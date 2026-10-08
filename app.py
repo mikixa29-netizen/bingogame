@@ -2,10 +2,14 @@ import os
 import random
 import asyncio
 import logging
-from flask import Flask, jsonify, request, session, render_template, redirect, url_for
+from functools import wraps
+from flask import Flask, jsonify, request, session, render_template, redirect, url_for, flash
 from datetime import datetime
 from database import db, init_db
 from game_logic import BingoGame
+
+# ከ config.py የአድሚን መረጃዎችን ማምጣት
+from config import ADMIN_USERNAME, ADMIN_PASSWORD
 
 # Configure logging
 logging.basicConfig(
@@ -27,12 +31,17 @@ from models import User, Game, GameParticipant, Transaction
 # Game storage (temporary, will be moved to database)
 active_games = {}
 
+# ==========================================
+# USER ROUTES (የተጫዋቾች ገፅ)
+# ==========================================
+
 @app.route('/')
 def index():
     """Show available games or create a new one."""
     if 'user_id' not in session:
         session['user_id'] = random.randint(1, 1000000)  # Temporary user ID generation
-    return render_template('game_lobby.html')
+    # games=active_games ተጨምሯል ዩዘሮች ጌሙን እንዲያዩት
+    return render_template('game_lobby.html', games=active_games)
 
 @app.route('/webhook/deposit', methods=['POST'])
 def deposit_webhook():
@@ -306,5 +315,47 @@ def mark_number(game_id):
         'message': message
     })
 
+
+# ==========================================
+# ADMIN ROUTES (የአድሚን መግቢያ እና ዳሽቦርድ)
+# ==========================================
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'admin_logged_in' not in session:
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Invalid credentials')
+            
+    return render_template('admin/login.html')
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    return render_template(
+        'admin/dashboard.html',
+        games=active_games,
+        active_games_count=len(active_games)
+    )
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('admin_login'))
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
