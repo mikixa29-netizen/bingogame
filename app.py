@@ -40,7 +40,7 @@ def index():
     """Show available games or create a new one."""
     if 'user_id' not in session:
         session['user_id'] = random.randint(1, 1000000)  # Temporary user ID generation
-    # games=active_games ተጨምሯል ዩዘሮች ጌሙን እንዲያዩት
+    # ዩዘሮች ጌሙን እንዲያዩት
     return render_template('game_lobby.html', games=active_games)
 
 @app.route('/webhook/deposit', methods=['POST'])
@@ -345,10 +345,19 @@ def admin_login():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
+    # ኤረር እንዳያመጣ ጌሞቹን ከ Dictionary ወደ List ተቀይሯል
+    game_list = list(active_games.values())
+    
+    # አክቲቭ የሆኑ ጌሞችን መቁጠሪያ
+    active_count = len([g for g in game_list if hasattr(g, 'status') and g.status == "active"])
+    
+    # አድሚን ዳሽቦርዱ የሚጠብቃቸውን ተለዋዋጮች በትክክል መላክ
     return render_template(
         'admin/dashboard.html',
-        games=active_games,
-        active_games_count=len(active_games)
+        players={}, 
+        games=game_list,
+        active_games=active_count,
+        total_players=0
     )
 
 @app.route('/admin/logout')
