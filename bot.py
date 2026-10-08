@@ -136,7 +136,7 @@ async def cmd_start(message: Message):
                 )
 
                 await message.answer(
-                    "Welcome to Addis Bingo! 🎮\n\n"
+                    "Welcome to Edil Bingo! 🎮\n\n"
                     "Please share your phone number to complete registration.",
                     reply_markup=keyboard
                 )
