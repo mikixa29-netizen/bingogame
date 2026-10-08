@@ -1,0 +1,67 @@
+Telegram Bingo Bot - Development Plan
+
+Finalized Steps for Telegram Bingo Bot with Admin Panel, Withdrawal Notifications & No API for Deposits
+
+This document is a step-by-step development plan for the Telegram Bingo Bot, including:
+- Admin Panel for Managing Games, Players, and Profit
+- Admin Notification for Withdrawal Requests
+- No API for Deposits – Tasker Automation Used
+
+Step 1: User Registration with Referral Link
+- Players register using their Telegram profile and phone number.
+- The bot generates a unique referral link (t.me/YourBot?start=123456789).
+- Referrer gets 20 birr bonus when the invited player deposits & plays one game.
+
+Step 2: Deposit System (No API – Tasker Automated)
+- Users get a randomly assigned deposit account.
+- Tasker detects transaction phone number, ID, and amount.
+- Players forward SMS to the bot for verification.
+
+Step 3: Bingo Game Setup
+- Players choose a cartela number (1-100).
+- Entry prices: 10, 20, 50, or 100 birr.
+- No duplicate cartela selection allowed.
+
+Step 4: Bingo Gameplay
+- The bot randomly calls numbers.
+- Players manually mark their matches.
+- First to complete a pattern wins.
+
+Step 5: Withdrawal Conditions
+- Must play at least 5 games and win 1 game.
+- Withdrawals are sent to the registered phone number.
+- Admin receives a notification for each withdrawal request.
+
+Step 6: Admin Panel for Managing Players, Games & Profit
+- View registered players, deposits, withdrawals, and profits.
+- Approve or deny withdrawals.
+
+Step 7: Prize Distribution & Payout
+- Winners receive 80 percent of the total pool.
+- 20 percent profit retained by the system.
+- Admin manually approves payouts.
+
+Step 8: Security & Fraud Prevention
+- Tasker logs must match forwarded SMS.
+- No duplicate cartela selections.
+- Manual withdrawal approvals prevent fraud.
+
+Tech Stack & Requirements
+- Bot Framework: aiogram (Python)
+- Database: SQLite / PostgreSQL
+- Tasker (Android App): To detect deposits (No API used)
+- Admin Panel: Flask/Django Web App OR Telegram Bot Admin Panel
+- Server Hosting: Cloud VPS / Local Server
+
+Summary
+- Players register (Telegram ID + Phone Number + Referral Link)
+- Deposit manually (No API, Tasker verifies SMS)
+- Bot assigns random deposit accounts
+- Choose cartela (Bingo ticket)
+- Wait for number callout
+- First to complete wins (80 percent payout, 20 percent profit)
+- Referral bonus: 20 birr after deposit & play
+- Withdrawal only after 5 games + 1 win
+- Admin Panel for managing players, deposits, games & profits
+- Admin must approve withdrawals manually
+

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Addis Bingo - Lobby</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+</head>
+<body class="bg-dark">
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Addis Bingo</h1>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Create New Game</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="errorAlert" class="alert alert-danger d-none"></div>
+                        <form id="createGameForm">
+                            <div class="mb-3">
+                                <label for="entryPrice" class="form-label">Entry Price (Birr)</label>
+                                <select class="form-select" id="entryPrice" required>
+                                    <option value="10">10 Birr</option>
+                                    <option value="20">20 Birr</option>
+                                    <option value="50">50 Birr</option>
+                                    <option value="100">100 Birr</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Create Game</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Available Games</h5>
+                        <button onclick="refreshGames()" class="btn btn-sm btn-secondary">
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="gamesList">
+                            <!-- Games will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showError(message) {
+            const alert = document.getElementById('errorAlert');
+            alert.textContent = message;
+            alert.classList.remove('d-none');
+        }
+
+        function hideError() {
+            const alert = document.getElementById('errorAlert');
+            alert.classList.add('d-none');
+        }
+
+        document.getElementById('createGameForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            hideError();
+
+            const entryPrice = parseInt(document.getElementById('entryPrice').value);
+
+            fetch('/game/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ entry_price: entryPrice })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                } else if (data.game_id) {
+                    window.location.href = `/game/${data.game_id}`;
+                }
+            })
+            .catch(error => {
+                showError('Failed to create game. Please try again.');
+                console.error('Error:', error);
+            });
+        });
+
+        function joinGame(gameId) {
+            window.location.href = `/game/${gameId}`;
+        }
+
+        function refreshGames() {
+            fetch('/game/list')
+                .then(response => response.json())
+                .then(games => {
+                    const gamesList = document.getElementById('gamesList');
+                    gamesList.innerHTML = '';
+
+                    games.forEach(game => {
+                        const gameCard = document.createElement('div');
+                        gameCard.className = 'card mb-2';
+                        gameCard.innerHTML = `
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">Game #${game.id}</h6>
+                                        <small class="text-muted">
+                                            ${game.players} players | ${game.entry_price} Birr
+                                        </small>
+                                    </div>
+                                    <button onclick="joinGame(${game.id})" 
+                                            class="btn btn-sm btn-success">
+                                        Join
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        gamesList.appendChild(gameCard);
+                    });
+
+                    if (games.length === 0) {
+                        gamesList.innerHTML = '<p class="text-muted">No games available. Create a new game!</p>';
+                    }
+                });
+        }
+
+        // Load games on page load
+        refreshGames();
+    </script>
+</body>
+</html>

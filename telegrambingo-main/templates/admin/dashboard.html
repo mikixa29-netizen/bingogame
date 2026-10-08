@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Bingo Bot</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Bingo Bot Admin</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Statistics</h5>
+                        <p>Total Players: {{ total_players }}</p>
+                        <p>Active Games: {{ active_games }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Active Games</h5>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Game ID</th>
+                                    <th>Players</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for game in games %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ game.players|length }}</td>
+                                        <td>{{ game.status }}</td>
+                                        <td>
+                                            {% if game.status == "waiting" %}
+                                                <form method="POST" action="{{ url_for('start_game') }}" class="d-inline">
+                                                    <input type="hidden" name="game_id" value="{{ loop.index0 }}">
+                                                    <button type="submit" class="btn btn-sm btn-primary">Start Game</button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Withdrawal Requests</h5>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Username</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in players.values() if player.balance > 0 %}
+                                    <tr>
+                                        <td>{{ player.user_id }}</td>
+                                        <td>{{ player.username }}</td>
+                                        <td>{{ player.balance }}</td>
+                                        <td>
+                                            <form method="POST" action="{{ url_for('approve_withdrawal') }}" class="d-inline">
+                                                <input type="hidden" name="user_id" value="{{ player.user_id }}">
+                                                <input type="hidden" name="amount" value="{{ player.balance }}">
+                                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

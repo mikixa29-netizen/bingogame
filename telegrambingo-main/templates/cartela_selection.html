@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Cartela</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <style>
+        body {
+            background: #6c4e9e;
+            color: white;
+        }
+        .cartela-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 15px;
+        }
+        .cartela-number {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .cartela-number:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .cartela-number.unavailable {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        .game-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="game-info">
+            <h2 class="text-center">Game #{{ game_id }}</h2>
+            <p class="text-center mb-0">Entry Price: {{ entry_price }} Birr</p>
+        </div>
+        
+        <h3 class="text-center mb-4">Select Your Cartela Number</h3>
+        
+        <div class="cartela-grid">
+            {% for i in range(1, 101) %}
+                <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
+                     onclick="selectCartela({{ i }}, {{ i not in used_cartelas }})">
+                    {{ i }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function selectCartela(number, available) {
+            if (!available) {
+                alert('This cartela number is already taken. Please choose another.');
+                return;
+            }
+
+            fetch(`/game/{{ game_id }}/join`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cartela_number: number })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    window.location.href = `/game/${data.game_id}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to join game. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>

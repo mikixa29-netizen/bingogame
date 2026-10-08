@@ -1,0 +1,58 @@
+Tasker Webhook Configuration Instructions:
+
+Production Webhook URL:
+https://bingoblaster.addisumelke01.repl.co/webhook/deposit
+
+Required Headers:
+Content-Type: application/json
+
+Payload Format:
+{
+  "amount": [Extract amount from SMS],
+  "phone": [Extract phone number from SMS]
+}
+
+Tasker Configuration Steps:
+1. Create a new Profile:
+   - Event → Phone → Received Text
+   - Configure SMS filter based on your bank's message format
+
+2. Create a Task:
+   - Add Action → Net → HTTP Post
+   - URL: https://bingoblaster.addisumelke01.repl.co/webhook/deposit
+   - Headers: Content-Type:application/json
+   - Body:
+     {
+       "amount": %amount,
+       "phone": %phone
+     }
+   (Replace %amount and %phone with your Tasker variables that extract these values from the SMS)
+
+Testing:
+1. First test the webhook format:
+   Test URL: https://bingoblaster.addisumelke01.repl.co/webhook/test
+   Method: POST
+   Headers: Content-Type: application/json
+   Body Format:
+   {
+     "amount": [amount from SMS],
+     "phone": [phone from SMS]
+   }
+   This will validate your data format without processing the deposit.
+
+2. Once format is confirmed, use the main deposit URL for production.  The production endpoint expects the same `Content-Type` and body format as the test endpoint.
+
+Example SMS Pattern:
+For the amount variable, extract the number after "ETB" or "Birr"
+For the phone variable, extract the sender's phone number or account number
+
+Example body:
+{
+  "amount": 100.0,
+  "phone": "0911234567"
+}
+
+Important Notes:
+- Ensure amounts are sent as numbers (e.g., 100.0, not "100 Birr")
+- Phone numbers should be in format: "0911234567" (no spaces or special characters)
+- Test the webhook setup before using it with real transactions

@@ -1,0 +1,16 @@
+/* Additional custom styles if needed */
+.navbar {
+    margin-bottom: 2rem;
+}
+
+.card {
+    margin-bottom: 1rem;
+}
+
+.table th {
+    background-color: var(--bs-dark);
+}
+
+.alert {
+    margin-bottom: 1rem;
+}
