@@ -1,15 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
+import os
 from config import (
-    ADMIN_USERNAME, ADMIN_PASSWORD, SECRET_KEY,
-    FLASK_HOST, FLASK_PORT
+    ADMIN_USERNAME, ADMIN_PASSWORD, SECRET_KEY
 )
 from game_logic import BingoGame, Player
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-# In-memory storage
+# ማሳሰቢያ፡ Render ሪስታርት ሲያደርግ ይህ ዳታ ስለሚጠፋ በቀጣይ ዳታቤዝ ማገናኘትህን አትዘንጋ
 games = []
 players = {}
 
@@ -20,6 +20,11 @@ def admin_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
+
+# 404 ኤረር እንዳያመጣ ዋናው ሊንክ ሲነካ ወደ ሎግ-ኢን ይወስደዋል
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def login():
@@ -42,7 +47,7 @@ def dashboard():
         'admin/dashboard.html',
         players=players,
         games=games,
-        active_games=len([g for g in games if g.status == "active"]),
+        active_games=len([g for g in games if hasattr(g, 'status') and g.status == "active"]),
         total_players=len(players)
     )
 
@@ -50,17 +55,20 @@ def dashboard():
 @admin_required
 def start_game():
     game_id = request.form.get('game_id')
-    if game_id and games[int(game_id)].start_game():
-        flash('Game started successfully')
+    if game_id and int(game_id) < len(games):
+        if games[int(game_id)].start_game():
+            flash('Game started successfully')
+        else:
+            flash('Could not start game')
     else:
-        flash('Could not start game')
+        flash('Invalid game ID')
     return redirect(url_for('dashboard'))
 
 @app.route('/admin/withdrawal/approve', methods=['POST'])
 @admin_required
 def approve_withdrawal():
     user_id = request.form.get('user_id')
-    amount = float(request.form.get('amount'))
+    amount = float(request.form.get('amount', 0))
     
     if user_id in players:
         player = players[user_id]
@@ -75,4 +83,6 @@ def approve_withdrawal():
     return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
-    app.run(host=FLASK_HOST, port=FLASK_PORT, debug=True)
+    # ሎካል ላይ ለቴስቲንግ ብቻ
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

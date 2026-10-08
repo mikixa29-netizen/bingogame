@@ -11,7 +11,6 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 def run_flask():
-    # Use gunicorn configuration
     from gunicorn.app.base import BaseApplication
 
     class FlaskApplication(BaseApplication):
@@ -27,10 +26,13 @@ def run_flask():
         def load(self):
             return self.application
 
+    # Render የሚሰጠውን ፖርት ይቀበላል፣ ካላገኘ 5000 ይጠቀማል
+    port = int(os.environ.get('PORT', 5000))
+    
     options = {
-        'bind': '0.0.0.0:5000',
+        'bind': f'0.0.0.0:{port}',
         'workers': 1,
-        'reload': True
+        'reload': False  # Render ላይ error እንዳያመጣ False መሆን አለበት
     }
     FlaskApplication(app, options).run()
 
@@ -38,23 +40,19 @@ def run_bot():
     asyncio.run(bot_main())
 
 if __name__ == "__main__":
-    # Register signal handler
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # Start Flask in a separate process
     flask_process = Process(target=run_flask)
     flask_process.start()
 
     try:
-        # Run the bot in the main process
         run_bot()
     except KeyboardInterrupt:
         print("Received keyboard interrupt, shutting down...")
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        # Cleanup
         if flask_process.is_alive():
             flask_process.terminate()
             flask_process.join()
