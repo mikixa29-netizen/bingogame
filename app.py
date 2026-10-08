@@ -8,7 +8,7 @@ from datetime import datetime
 from database import db, init_db
 from game_logic import BingoGame
 
-# ከ config.py የአድሚን መረጃዎችን ማምጣት
+# Import admin credentials from config
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
 
 # Configure logging
@@ -32,7 +32,7 @@ from models import User, Game, GameParticipant, Transaction
 active_games = {}
 
 # ==========================================
-# USER ROUTES (የተጫዋቾች ገፅ)
+# USER ROUTES (Player-facing views)
 # ==========================================
 
 @app.route('/')
@@ -40,18 +40,15 @@ def index():
     """Show available games or create a new one."""
     if 'user_id' not in session:
         session['user_id'] = random.randint(1, 1000000)  # Temporary user ID generation
-    # ዩዘሮች ጌሙን እንዲያዩት
     return render_template('game_lobby.html', games=active_games)
 
 @app.route('/webhook/deposit', methods=['POST'])
 def deposit_webhook():
     """Handle deposit webhook from Tasker"""
     try:
-        # Get webhook data
         data = request.get_json()
         logger.info(f"Received deposit webhook: {data}")
 
-        # Validate required fields
         if not data or 'amount' not in data or 'phone' not in data:
             error_msg = 'Invalid webhook data - must include amount and phone'
             logger.error(error_msg)
@@ -64,7 +61,6 @@ def deposit_webhook():
         except (ValueError, TypeError):
             return jsonify({'error': 'Invalid amount format'}), 400
 
-        # Process deposit through bot
         from bot import process_deposit_confirmation
         asyncio.run(process_deposit_confirmation(data))
 
@@ -81,8 +77,6 @@ def test_webhook():
     try:
         data = request.get_json()
         logger.info(f"Test webhook received: {data}")
-
-        # Log headers for debugging
         logger.debug(f"Request headers: {dict(request.headers)}")
 
         validation = {
@@ -92,30 +86,23 @@ def test_webhook():
             "headers": dict(request.headers)
         }
 
-        # Validate webhook format
         if not data:
             validation["format_check"].append("❌ No JSON data received")
             return jsonify(validation), 400
 
-        # Check if it's a GitHub ping event
         if request.headers.get('X-GitHub-Event') == 'ping':
             return jsonify({
                 "message": "Webhook configured successfully!",
                 "zen": data.get('zen', 'No zen provided')
             })
 
-        # Extract amount and phone from different payload formats
         amount = None
         phone = None
 
-        # Try Tasker format first
         if 'amount' in data and 'phone' in data:
             amount = data.get('amount')
             phone = data.get('phone')
-        # Try GitHub issue format (for testing)
         elif 'issue' in data:
-            # Extract amount and phone from issue title
-            # Expected format: "Deposit: 100 - 0911234567"
             title = data['issue']['title']
             if 'Deposit:' in title:
                 try:
@@ -125,15 +112,12 @@ def test_webhook():
                 except (IndexError, ValueError):
                     pass
 
-        # Validate required fields
-        required_fields = ['amount', 'phone']
         for field in [('amount', amount), ('phone', phone)]:
             if not field[1]:
                 validation["format_check"].append(f"❌ Missing required field: {field[0]}")
             else:
                 validation["format_check"].append(f"✅ Found required field: {field[0]}")
 
-        # Validate amount
         try:
             amount = float(amount) if amount else 0
             if amount <= 0:
@@ -143,7 +127,6 @@ def test_webhook():
         except (ValueError, TypeError):
             validation["data_validation"].append("❌ Invalid amount format")
 
-        # Validate phone
         if phone:
             phone = str(phone)
             if not phone.isdigit() or len(phone) < 10:
@@ -151,7 +134,6 @@ def test_webhook():
             else:
                 validation["data_validation"].append(f"✅ Valid phone format: {phone}")
 
-        # Overall validation status
         validation["status"] = "valid" if all(
             "❌" not in checks 
             for checks in validation["format_check"] + validation["data_validation"]
@@ -182,7 +164,6 @@ def create_game():
             game_id = len(active_games) + 1
             active_games[game_id] = BingoGame(game_id, entry_price)
 
-            # Store user_id in session for web app
             session['user_id'] = user_id
 
             return jsonify({
@@ -202,8 +183,6 @@ def select_cartela(game_id):
         return redirect(url_for('index'))
 
     game = active_games[game_id]
-
-    # Get list of used cartela numbers
     used_cartelas = set()
     for player in game.players.values():
         used_cartelas.add(player.get('cartela_number', 0))
@@ -224,7 +203,6 @@ def play_game(game_id):
     game = active_games[game_id]
     user_id = session['user_id']
 
-    # Add player if they haven't joined
     if user_id not in game.players:
         board = game.add_player(user_id)
         if not board:
@@ -232,13 +210,11 @@ def play_game(game_id):
 
     player = game.players[user_id]
 
-    # Auto-start game if enough players have joined
     if game.status == "waiting" and len(game.players) >= game.min_players:
         game.start_game()
         if game.status == "active":
-            game.call_number()  # Call first number automatically
+            game.call_number()
 
-    # Get current call number
     current_number = None
     if game.status == "active" and game.called_numbers:
         current_number = game.format_number(game.called_numbers[-1])
@@ -284,7 +260,6 @@ def mark_number(game_id):
     if user_id not in game.players:
         return jsonify({'error': 'Player not in game'}), 400
 
-    # Handle bingo check request
     check_win = request.json.get('check_win', False)
     if check_win:
         winner, message = game.check_winner(user_id)
@@ -295,7 +270,6 @@ def mark_number(game_id):
             'message': message
         })
 
-    # Handle number marking
     number = request.json.get('number')
     if not number:
         return jsonify({'error': 'Number required'}), 400
@@ -304,7 +278,6 @@ def mark_number(game_id):
     if not success:
         return jsonify({'error': 'Could not mark number'}), 400
 
-    # Check for win after marking
     winner, message = game.check_winner(user_id)
     if winner:
         game.end_game(user_id)
@@ -317,7 +290,7 @@ def mark_number(game_id):
 
 
 # ==========================================
-# ADMIN ROUTES (የአድሚን መግቢያ እና ዳሽቦርድ)
+# ADMIN ROUTES (Dashboard & User Management)
 # ==========================================
 
 def admin_required(f):
@@ -345,20 +318,43 @@ def admin_login():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    # ኤረር እንዳያመጣ ጌሞቹን ከ Dictionary ወደ List ተቀይሯል
     game_list = list(active_games.values())
-    
-    # አክቲቭ የሆኑ ጌሞችን መቁጠሪያ
     active_count = len([g for g in game_list if hasattr(g, 'status') and g.status == "active"])
     
-    # አድሚን ዳሽቦርዱ የሚጠብቃቸውን ተለዋዋጮች በትክክል መላክ
+    # Fetch registered users from the database
+    users_list = User.query.all()
+    
     return render_template(
         'admin/dashboard.html',
         players={}, 
         games=game_list,
         active_games=active_count,
-        total_players=0
+        total_players=len(users_list),
+        users=users_list
     )
+
+@app.route('/admin/user/<int:user_id>/add_balance', methods=['POST'])
+@admin_required
+def admin_add_balance(user_id):
+    try:
+        amount = float(request.form.get('amount', 0))
+        if amount <= 0:
+            flash('Amount must be greater than zero', 'error')
+            return redirect(url_for('admin_dashboard'))
+            
+        user = User.query.get(user_id)
+        if user:
+            user.balance += amount
+            db.session.commit()
+            flash(f'Successfully added {amount} to user!', 'success')
+        else:
+            flash('User not found', 'error')
+            
+    except Exception as e:
+        logger.error(f"Error adding balance: {str(e)}")
+        flash('Error adding balance', 'error')
+        
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/logout')
 def admin_logout():

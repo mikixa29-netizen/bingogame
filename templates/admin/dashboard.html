@@ -1,104 +1,189 @@
 <!DOCTYPE html>
-<html data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Bingo Bot</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <title>Bingo Bot Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 {
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stats-grid {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            flex: 1;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .section-box {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        th {
+            background-color: #334155;
+            color: #ffffff;
+        }
+        input[type="number"] {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            width: 100px;
+        }
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #16a34a;
+        }
+        .flashes {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .flashes li {
+            background: #3b82f6;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        .logout-btn {
+            float: right;
+            background: #ef4444;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            color: white;
+        }
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Bingo Bot Admin</a>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Bingo Bot Admin Dashboard</h2>
+            <a href="{{ url_for('admin_logout') }}" class="logout-btn">Logout</a>
         </div>
-    </nav>
 
-    <div class="container mt-4">
         {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-info">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+          {% if messages %}
+            <ul class="flashes">
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
         {% endwith %}
 
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Statistics</h5>
-                        <p>Total Players: {{ total_players }}</p>
-                        <p>Active Games: {{ active_games }}</p>
-                    </div>
-                </div>
+        <!-- Statistics Section -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Statistics</h3>
+                <p>Total Players: <strong>{{ total_players }}</strong></p>
+                <p>Active Games: <strong>{{ active_games }}</strong></p>
             </div>
+        </div>
 
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Active Games</h5>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Game ID</th>
-                                    <th>Players</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for game in games %}
-                                    <tr>
-                                        <td>{{ loop.index }}</td>
-                                        <td>{{ game.players|length }}</td>
-                                        <td>{{ game.status }}</td>
-                                        <td>
-                                            {% if game.status == "waiting" %}
-                                                <form method="POST" action="{{ url_for('start_game') }}" class="d-inline">
-                                                    <input type="hidden" name="game_id" value="{{ loop.index0 }}">
-                                                    <button type="submit" class="btn btn-sm btn-primary">Start Game</button>
-                                                </form>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- Active Games Section -->
+        <div class="section-box">
+            <h3>Active Games</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Game ID</th>
+                        <th>Players Count</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for g in games %}
+                    <tr>
+                        <td>{{ g.game_id }}</td>
+                        <td>{{ g.players|length }}</td>
+                        <td>{{ g.status }}</td>
+                        <td>-</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8;">No active games running.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-                <div class="card mt-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Withdrawal Requests</h5>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Username</th>
-                                    <th>Amount</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for player in players.values() if player.balance > 0 %}
-                                    <tr>
-                                        <td>{{ player.user_id }}</td>
-                                        <td>{{ player.username }}</td>
-                                        <td>{{ player.balance }}</td>
-                                        <td>
-                                            <form method="POST" action="{{ url_for('approve_withdrawal') }}" class="d-inline">
-                                                <input type="hidden" name="user_id" value="{{ player.user_id }}">
-                                                <input type="hidden" name="amount" value="{{ player.balance }}">
-                                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <!-- User Management Section -->
+        <div class="section-box">
+            <h3>Users Management & Balance Control</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username / Phone</th>
+                        <th>Balance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td>{{ u.username or u.phone }}</td>
+                        <td>{{ u.balance }} ETB</td>
+                        <td>
+                            <form action="{{ url_for('admin_add_balance', user_id=u.id) }}" method="POST" style="display:inline;">
+                                <input type="number" name="amount" placeholder="Amount" step="0.01" required>
+                                <button type="submit">Add Balance</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8;">No registered users found in the database.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </body>
