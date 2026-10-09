@@ -39,12 +39,17 @@ active_games = {}
 def index():
     """Show available games or create a new one."""
     if 'user_id' not in session:
-        session['user_id'] = random.randint(1, 1000000)  # Temporary user ID generation
+        session['user_id'] = random.randint(100000, 999999)  # Temporary user ID generation
     
-    # ተጠቃሚውን ከዳታቤዝ መፈለግ ወይም መፍጠር
+    # ተጠቃሚውን ከዳታቤዝ መፈለግ (telegram_id ኑል እንዳይሆን ተደርጎ ተስተካክሏል)
     user = User.query.get(session['user_id'])
     if not user:
-        user = User(id=session['user_id'], username=f"Player_{session['user_id']}", balance=50.0) # ነባሪ የፈተና 50 ብር
+        user = User(
+            id=session['user_id'],
+            telegram_id=str(session['user_id']),  # telegram_id NOT NULL constraint እንዳይሰብር ተደርጓል
+            username=f"Player_{session['user_id']}",
+            balance=50.0
+        )
         db.session.add(user)
         db.session.commit()
 
