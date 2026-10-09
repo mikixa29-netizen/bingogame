@@ -1,43 +1,102 @@
 <!DOCTYPE html>
-<html data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - Bingo Bot</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <title>Edil Bingo - Admin Login</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #a483cf;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .header-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #f3eafa;
+            color: #333;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .btn-login {
+            background: #ff6600;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .flash-msg {
+            background: #ff4d4d;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="text-center">Admin Login</h3>
-                    </div>
-                    <div class="card-body">
-                        {% with messages = get_flashed_messages() %}
-                            {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-danger">{{ message }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        {% endwith %}
-                        
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Login</button>
-                        </form>
-                    </div>
-                </div>
+
+    <div class="header-title">Edil Bingo - Admin</div>
+
+    <div class="login-card">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-msg">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" required>
             </div>
-        </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn-login">Login</button>
+        </form>
     </div>
+
 </body>
 </html>

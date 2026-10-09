@@ -1,137 +1,235 @@
 <!DOCTYPE html>
-<html data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Addis Bingo - Lobby</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <title>Edil Bingo - Lobby</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #a483cf;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .header-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            letter-spacing: 1px;
+        }
+        .top-stats {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 0 10px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .stat-box {
+            background: #ffffff;
+            color: #333;
+            border-radius: 14px;
+            padding: 8px 15px;
+            text-align: center;
+            flex: 1;
+            min-width: 90px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+        .stat-box .label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .stat-box .value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #222;
+        }
+        .main-container {
+            width: 92%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .section-label {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        .stake-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .stake-btn {
+            background: #e2d1f9;
+            color: #333;
+            border: 2px solid transparent;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .stake-btn.selected {
+            background: #008000;
+            color: white;
+            border-color: #fff;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            width: 92%;
+            max-width: 420px;
+            justify-content: center;
+        }
+        .btn-refresh {
+            background: #209cee;
+            color: white;
+            border: none;
+            padding: 14px 0;
+            flex: 1;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-start {
+            background: #ff6600;
+            color: white;
+            border: none;
+            padding: 14px 0;
+            flex: 1;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        /* Modal Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-box {
+            background: #4a154b;
+            color: white;
+            width: 85%;
+            max-width: 320px;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            border: 2px solid #ff6600;
+        }
+        .modal-box h3 { margin-top: 0; color: #ff9800; font-size: 20px; }
+        .modal-box p { font-size: 14px; color: #f3eafa; margin-bottom: 20px; }
+        .modal-btn {
+            background: #ff6600; color: white; border: none; padding: 10px 20px;
+            border-radius: 20px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%;
+        }
+    </style>
 </head>
-<body class="bg-dark">
-    <div class="container mt-4">
-        <h1 class="text-center mb-4">Addis Bingo</h1>
+<body>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Create New Game</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="errorAlert" class="alert alert-danger d-none"></div>
-                        <form id="createGameForm">
-                            <div class="mb-3">
-                                <label for="entryPrice" class="form-label">Entry Price (Birr)</label>
-                                <select class="form-select" id="entryPrice" required>
-                                    <option value="10">10 Birr</option>
-                                    <option value="20">20 Birr</option>
-                                    <option value="50">50 Birr</option>
-                                    <option value="100">100 Birr</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Create Game</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+    <div class="header-title">Edil Bingo</div>
 
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Available Games</h5>
-                        <button onclick="refreshGames()" class="btn btn-sm btn-secondary">
-                            Refresh
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div id="gamesList">
-                            <!-- Games will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="top-stats">
+        <div class="stat-box">
+            <div class="label">Wallet</div>
+            <div class="value" id="walletVal">{{ balance | default('50.00') }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Active Game</div>
+            <div class="value">Live</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Stake</div>
+            <div class="value" id="stakeVal">10</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="section-label">Select Your Game Stake (Birr)</div>
+        <div class="stake-options">
+            <button class="stake-btn selected" onclick="setStake(10, this)">10 Birr</button>
+            <button class="stake-btn" onclick="setStake(20, this)">20 Birr</button>
+            <button class="stake-btn" onclick="setStake(50, this)">50 Birr</button>
+            <button class="stake-btn" onclick="setStake(100, this)">100 Birr</button>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn-refresh" onclick="location.reload()">Refresh</button>
+        <button class="btn-start" onclick="proceedToCartelaSelection()">Start game</button>
+    </div>
+
+    <!-- Low Balance Modal Popup -->
+    <div class="modal-overlay" id="topupModal">
+        <div class="modal-box">
+            <h3>⚠️ Low Balance</h3>
+            <p>Please top up your wallet first to play this game!</p>
+            <button class="modal-btn" onclick="closeModal()">Top Up / OK</button>
         </div>
     </div>
 
     <script>
-        function showError(message) {
-            const alert = document.getElementById('errorAlert');
-            alert.textContent = message;
-            alert.classList.remove('d-none');
+        let selectedStake = 10;
+
+        function setStake(amount, btnElement) {
+            document.querySelectorAll('.stake-btn').forEach(btn => btn.classList.remove('selected'));
+            btnElement.classList.add('selected');
+            selectedStake = amount;
+            document.getElementById('stakeVal').innerText = amount;
         }
 
-        function hideError() {
-            const alert = document.getElementById('errorAlert');
-            alert.classList.add('d-none');
-        }
-
-        document.getElementById('createGameForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            hideError();
-
-            const entryPrice = parseInt(document.getElementById('entryPrice').value);
-
+        function proceedToCartelaSelection() {
             fetch('/game/create', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ entry_price: entryPrice })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ entry_price: selectedStake })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    showError(data.error);
+                if (data.low_balance || (data.error && data.error.includes('balance'))) {
+                    document.getElementById('topupModal').style.display = 'flex';
+                } else if (data.error) {
+                    alert(data.error);
                 } else if (data.game_id) {
-                    window.location.href = `/game/${data.game_id}`;
+                    window.location.href = `/game/${data.game_id}/select_cartela`;
                 }
             })
             .catch(error => {
-                showError('Failed to create game. Please try again.');
                 console.error('Error:', error);
+                document.getElementById('topupModal').style.display = 'flex';
             });
-        });
-
-        function joinGame(gameId) {
-            window.location.href = `/game/${gameId}`;
         }
 
-        function refreshGames() {
-            fetch('/game/list')
-                .then(response => response.json())
-                .then(games => {
-                    const gamesList = document.getElementById('gamesList');
-                    gamesList.innerHTML = '';
-
-                    games.forEach(game => {
-                        const gameCard = document.createElement('div');
-                        gameCard.className = 'card mb-2';
-                        gameCard.innerHTML = `
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-0">Game #${game.id}</h6>
-                                        <small class="text-muted">
-                                            ${game.players} players | ${game.entry_price} Birr
-                                        </small>
-                                    </div>
-                                    <button onclick="joinGame(${game.id})" 
-                                            class="btn btn-sm btn-success">
-                                        Join
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        gamesList.appendChild(gameCard);
-                    });
-
-                    if (games.length === 0) {
-                        gamesList.innerHTML = '<p class="text-muted">No games available. Create a new game!</p>';
-                    }
-                });
+        function closeModal() {
+            document.getElementById('topupModal').style.display = 'none';
         }
-
-        // Load games on page load
-        refreshGames();
     </script>
 </body>
 </html>

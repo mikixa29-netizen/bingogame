@@ -1,84 +1,246 @@
 <!DOCTYPE html>
-<html data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Your Cartela</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <title>Edil Bingo - Select Cartela</title>
     <style>
         body {
-            background: #6c4e9e;
-            color: white;
+            margin: 0;
+            padding: 0;
+            background-color: #a483cf;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+            letter-spacing: 1px;
+        }
+        .top-stats {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            padding: 0 10px;
+        }
+        .stat-box {
+            background: #ffffff;
+            color: #333;
+            border-radius: 12px;
+            padding: 6px 14px;
+            text-align: center;
+            min-width: 60px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stat-box .label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .stat-box .value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #222;
+        }
+        .cartela-container {
+            width: 92%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
         }
         .cartela-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            padding: 15px;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+            max-height: 240px;
+            overflow-y: auto;
         }
         .cartela-number {
+            background: #e2d1f9;
+            color: #333;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            font-size: 1.2em;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s;
         }
-        .cartela-number:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .cartela-number.selected {
+            background: #008000 !important;
+            color: #fff !important;
         }
         .cartela-number.unavailable {
-            opacity: 0.5;
+            background: rgba(0, 0, 0, 0.2);
+            color: #888;
             cursor: not-allowed;
-            background: rgba(255, 0, 0, 0.1);
         }
-        .game-info {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .preview-box {
+            background: #f3eafa;
+            color: #333;
+            padding: 10px;
+            border-radius: 8px;
+            width: 92%;
+            max-width: 420px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            width: 92%;
+            max-width: 420px;
+            margin-bottom: 25px;
+        }
+        .btn-refresh {
+            background: #209cee;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            flex: 1;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-start {
+            background: #ff6600;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            flex: 1;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        /* Modal Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-box {
+            background: #4a154b;
+            color: white;
+            width: 85%;
+            max-width: 320px;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            border: 2px solid #ff6600;
+        }
+        .modal-box h3 { margin-top: 0; color: #ff9800; font-size: 20px; }
+        .modal-box p { font-size: 14px; color: #f3eafa; margin-bottom: 20px; }
+        .modal-btn {
+            background: #ff6600; color: white; border: none; padding: 10px 20px;
+            border-radius: 20px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <div class="game-info">
-            <h2 class="text-center">Game #{{ game_id }}</h2>
-            <p class="text-center mb-0">Entry Price: {{ entry_price }} Birr</p>
+
+    <div class="header-title">Edil Bingo</div>
+
+    <div class="top-stats">
+        <div class="stat-box">
+            <div class="label">Wallet</div>
+            <div class="value" id="wallet-val">{{ balance | default('50.00') }}</div>
         </div>
-        
-        <h3 class="text-center mb-4">Select Your Cartela Number</h3>
-        
+        <div class="stat-box">
+            <div class="label">Game</div>
+            <div class="value">#{{ game_id }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Stake</div>
+            <div class="value">{{ entry_price }}</div>
+        </div>
+    </div>
+
+    <div style="font-size: 15px; font-weight: bold; margin-bottom: 8px;">Select Your Cartela Number</div>
+
+    <div class="cartela-container">
         <div class="cartela-grid">
             {% for i in range(1, 101) %}
                 <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
-                     onclick="selectCartela({{ i }}, {{ i not in used_cartelas }})">
+                     id="cartela-{{ i }}"
+                     onclick="selectCartela({{ i }}, {{ 'false' if i in used_cartelas else 'true' }})">
                     {{ i }}
                 </div>
             {% endfor %}
         </div>
     </div>
 
+    <div class="preview-box" id="previewLbl">Selected Cartela: None</div>
+
+    <div class="action-buttons">
+        <button class="btn-refresh" onclick="location.reload()">Refresh</button>
+        <button class="btn-start" onclick="confirmJoin()">Start Game</button>
+    </div>
+
+    <!-- Top Up Warning Modal Popup -->
+    <div class="modal-overlay" id="topupModal">
+        <div class="modal-box">
+            <h3>⚠️ Low Balance</h3>
+            <p>Please top up your wallet first to play this game!</p>
+            <button class="modal-btn" onclick="closeModal()">Top Up / OK</button>
+        </div>
+    </div>
+
     <script>
+        let chosenCartela = null;
+
         function selectCartela(number, available) {
             if (!available) {
-                alert('This cartela number is already taken. Please choose another.');
+                alert('This cartela number is already taken.');
+                return;
+            }
+            document.querySelectorAll('.cartela-number').forEach(el => {
+                if (!el.classList.contains('unavailable')) el.classList.remove('selected');
+            });
+            let target = document.getElementById('cartela-' + number);
+            if (target) {
+                target.classList.add('selected');
+                chosenCartela = number;
+                document.getElementById('previewLbl').innerText = "Selected Cartela: #" + number;
+            }
+        }
+
+        function confirmJoin() {
+            if (!chosenCartela) {
+                alert('እባክዎ መጀመሪያ ከ 1 እስከ 100 ካሉት ውስጥ አንድ ካርቴላ ይምረጡ!');
                 return;
             }
 
             fetch(`/game/{{ game_id }}/join`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ cartela_number: number })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ cartela_number: chosenCartela })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
+                if (data.low_balance || (data.error && data.error.includes('balance'))) {
+                    document.getElementById('topupModal').style.display = 'flex';
+                } else if (data.error) {
                     alert(data.error);
                 } else {
                     window.location.href = `/game/${data.game_id}`;
@@ -86,8 +248,12 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to join game. Please try again.');
+                document.getElementById('topupModal').style.display = 'flex';
             });
+        }
+
+        function closeModal() {
+            document.getElementById('topupModal').style.display = 'none';
         }
     </script>
 </body>

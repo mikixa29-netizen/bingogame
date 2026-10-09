@@ -40,7 +40,28 @@ def index():
     """Show available games or create a new one."""
     if 'user_id' not in session:
         session['user_id'] = random.randint(1, 1000000)  # Temporary user ID generation
-    return render_template('game_lobby.html', games=active_games)
+    
+    # ተጠቃሚውን ከዳታቤዝ መፈለግ ወይም መፍጠር
+    user = User.query.get(session['user_id'])
+    if not user:
+        user = User(id=session['user_id'], username=f"Player_{session['user_id']}", balance=50.0) # ነባሪ የፈተና 50 ብር
+        db.session.add(user)
+        db.session.commit()
+
+    return render_template('game_lobby.html', balance=user.balance)
+
+@app.route('/game/list', methods=['GET'])
+def list_games():
+    """Return active games as JSON for lobby refresh"""
+    games_data = []
+    for g_id, game in active_games.items():
+        if game.status == "waiting":
+            games_data.append({
+                'id': g_id,
+                'players': len(game.players),
+                'entry_price': game.entry_price
+            })
+    return jsonify(games_data)
 
 @app.route('/webhook/deposit', methods=['POST'])
 def deposit_webhook():
@@ -152,19 +173,28 @@ def test_webhook():
 
 @app.route('/game/create', methods=['GET', 'POST'])
 def create_game():
-    """Create a new game."""
+    """Create a new game room and check user balance before proceeding."""
     try:
         if request.method == 'POST':
             entry_price = int(request.json.get('entry_price', 10))
-            user_id = request.json.get('user_id')
+            user_id = session.get('user_id', 1)
+
+            # 1. የተጠቃሚውን ቀሪ ሂሳብ (Balance) ከዳታቤዝ ማረጋገጥ
+            user = User.query.get(user_id)
+            user_balance = user.balance if user else 0.0
+
+            if user_balance < entry_price:
+                return jsonify({
+                    'error': 'Insufficient balance! Please top up your wallet first.',
+                    'low_balance': True
+                }), 400
 
             if entry_price not in [10, 20, 50, 100]:
                 return jsonify({'error': 'Invalid entry price'}), 400
 
+            # 2. አዲስ ጨዋታ በሲስተም መፍጠር
             game_id = len(active_games) + 1
             active_games[game_id] = BingoGame(game_id, entry_price)
-
-            session['user_id'] = user_id
 
             return jsonify({
                 'game_id': game_id,
@@ -178,11 +208,15 @@ def create_game():
 
 @app.route('/game/<int:game_id>/select_cartela')
 def select_cartela(game_id):
-    """Show cartela selection interface"""
+    """Show cartela selection interface with wallet & stake info"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
     game = active_games[game_id]
+    user_id = session.get('user_id', 1)
+    user = User.query.get(user_id)
+    balance = user.balance if user else 50.0
+
     used_cartelas = set()
     for player in game.players.values():
         used_cartelas.add(player.get('cartela_number', 0))
@@ -191,22 +225,63 @@ def select_cartela(game_id):
         'cartela_selection.html',
         game_id=game_id,
         entry_price=game.entry_price,
-        used_cartelas=used_cartelas
+        used_cartelas=used_cartelas,
+        balance=balance
     )
+
+@app.route('/game/<int:game_id>/join', methods=['POST'])
+def join_game(game_id):
+    """Join existing game room using selected cartela number and deduct balance"""
+    if game_id not in active_games:
+        return jsonify({'error': 'Game not found'}), 404
+
+    game = active_games[game_id]
+    user_id = session.get('user_id', 1)
+    data = request.json or {}
+    cartela_number = data.get('cartela_number')
+
+    user = User.query.get(user_id)
+    user_balance = user.balance if user else 50.0
+
+    # 1. ባሌንስ ማረጋገጥ
+    if user_balance < game.entry_price:
+        return jsonify({
+            'error': 'Insufficient balance! Please top up your wallet first.',
+            'low_balance': True
+        }), 400
+
+    # 2. ሂሳብ መቀነስ (Stake deduction)
+    if user:
+        user.balance -= game.entry_price
+        db.session.commit()
+
+    # 3. ተጫዋቹን ጨዋታው ውስጥ መመዝገብ
+    board = game.add_player(user_id, cartela_number=cartela_number)
+    if not board:
+        # ካርቴላው ከተያዘ ገንዘቡን መልሶ መክፈል
+        if user:
+            user.balance += game.entry_price
+            db.session.commit()
+        return jsonify({'error': 'Cartela already taken or game full'}), 400
+
+    session['active_game_id'] = game_id
+
+    return jsonify({
+        'success': True,
+        'game_id': game_id
+    })
 
 @app.route('/game/<int:game_id>')
 def play_game(game_id):
-    """Show the game interface."""
+    """Show the active game interface."""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
     game = active_games[game_id]
-    user_id = session['user_id']
+    user_id = session.get('user_id', 1)
 
     if user_id not in game.players:
-        board = game.add_player(user_id)
-        if not board:
-            return redirect(url_for('index'))
+        return redirect(url_for('index'))
 
     player = game.players[user_id]
 
@@ -220,15 +295,15 @@ def play_game(game_id):
         current_number = game.format_number(game.called_numbers[-1])
 
     return render_template('game.html',
-                         game_id=game_id,
-                         game=game,
-                         board=player['board'],
-                         marked=player['marked'],
-                         called_numbers=game.called_numbers,
-                         current_number=current_number,
-                         active_players=len(game.players),
-                         game_status=game.status,
-                         entry_price=game.entry_price)
+                           game_id=game_id,
+                           game=game,
+                           board=player['board'],
+                           marked=player['marked'],
+                           called_numbers=game.called_numbers,
+                           current_number=current_number,
+                           active_players=len(game.players),
+                           game_status=game.status,
+                           entry_price=game.entry_price)
 
 @app.route('/game/<int:game_id>/call', methods=['POST'])
 def call_number(game_id):
@@ -255,7 +330,7 @@ def mark_number(game_id):
         return jsonify({'error': 'Game not found'}), 404
 
     game = active_games[game_id]
-    user_id = session['user_id']
+    user_id = session.get('user_id', 1)
 
     if user_id not in game.players:
         return jsonify({'error': 'Player not in game'}), 400
@@ -321,7 +396,6 @@ def admin_dashboard():
     game_list = list(active_games.values())
     active_count = len([g for g in game_list if hasattr(g, 'status') and g.status == "active"])
     
-    # Fetch registered users from the database
     users_list = User.query.all()
     
     return render_template(
