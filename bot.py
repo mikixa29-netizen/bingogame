@@ -37,7 +37,8 @@ if not TOKEN:
 ADMIN_IDS = [int(id.strip()) for id in os.getenv("ADMIN_IDS", "").split(",") if id.strip()]
 DEFAULT_WELCOME_IMAGE = os.getenv("WELCOME_IMAGE_URL", "https://i.imgur.com/your_default_image.jpg") 
 
-WEBAPP_URL = f"https://{os.getenv('REPLIT_SLUG')}.replit.app" if os.getenv('REPLIT_SLUG') else "http://0.0.0.0:5000"
+# Render ላይ አፕሊኬሽኑ ሲሰራ ትክክለኛውን የ Render URL (Render External URL) እንዲጠቀም ተደርጓል
+WEBAPP_URL = os.getenv('RENDER_EXTERNAL_URL') or "http://0.0.0.0:5000"
 router = Router()
 
 app = Flask(__name__)
@@ -363,9 +364,6 @@ async def process_deposit_amount(message: Message, state: FSMContext):
         await message.answer("Sorry, an error occurred. Please try again.")
 
 async def simulate_merchant_api_verification(method: str, amount: float, reference: str, user_phone: str) -> bool:
-    """
-    Simulates checking the transaction against Telebirr / CBE Birr Merchant API.
-    """
     await asyncio.sleep(1)
     if reference and len(reference.strip()) >= 5:
         return True
@@ -797,9 +795,25 @@ async def setup_bot():
     dp.include_router(router)
     return bot, dp
 
-async def main():
-    bot, dp = await setup_bot()
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+# ቴሌግራም ቦቱን (Polling) እና የ Flask ሰርቨርን በአንድ ላይ (Background Task) የማስጀመር ሎጂክ
+async def run_bot():
+    try:
+        bot, dp = await setup_bot()
+        logger.info("Starting Telegram Bot Polling...")
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    except Exception as e:
+        logger.error(f"Error in bot polling: {e}")
+
+def run_flask():
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # ቦቱ እና ፍላስክ አብረው በአንድ ላይ እንዲሰሩ (Background thread for bot, main thread for flask)
+    import threading
+    
+    bot_thread = threading.Thread(target=lambda: asyncio.run(run_bot()))
+    bot_thread.daemon = True
+    bot_thread.start()
+    
+    run_flask()
