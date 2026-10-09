@@ -37,7 +37,6 @@ if not TOKEN:
 ADMIN_IDS = [int(id.strip()) for id in os.getenv("ADMIN_IDS", "").split(",") if id.strip()]
 DEFAULT_WELCOME_IMAGE = os.getenv("WELCOME_IMAGE_URL", "https://i.imgur.com/your_default_image.jpg") 
 
-# Render ላይ አፕሊኬሽኑ ሲሰራ ትክክለኛውን የ Render URL (Render External URL) እንዲጠቀም ተደርጓል
 WEBAPP_URL = os.getenv('RENDER_EXTERNAL_URL') or "http://0.0.0.0:5000"
 router = Router()
 
@@ -126,11 +125,19 @@ async def cmd_start(message: Message):
                 db.session.commit()
                 logger.info(f"New user registered: {user_id} ({username})")
 
-        await message.answer_photo(
-            photo=get_welcome_photo(),
-            caption="Welcome to Edil Bingo! Choose an option below.",
-            reply_markup=get_main_menu()
-        )
+        # ፎቶ ማውረድ ሳይሳካ ሲቀር ቦቱ እንዳይወድቅ ב-try-except ተጠብቋል
+        try:
+            await message.answer_photo(
+                photo=get_welcome_photo(),
+                caption="Welcome to Edil Bingo! Choose an option below.",
+                reply_markup=get_main_menu()
+            )
+        except Exception as photo_err:
+            logger.warning(f"Could not send welcome photo, sending text instead: {photo_err}")
+            await message.answer(
+                "Welcome to Edil Bingo! Choose an option below.",
+                reply_markup=get_main_menu()
+            )
     except Exception as e:
         logger.error(f"Error in start command: {e}")
         await message.answer("Sorry, there was an error. Please try again later.")
@@ -194,11 +201,17 @@ async def process_phone_number(message: Message):
                 reply_markup=ReplyKeyboardRemove()
             )
             
-            await message.answer_photo(
-                photo=get_welcome_photo(),
-                caption="Welcome to Edil Bingo! Choose an option below.",
-                reply_markup=get_main_menu()
-            )
+            try:
+                await message.answer_photo(
+                    photo=get_welcome_photo(),
+                    caption="Welcome to Edil Bingo! Choose an option below.",
+                    reply_markup=get_main_menu()
+                )
+            except Exception:
+                await message.answer(
+                    "Welcome to Edil Bingo! Choose an option below.",
+                    reply_markup=get_main_menu()
+                )
     except Exception as e:
         logger.error(f"Error processing phone number: {e}")
 
@@ -256,17 +269,29 @@ async def process_play_bingo_command_or_callback(event):
     ])
     
     if isinstance(event, CallbackQuery):
-        await message.edit_caption(
-            caption="🍀 Best of luck on your Bingo game adventure! 🎮",
-            reply_markup=keyboard
-        )
+        try:
+            await message.edit_caption(
+                caption="🍀 Best of luck on your Bingo game adventure! 🎮",
+                reply_markup=keyboard
+            )
+        except Exception:
+            await message.answer(
+                "🍀 Best of luck on your Bingo game adventure! 🎮",
+                reply_markup=keyboard
+            )
         await event.answer()
     else:
-        await message.answer_photo(
-            photo=get_welcome_photo(),
-            caption="🍀 Best of luck on your Bingo game adventure! 🎮",
-            reply_markup=keyboard
-        )
+        try:
+            await message.answer_photo(
+                photo=get_welcome_photo(),
+                caption="🍀 Best of luck on your Bingo game adventure! 🎮",
+                reply_markup=keyboard
+            )
+        except Exception:
+            await message.answer(
+                "🍀 Best of luck on your Bingo game adventure! 🎮",
+                reply_markup=keyboard
+            )
 
 @router.callback_query(F.data == "play_demo")
 async def process_play_demo(callback_query: CallbackQuery):
@@ -304,10 +329,16 @@ async def process_deposit_command_or_callback(event, state: FSMContext = None):
 
     caption = "💳 <b>Deposit Funds</b>\n\nChoose your preferred payment method:"
     if isinstance(event, CallbackQuery):
-        await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        try:
+            await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        except Exception:
+            await message.answer(caption, reply_markup=keyboard, parse_mode="HTML")
         await event.answer()
     else:
-        await message.answer_photo(photo=get_welcome_photo(), caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        try:
+            await message.answer_photo(photo=get_welcome_photo(), caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        except Exception:
+            await message.answer(caption, reply_markup=keyboard, parse_mode="HTML")
     
     if state:
         await state.set_state(UserState.waiting_for_deposit_method)
@@ -322,14 +353,17 @@ async def process_deposit_method_selection(callback_query: CallbackQuery, state:
         [InlineKeyboardButton(text="🔙 Back", callback_data="menu_deposit")]
     ])
     
-    await callback_query.message.edit_caption(
-        caption=f"Selected Method: <b>{method}</b>\n\n"
-                "💰 Enter the amount you want to deposit (in birr):\n"
-                "• Minimum: <b>50 birr</b>\n"
-                "• Maximum: <b>1000 birr</b>",
-        reply_markup=keyboard,
-        parse_mode="HTML"
-    )
+    try:
+        await callback_query.message.edit_caption(
+            caption=f"Selected Method: <b>{method}</b>\n\n"
+                    "💰 Enter the amount you want to deposit (in birr):\n"
+                    "• Minimum: <b>50 birr</b>\n"
+                    "• Maximum: <b>1000 birr</b>",
+            reply_markup=keyboard,
+            parse_mode="HTML"
+        )
+    except Exception:
+        pass
     await callback_query.answer()
 
 @router.message(UserState.waiting_for_deposit_amount)
@@ -422,11 +456,17 @@ async def process_deposit_reference(message: Message, state: FSMContext):
                 parse_mode="HTML"
             )
     
-    await message.answer_photo(
-        photo=get_welcome_photo(),
-        caption="Welcome to Edil Bingo! Choose an option below.",
-        reply_markup=get_main_menu()
-    )
+    try:
+        await message.answer_photo(
+            photo=get_welcome_photo(),
+            caption="Welcome to Edil Bingo! Choose an option below.",
+            reply_markup=get_main_menu()
+        )
+    except Exception:
+        await message.answer(
+            "Welcome to Edil Bingo! Choose an option below.",
+            reply_markup=get_main_menu()
+        )
 
 
 # ==========================================
@@ -469,10 +509,16 @@ async def process_withdraw_command_or_callback(event, state: FSMContext = None):
 
     caption = "💳 <b>Withdraw Funds</b>\n\nSelect your payout payment method:"
     if isinstance(event, CallbackQuery):
-        await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        try:
+            await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        except Exception:
+            await message.answer(caption, reply_markup=keyboard, parse_mode="HTML")
         await event.answer()
     else:
-        await message.answer_photo(photo=get_welcome_photo(), caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        try:
+            await message.answer_photo(photo=get_welcome_photo(), caption=caption, reply_markup=keyboard, parse_mode="HTML")
+        except Exception:
+            await message.answer(caption, reply_markup=keyboard, parse_mode="HTML")
     
     if state:
         await state.set_state(UserState.waiting_for_withdraw_method)
@@ -491,13 +537,16 @@ async def process_withdraw_method_selection(callback_query: CallbackQuery, state
         user = User.query.filter_by(telegram_id=callback_query.from_user.id).first()
         max_bal = user.balance
 
-    await callback_query.message.edit_caption(
-        caption=f"Selected Payout Method: <b>{method}</b>\n\n"
-                f"💰 Your Current Balance: <b>{max_bal:.2f} birr</b>\n"
-                "Enter the amount you want to withdraw:",
-        reply_markup=keyboard,
-        parse_mode="HTML"
-    )
+    try:
+        await callback_query.message.edit_caption(
+            caption=f"Selected Payout Method: <b>{method}</b>\n\n"
+                    f"💰 Your Current Balance: <b>{max_bal:.2f} birr</b>\n"
+                    "Enter the amount you want to withdraw:",
+            reply_markup=keyboard,
+            parse_mode="HTML"
+        )
+    except Exception:
+        pass
     await callback_query.answer()
 
 @router.message(UserState.waiting_for_withdraw_amount)
@@ -577,11 +626,17 @@ async def process_withdraw_phone(message: Message, state: FSMContext):
         except Exception as e:
             logger.error(f"Failed to notify admin {admin_id} for withdrawal: {e}")
     
-    await message.answer_photo(
-        photo=get_welcome_photo(),
-        caption="Welcome to Edil Bingo! Choose an option below.",
-        reply_markup=get_main_menu()
-    )
+    try:
+        await message.answer_photo(
+            photo=get_welcome_photo(),
+            caption="Welcome to Edil Bingo! Choose an option below.",
+            reply_markup=get_main_menu()
+        )
+    except Exception:
+        await message.answer(
+            "Welcome to Edil Bingo! Choose an option below.",
+            reply_markup=get_main_menu()
+        )
 
 
 # ==========================================
@@ -690,13 +745,22 @@ async def process_price_selection(callback_query: CallbackQuery):
                             InlineKeyboardButton(text="Select Your Cartela", web_app=WebAppInfo(url=webapp_target_url))
                         ], [InlineKeyboardButton(text="🔙 Back to Main Menu", callback_data="menu_main")]])
                         
-                        await callback_query.message.edit_caption(
-                            caption=f"Game created! Entry price: {price} Birr\n"
-                                    f"👤 Player: {user.username or 'Player'}\n"
-                                    f"💰 Active Wallet Balance: {user.balance:.2f} Birr\n\n"
-                                    f"Please select your cartela number:",
-                            reply_markup=keyboard
-                        )
+                        try:
+                            await callback_query.message.edit_caption(
+                                caption=f"Game created! Entry price: {price} Birr\n"
+                                        f"👤 Player: {user.username or 'Player'}\n"
+                                        f"💰 Active Wallet Balance: {user.balance:.2f} Birr\n\n"
+                                        f"Please select your cartela number:",
+                                reply_markup=keyboard
+                            )
+                        except Exception:
+                            await callback_query.message.answer(
+                                text=f"Game created! Entry price: {price} Birr\n"
+                                     f"👤 Player: {user.username or 'Player'}\n"
+                                     f"💰 Active Wallet Balance: {user.balance:.2f} Birr\n\n"
+                                     f"Please select your cartela number:",
+                                reply_markup=keyboard
+                            )
                     else:
                         await callback_query.answer("Failed to create game. Please try again.", show_alert=True)
     except Exception as e:
@@ -706,11 +770,17 @@ async def process_price_selection(callback_query: CallbackQuery):
 async def process_back_to_main(callback_query: CallbackQuery):
     try:
         await callback_query.message.delete()
-        await callback_query.message.answer_photo(
-            photo=get_welcome_photo(),
-            caption="Welcome to Edil Bingo! Choose an option below.",
-            reply_markup=get_main_menu()
-        )
+        try:
+            await callback_query.message.answer_photo(
+                photo=get_welcome_photo(),
+                caption="Welcome to Edil Bingo! Choose an option below.",
+                reply_markup=get_main_menu()
+            )
+        except Exception:
+            await callback_query.message.answer(
+                "Welcome to Edil Bingo! Choose an option below.",
+                reply_markup=get_main_menu()
+            )
     except Exception as e:
         logger.error(f"Error going back to main menu: {e}")
     await callback_query.answer()
@@ -747,11 +817,17 @@ async def process_new_welcome_image(message: Message, state: FSMContext):
     config['welcome_image_file_id'] = file_id
     save_config(config)
     await state.clear()
-    await message.answer_photo(
-        photo=file_id,
-        caption="✅ <b>Success!</b> The main menu image has been updated. Users will now see this picture.",
-        parse_mode="HTML"
-    )
+    try:
+        await message.answer_photo(
+            photo=file_id,
+            caption="✅ <b>Success!</b> The main menu image has been updated. Users will now see this picture.",
+            parse_mode="HTML"
+        )
+    except Exception:
+        await message.answer(
+            "✅ <b>Success!</b> The main menu image has been updated.",
+            parse_mode="HTML"
+        )
 
 @router.message(AdminState.waiting_for_welcome_image)
 async def process_new_welcome_image_invalid(message: Message, state: FSMContext):
@@ -795,7 +871,6 @@ async def setup_bot():
     dp.include_router(router)
     return bot, dp
 
-# ቴሌግራም ቦቱን (Polling) እና የ Flask ሰርቨርን በአንድ ላይ (Background Task) የማስጀመር ሎጂክ
 async def run_bot():
     try:
         bot, dp = await setup_bot()
@@ -809,7 +884,6 @@ def run_flask():
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
 if __name__ == "__main__":
-    # ቦቱ እና ፍላስክ አብረው በአንድ ላይ እንዲሰሩ (Background thread for bot, main thread for flask)
     import threading
     
     bot_thread = threading.Thread(target=lambda: asyncio.run(run_bot()))
