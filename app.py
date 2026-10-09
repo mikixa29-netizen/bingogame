@@ -28,8 +28,17 @@ init_db(app)
 # Import models after db initialization
 from models import User, Game, GameParticipant, Transaction
 
-# Game storage (temporary, will be moved to database)
+# Global active games rooms storage
 active_games = {}
+
+# Initial default rooms መፍጠር (ሲስተሙ ሲነሳ ጨዋታዎች እንዲኖሩ)
+def init_default_games():
+    if not active_games:
+        # ለምሳሌ በ 10 ብር እና 20 ብር ስቴክ የሚጀምሩ ሩሞች አስቀድመን እንፈጥራለን
+        active_games[1] = BingoGame(1, entry_price=10)
+        active_games[2] = BingoGame(2, entry_price=20)
+
+init_default_games()
 
 # ==========================================
 # USER ROUTES (Player-facing views)
@@ -37,16 +46,16 @@ active_games = {}
 
 @app.route('/')
 def index():
-    """Show available games or create a new one."""
+    """Lobby ገጽ፡ ያሉትን ጨዋታዎች እና የዩዘርን ባሌንስ ማሳየት"""
     if 'user_id' not in session:
-        session['user_id'] = random.randint(100000, 999999)  # Temporary user ID generation
+        session['user_id'] = random.randint(100000, 999999)
     
-    # ተጠቃሚውን ከዳታቤዝ መፈለግ (telegram_id ኑል እንዳይሆን ተደርጎ ተስተካክሏል)
     user = User.query.get(session['user_id'])
     if not user:
+        rand_telegram_id = int(session['user_id'])
         user = User(
             id=session['user_id'],
-            telegram_id=str(session['user_id']),  # telegram_id NOT NULL constraint እንዳይሰብር ተደርጓል
+            telegram_id=rand_telegram_id,
             username=f"Player_{session['user_id']}",
             balance=50.0
         )
@@ -57,163 +66,50 @@ def index():
 
 @app.route('/game/list', methods=['GET'])
 def list_games():
-    """Return active games as JSON for lobby refresh"""
+    """Available games (waiting rooms) ዝርዝር በ JSON መልክ መመለስ"""
     games_data = []
     for g_id, game in active_games.items():
         if game.status == "waiting":
             games_data.append({
                 'id': g_id,
                 'players': len(game.players),
-                'entry_price': game.entry_price
+                'entry_price': game.entry_price,
+                'status': game.status
             })
     return jsonify(games_data)
 
-@app.route('/webhook/deposit', methods=['POST'])
-def deposit_webhook():
-    """Handle deposit webhook from Tasker"""
-    try:
-        data = request.get_json()
-        logger.info(f"Received deposit webhook: {data}")
-
-        if not data or 'amount' not in data or 'phone' not in data:
-            error_msg = 'Invalid webhook data - must include amount and phone'
-            logger.error(error_msg)
-            return jsonify({'error': error_msg}), 400
-
-        try:
-            amount = float(data['amount'])
-            if amount <= 0:
-                return jsonify({'error': 'Amount must be positive'}), 400
-        except (ValueError, TypeError):
-            return jsonify({'error': 'Invalid amount format'}), 400
-
-        from bot import process_deposit_confirmation
-        asyncio.run(process_deposit_confirmation(data))
-
-        return jsonify({'status': 'success', 'message': 'Deposit processed successfully'})
-
-    except Exception as e:
-        error_msg = str(e)
-        logger.exception(f"Error processing webhook: {error_msg}")
-        return jsonify({'error': error_msg}), 500
-
-@app.route('/webhook/test', methods=['POST'])
-def test_webhook():
-    """Test endpoint for webhook validation"""
-    try:
-        data = request.get_json()
-        logger.info(f"Test webhook received: {data}")
-        logger.debug(f"Request headers: {dict(request.headers)}")
-
-        validation = {
-            "format_check": [],
-            "data_validation": [],
-            "received_data": data,
-            "headers": dict(request.headers)
-        }
-
-        if not data:
-            validation["format_check"].append("❌ No JSON data received")
-            return jsonify(validation), 400
-
-        if request.headers.get('X-GitHub-Event') == 'ping':
-            return jsonify({
-                "message": "Webhook configured successfully!",
-                "zen": data.get('zen', 'No zen provided')
-            })
-
-        amount = None
-        phone = None
-
-        if 'amount' in data and 'phone' in data:
-            amount = data.get('amount')
-            phone = data.get('phone')
-        elif 'issue' in data:
-            title = data['issue']['title']
-            if 'Deposit:' in title:
-                try:
-                    parts = title.split('Deposit:')[1].strip().split('-')
-                    amount = float(parts[0].strip())
-                    phone = parts[1].strip()
-                except (IndexError, ValueError):
-                    pass
-
-        for field in [('amount', amount), ('phone', phone)]:
-            if not field[1]:
-                validation["format_check"].append(f"❌ Missing required field: {field[0]}")
-            else:
-                validation["format_check"].append(f"✅ Found required field: {field[0]}")
-
-        try:
-            amount = float(amount) if amount else 0
-            if amount <= 0:
-                validation["data_validation"].append("❌ Amount must be positive")
-            else:
-                validation["data_validation"].append(f"✅ Valid amount: {amount}")
-        except (ValueError, TypeError):
-            validation["data_validation"].append("❌ Invalid amount format")
-
-        if phone:
-            phone = str(phone)
-            if not phone.isdigit() or len(phone) < 10:
-                validation["data_validation"].append("❌ Invalid phone number format")
-            else:
-                validation["data_validation"].append(f"✅ Valid phone format: {phone}")
-
-        validation["status"] = "valid" if all(
-            "❌" not in checks 
-            for checks in validation["format_check"] + validation["data_validation"]
-        ) else "invalid"
-
-        logger.info(f"Webhook validation result: {validation}")
-        return jsonify(validation)
-
-    except Exception as e:
-        logger.error(f"Error in webhook test: {str(e)}")
-        return jsonify({
-            "status": "error",
-            "error": str(e),
-            "help": "Make sure to send a POST request with Content-Type: application/json"
-        }), 500
-
-@app.route('/game/create', methods=['GET', 'POST'])
+@app.route('/game/create', methods=['POST'])
 def create_game():
-    """Create a new game room and check user balance before proceeding."""
+    """አዲስ ሩም (Game Room) በባለቤቱ/አድሚኑ ወይም በሲስተሙ ጥያቄ መፍጠር"""
     try:
-        if request.method == 'POST':
-            entry_price = int(request.json.get('entry_price', 10))
-            user_id = session.get('user_id', 1)
+        entry_price = int(request.json.get('entry_price', 10))
+        user_id = session.get('user_id', 1)
 
-            # 1. የተጠቃሚውን ቀሪ ሂሳብ (Balance) ከዳታቤዝ ማረጋገጥ
-            user = User.query.get(user_id)
-            user_balance = user.balance if user else 0.0
+        user = User.query.get(user_id)
+        user_balance = user.balance if user else 0.0
 
-            if user_balance < entry_price:
-                return jsonify({
-                    'error': 'Insufficient balance! Please top up your wallet first.',
-                    'low_balance': True
-                }), 400
-
-            if entry_price not in [10, 20, 50, 100]:
-                return jsonify({'error': 'Invalid entry price'}), 400
-
-            # 2. አዲስ ጨዋታ በሲስተም መፍጠር
-            game_id = len(active_games) + 1
-            active_games[game_id] = BingoGame(game_id, entry_price)
-
+        if user_balance < entry_price:
             return jsonify({
-                'game_id': game_id,
-                'entry_price': entry_price
-            })
-        else:
-            return jsonify({'error': 'Invalid request method'}), 405
+                'error': 'Insufficient balance! Please top up your wallet first.',
+                'low_balance': True
+            }), 400
+
+        # አዲስ ሩም መፍጠር
+        new_game_id = max(active_games.keys(), default=0) + 1
+        active_games[new_game_id] = BingoGame(new_game_id, entry_price)
+
+        return jsonify({
+            'success': True,
+            'game_id': new_game_id,
+            'entry_price': entry_price
+        })
     except Exception as e:
         logger.exception(f"Error creating game: {str(e)}")
         return jsonify({'error': 'Failed to create game'}), 500
 
 @app.route('/game/<int:game_id>/select_cartela')
 def select_cartela(game_id):
-    """Show cartela selection interface with wallet & stake info"""
+    """ዩዘሩ የተመረጠውን ሩም አግኝቶ ከ 1-100 ካርቴላ የሚመርጥበት ገጽ"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
@@ -222,6 +118,7 @@ def select_cartela(game_id):
     user = User.query.get(user_id)
     balance = user.balance if user else 50.0
 
+    # უკვე የተያዙ ካርቴላዎች ዝርዝር
     used_cartelas = set()
     for player in game.players.values():
         used_cartelas.add(player.get('cartela_number', 0))
@@ -236,7 +133,7 @@ def select_cartela(game_id):
 
 @app.route('/game/<int:game_id>/join', methods=['POST'])
 def join_game(game_id):
-    """Join existing game room using selected cartela number and deduct balance"""
+    """ዩዘሩ ካርቴላ መርጦ ጨዋታውን የሚቀላቀልበት እና ገንዘብ የሚቀነስበት ሎጂክ"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -244,6 +141,9 @@ def join_game(game_id):
     user_id = session.get('user_id', 1)
     data = request.json or {}
     cartela_number = data.get('cartela_number')
+
+    if not cartela_number:
+        return jsonify({'error': 'Please select a cartela number'}), 400
 
     user = User.query.get(user_id)
     user_balance = user.balance if user else 50.0
@@ -255,13 +155,13 @@ def join_game(game_id):
             'low_balance': True
         }), 400
 
-    # 2. ሂሳብ መቀነስ (Stake deduction)
+    # 2. የጨዋታውን ዋጋ ከዩዘሩ አካውንት መቀነስ
     if user:
         user.balance -= game.entry_price
         db.session.commit()
 
     # 3. ተጫዋቹን ጨዋታው ውስጥ መመዝገብ
-    board = game.add_player(user_id, cartela_number=cartela_number)
+    board = game.add_player(user_id, cartela_number=int(cartela_number))
     if not board:
         # ካርቴላው ከተያዘ ገንዘቡን መልሶ መክፈል
         if user:
@@ -278,7 +178,7 @@ def join_game(game_id):
 
 @app.route('/game/<int:game_id>')
 def play_game(game_id):
-    """Show the active game interface."""
+    """የላይቭ ጨዋታ ማሳያ ገጽ"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
@@ -312,7 +212,7 @@ def play_game(game_id):
 
 @app.route('/game/<int:game_id>/call', methods=['POST'])
 def call_number(game_id):
-    """Call the next number."""
+    """ቁጥር መጥሪያ ራውት"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -330,7 +230,7 @@ def call_number(game_id):
 
 @app.route('/game/<int:game_id>/mark', methods=['POST'])
 def mark_number(game_id):
-    """Mark a number on the player's board."""
+    """ቢንጎ ማረጋገጫ ራውት"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -370,7 +270,7 @@ def mark_number(game_id):
 
 
 # ==========================================
-# ADMIN ROUTES (Dashboard & User Management)
+# ADMIN ROUTES
 # ==========================================
 
 def admin_required(f):
@@ -400,7 +300,6 @@ def admin_login():
 def admin_dashboard():
     game_list = list(active_games.values())
     active_count = len([g for g in game_list if hasattr(g, 'status') and g.status == "active"])
-    
     users_list = User.query.all()
     
     return render_template(
