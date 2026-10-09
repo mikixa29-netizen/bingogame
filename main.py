@@ -1,7 +1,7 @@
 import os
 import asyncio
 from app import app
-from bot import main as bot_main
+from bot import run_bot as bot_main  # እዚህ ጋር from bot import run_bot ተብሎ ተስተካክሏል
 from multiprocessing import Process
 import signal
 import sys
