@@ -34,7 +34,6 @@ active_games = {}
 # Initial default rooms መፍጠር (ሲስተሙ ሲነሳ ጨዋታዎች እንዲኖሩ)
 def init_default_games():
     if not active_games:
-        # ለምሳሌ በ 10 ብር እና 20 ብር ስቴክ የሚጀምሩ ሩሞች አስቀድመን እንፈጥራለን
         active_games[1] = BingoGame(1, entry_price=10)
         active_games[2] = BingoGame(2, entry_price=20)
 
@@ -47,16 +46,18 @@ init_default_games()
 @app.route('/')
 def index():
     """Lobby ገጽ፡ ያሉትን ጨዋታዎች እና የዩዘርን ባሌንስ ማሳየት"""
-    if 'user_id' not in session:
+    # session['user_id'] ኑል (None) እንዳይሆን ጥንቃቄ ተደርጓል
+    if not session.get('user_id'):
         session['user_id'] = random.randint(100000, 999999)
     
-    user = User.query.get(session['user_id'])
+    user_id = int(session['user_id'])
+    
+    user = User.query.get(user_id)
     if not user:
-        rand_telegram_id = int(session['user_id'])
         user = User(
-            id=session['user_id'],
-            telegram_id=rand_telegram_id,
-            username=f"Player_{session['user_id']}",
+            id=user_id,
+            telegram_id=user_id,
+            username=f"Player_{user_id}",
             balance=50.0
         )
         db.session.add(user)
@@ -83,7 +84,9 @@ def create_game():
     """አዲስ ሩም (Game Room) በባለቤቱ/አድሚኑ ወይም በሲስተሙ ጥያቄ መፍጠር"""
     try:
         entry_price = int(request.json.get('entry_price', 10))
-        user_id = session.get('user_id', 1)
+        if not session.get('user_id'):
+            session['user_id'] = random.randint(100000, 999999)
+        user_id = int(session['user_id'])
 
         user = User.query.get(user_id)
         user_balance = user.balance if user else 0.0
@@ -114,7 +117,10 @@ def select_cartela(game_id):
         return redirect(url_for('index'))
 
     game = active_games[game_id]
-    user_id = session.get('user_id', 1)
+    if not session.get('user_id'):
+        session['user_id'] = random.randint(100000, 999999)
+    user_id = int(session['user_id'])
+    
     user = User.query.get(user_id)
     balance = user.balance if user else 50.0
 
@@ -138,7 +144,10 @@ def join_game(game_id):
         return jsonify({'error': 'Game not found'}), 404
 
     game = active_games[game_id]
-    user_id = session.get('user_id', 1)
+    if not session.get('user_id'):
+        session['user_id'] = random.randint(100000, 999999)
+    user_id = int(session['user_id'])
+    
     data = request.json or {}
     cartela_number = data.get('cartela_number')
 
@@ -183,7 +192,9 @@ def play_game(game_id):
         return redirect(url_for('index'))
 
     game = active_games[game_id]
-    user_id = session.get('user_id', 1)
+    if not session.get('user_id'):
+        session['user_id'] = random.randint(100000, 999999)
+    user_id = int(session['user_id'])
 
     if user_id not in game.players:
         return redirect(url_for('index'))
@@ -235,7 +246,9 @@ def mark_number(game_id):
         return jsonify({'error': 'Game not found'}), 404
 
     game = active_games[game_id]
-    user_id = session.get('user_id', 1)
+    if not session.get('user_id'):
+        session['user_id'] = random.randint(100000, 999999)
+    user_id = int(session['user_id'])
 
     if user_id not in game.players:
         return jsonify({'error': 'Player not in game'}), 400
