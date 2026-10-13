@@ -91,7 +91,7 @@
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            max-height: 260px;
+            max-height: 240px;
             overflow-y: auto;
         }
         .cartela-number {
@@ -112,7 +112,7 @@
             transform: scale(0.92);
         }
         
-        /* 1. ተጠቃሚው የመረጠው በደማቅ አረንጓዴ (Green) */
+        /* User selection: Bold Green */
         .cartela-number.selected {
             background: #27ae60 !important;
             color: #fff !important;
@@ -120,7 +120,7 @@
             box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4);
         }
 
-        /* 2. ሌሎች ተጫዋቾች የያዟቸው በደማቅ ብርቱካናማ (Bold Orange) */
+        /* Occupied/Taken by other players: Bold Orange */
         .cartela-number.other-selected,
         .cartela-number.unavailable {
             background: #ff6600 !important;
@@ -130,19 +130,66 @@
             opacity: 0.9;
         }
 
+        /* Preview Area for Selected Cartelas */
+        .previews-wrapper {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
         .preview-box {
             background: #ffffff;
             color: #222;
             padding: 10px;
             border-radius: 12px;
-            width: 100%;
-            max-width: 420px;
             text-align: center;
-            margin-bottom: 12px;
             font-weight: 800;
             font-size: 13px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.12);
         }
+        .mini-cartelas-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .mini-card-preview {
+            background: #f3eafa;
+            border-radius: 8px;
+            padding: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            text-align: center;
+            width: 90px;
+        }
+        .mini-card-title {
+            font-size: 9px;
+            font-weight: 900;
+            color: #4a154b;
+            margin-bottom: 4px;
+        }
+        .mini-card-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+        }
+        .mini-cell {
+            background: #fff;
+            color: #333;
+            font-size: 8px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            font-weight: 800;
+        }
+        .mini-cell.star {
+            background: #27ae60;
+            color: #fff;
+        }
+
         .action-buttons {
             display: flex;
             gap: 10px;
@@ -236,14 +283,18 @@
             {% for i in range(1, 201) %}
                 <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
                      id="cartela-{{ i }}"
-                     onclick="toggleCartela('{{ i }}')">
+                     data-cartela-number="{{ i }}">
                     {{ i }}
                 </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="preview-box" id="previewLbl">Selected Cartelas: None</div>
+    <!-- Previews Container -->
+    <div class="previews-wrapper">
+        <div class="preview-box" id="previewLbl">Selected Cartelas: None</div>
+        <div class="mini-cartelas-row" id="miniCartelasRow"></div>
+    </div>
 
     <div class="action-buttons">
         <button class="btn-refresh" onclick="location.reload()">Refresh</button>
@@ -259,14 +310,14 @@
         </div>
     </div>
 
-    <div id="game-data" data-game-id="{{ game_id }}" style="display:none;"></div>
+    <div id="game-data" data-game-id='{{ game_id | tojson | safe }}' style="display:none;"></div>
 
     <script>
         let selectedCartelas = [];
         let maxCards = 4;
         let entryPrice = parseFloat(document.getElementById('entry-price').innerText) || 10;
         let userWallet = parseFloat(document.getElementById('wallet-val').innerText) || 0;
-        let gameId = document.getElementById('game-data').dataset.gameId;
+        let gameId = JSON.parse(document.getElementById('game-data').dataset.gameId);
 
         setInterval(checkGameStatus, 2000);
 
@@ -295,6 +346,36 @@
             }).catch(err => console.log(err));
         }
 
+        // 5x5 Bingo Cartela Generator logic (matching server-side math)
+        function generateCartelaNumbers(id) {
+            let numbers = [];
+            let bCol = getUniqueRandoms(1, 15, 5, id);
+            let iCol = getUniqueRandoms(16, 30, 5, id + 10);
+            let nCol = getUniqueRandoms(31, 45, 4, id + 20);
+            nCol.splice(2, 0, '*');
+            let gCol = getUniqueRandoms(46, 60, 5, id + 30);
+            let oCol = getUniqueRandoms(61, 75, 5, id + 40);
+
+            for (let r = 0; r < 5; r++) {
+                numbers.push(bCol[r]);
+                numbers.push(iCol[r]);
+                numbers.push(nCol[r]);
+                numbers.push(gCol[r]);
+                numbers.push(oCol[r]);
+            }
+            return numbers;
+        }
+
+        function getUniqueRandoms(min, max, count, seed) {
+            let arr = [];
+            for (let i = min; i <= max; i++) arr.push(i);
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor((Math.sin(seed + i) + 1) * 0.5 * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr.slice(0, count);
+        }
+
         function toggleCartela(number) {
             let target = document.getElementById('cartela-' + number);
             if (target.classList.contains('unavailable') || target.classList.contains('other-selected')) {
@@ -317,10 +398,40 @@
             }
 
             document.getElementById('selected-count').innerText = selectedCartelas.length + '/' + maxCards;
+            
+            let previewLbl = document.getElementById('previewLbl');
+            let rowContainer = document.getElementById('miniCartelasRow');
+            rowContainer.innerHTML = '';
+
             if (selectedCartelas.length > 0) {
-                document.getElementById('previewLbl').innerText = "Selected Cartelas: #" + selectedCartelas.join(', #');
+                previewLbl.innerText = "Selected Cartelas: #" + selectedCartelas.join(', #');
+                
+                // Render visual mini-grids for each selected card
+                selectedCartelas.forEach(cardId => {
+                    let cardBox = document.createElement('div');
+                    cardBox.className = 'mini-card-preview';
+                    
+                    let title = document.createElement('div');
+                    title.className = 'mini-card-title';
+                    title.innerText = `#${cardId}`;
+                    cardBox.appendChild(title);
+
+                    let gridDiv = document.createElement('div');
+                    gridDiv.className = 'mini-card-grid';
+
+                    let numbers = generateCartelaNumbers(cardId);
+                    numbers.forEach((num, idx) => {
+                        let cell = document.createElement('div');
+                        cell.className = 'mini-cell' + (idx === 12 ? ' star' : '');
+                        cell.innerText = idx === 12 ? '★' : num;
+                        gridDiv.appendChild(cell);
+                    });
+
+                    cardBox.appendChild(gridDiv);
+                    rowContainer.appendChild(cardBox);
+                });
             } else {
-                document.getElementById('previewLbl').innerText = "Selected Cartelas: None";
+                previewLbl.innerText = "Selected Cartelas: None";
             }
         }
 
