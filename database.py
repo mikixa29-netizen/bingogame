@@ -11,7 +11,6 @@ db = SQLAlchemy(model_class=Base)
 def init_db(app):
     database_url = os.environ.get("DATABASE_URL")
     
-    # PostgreSQL URL ፎርማት ማስተካከያ (Render ላይ አስፈላጊ ከሆነ)
     if database_url and database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
 
@@ -27,25 +26,21 @@ def init_db(app):
         import models  # Import models here to avoid circular imports
         db.create_all()
         
-        # የጠየቋቸውን አዳዲስ አምዶች (Columns) ዳታቤዝ ላይ ከሌሉ በራሱ ጨምሮ ኤረር እንዳያመጣ መከላከል
-        with db.engine.connect() as conn:
-            # 1. is_blocked
-            try:
-                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN is_blocked BOOLEAN DEFAULT FALSE;"))
-                conn.commit()
-            except Exception:
-                pass
-
-            # 2. bonus_balance
-            try:
-                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN bonus_balance FLOAT DEFAULT 20.0;"))
-                conn.commit()
-            except Exception:
-                pass
-
-            # 3. coin
-            try:
-                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN coin INTEGER DEFAULT 0;"))
-                conn.commit()
-            except Exception:
-                pass
+        # PostgreSQL አውቶማቲክ አምዶችን ለመጨመር ደህንነቱ የተጠበቀ መንገድ
+        with db.engine.connect() as connection:
+            connection = connection.execution_options(isolation_level="AUTOCOMMIT")
+            
+            columns_to_add = [
+                ('is_blocked', 'BOOLEAN DEFAULT FALSE'),
+                ('bonus_balance', 'DOUBLE PRECISION DEFAULT 20.0'),
+                ('coin', 'INTEGER DEFAULT 0'),
+                ('games_played', 'INTEGER DEFAULT 0'),
+                ('games_won', 'INTEGER DEFAULT 0'),
+                ('referrer_id', 'BIGINT')
+            ]
+            
+            for col_name, col_type in columns_to_add:
+                try:
+                    connection.execute(text(f'ALTER TABLE "user" ADD COLUMN {col_name} {col_type};'))
+                except Exception:
+                    pass  # አምዱ ቀድሞውኑ ካለ ችግር ሳይፈጥር እንዲያልፍ
