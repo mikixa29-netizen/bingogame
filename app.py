@@ -80,7 +80,7 @@ def list_games():
 
 @app.route('/game/create', methods=['POST'])
 def create_game():
-    """Çêkirina jûreyeke nû ya lîstikê û kontrolkirina balansa bikarhêner"""
+    """ሁሉም ተጫዋቾች ወደ አንድ የጋራ waiting ሩም እንዲገቡ ማስተካከያ የተደረገበት ክፍል"""
     try:
         data = request.json or {}
         entry_price = int(data.get('entry_price', 10))
@@ -93,17 +93,14 @@ def create_game():
         if not user or user.is_blocked:
             return jsonify({'error': 'User not found or blocked.'}), 403
 
-        same_price_games = [
-            g for g in active_games.values() 
-            if g.entry_price == entry_price and g.status in ['waiting', 'countdown', 'active']
-        ]
-
-        if len(same_price_games) >= 3:
-            available_game = next((g for g in same_price_games if g.status in ['waiting', 'countdown']), None)
-            if available_game:
-                return jsonify({'success': True, 'game_id': available_game.game_id, 'entry_price': entry_price})
-            else:
-                return jsonify({'error': 'Maximum 3 active games running for this room. Please wait.'}), 400
+        # 1. አሁን 'waiting' ላይ ያለ ክፍት ሩም መፈለግ (ሁሉም ወደዚህኛው እንዲገቡ ይደረጋል)
+        waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status == 'waiting'), None)
+        if waiting_game:
+            return jsonify({
+                'success': True,
+                'game_id': waiting_game.game_id,
+                'entry_price': entry_price
+            })
 
         total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
 
@@ -113,6 +110,7 @@ def create_game():
                 'low_balance': True
             }), 400
 
+        # ምንም waiting ሩም ከሌለ ብቻ አዲስ ሩም ይፈጠራል
         new_game_id = max(active_games.keys(), default=0) + 1
         active_games[new_game_id] = BingoGame(new_game_id, entry_price, max_cards_per_player=4)
 
@@ -384,7 +382,6 @@ def leave_game(game_id):
             if user and user.telegram_id in game.players:
                 success, msg, balance_deducted = game.player_leave(user.telegram_id)
                 if balance_deducted:
-                    # Ji balansa sereke an bonusê heqê têketinê tê birîn
                     if user.balance >= game.entry_price:
                         user.balance -= game.entry_price
                     else:
@@ -508,9 +505,10 @@ def admin_toggle_block(user_id):
 @app.route('/admin/broadcast', methods=['POST'])
 @admin_required
 def admin_broadcast_news():
+    git_msg = 'Broadcast message sent successfully to users!'
     text = request.form.get('broadcast_text')
     if text:
-        flash('Broadcast message sent successfully to users!', 'success')
+        flash(git_msg, 'success')
     else:
         flash('Broadcast text cannot be empty.', 'error')
     return redirect(url_for('admin_dashboard'))
@@ -538,10 +536,10 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
-    
 @app.route('/ping')
 def ping():
     return "Bot and Web are alive!", 200
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
