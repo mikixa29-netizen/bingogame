@@ -453,7 +453,10 @@
             <div class="winner-name" id="wNameText">Winner Won!</div>
             <div class="winning-cartela-tag" id="wCartelaTag">Winning Cartela : --</div>
             <div class="winner-board-grid" id="wBoardGrid"></div>
-            <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;" id="wRestartText">Winner declared!</div>
+            <div style="margin-top: 12px; font-size: 12px; font-weight: bold; color: #38bdf8;" id="wPrizeText">Prize: -- Birr</div>
+            <div style="margin-top: 8px;">
+                <button onclick="window.location.href='/'" style="background: #209cee; color: white; border: none; padding: 8px 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">Back to Lobby</button>
+            </div>
         </div>
     </div>
 
@@ -461,18 +464,19 @@
          data-board='{{ (player_cards[0].board if player_cards else []) | tojson | safe }}'
          data-marked='{{ (player_cards[0].marked if player_cards else []) | tojson | safe }}'
          data-status='{{ game_status | default("waiting") }}'
+         data-game-id='{{ game_id | tojson | safe }}'
          style="display: none;"></div>
 
     <script>
-        const gameId = {{ game_id | tojson | safe }};
+        const serverData = document.getElementById('game-server-data');
+        const gameId = JSON.parse(serverData.dataset.gameId || 'null');
         let selectedCartelaId = 1;
 
-        const serverData = document.getElementById('game-server-data');
         let playerBoard = JSON.parse(serverData.dataset.board || '[]');
         let markedNumbers = JSON.parse(serverData.dataset.marked || '[]');
         let gameStatus = serverData.dataset.status;
 
-        if (playerBoard.length > 0 || gameStatus === 'active' || gameStatus === 'countdown') {
+        if (playerBoard.length > 0 || gameStatus === 'active' || gameStatus === 'countdown' || gameStatus === 'finished') {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
         }
@@ -596,7 +600,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.winner) {
-                    showWinnerModal(data.winners[0]);
+                    showWinnerModal(data);
                 } else {
                     alert(data.message || 'Not a winning bingo yet!');
                 }
@@ -613,18 +617,28 @@
             .catch(() => { window.location.href = '/'; });
         }
 
-        function showWinnerModal(winner) {
-            document.getElementById('wNameText').innerText = winner.username + " Won!";
-            document.getElementById('wCartelaTag').innerText = "Winning Cartela: #" + winner.cartela_number;
-            let wGrid = document.getElementById('wBoardGrid');
-            wGrid.innerHTML = '';
-            winner.board.forEach((num, idx) => {
-                let wCell = document.createElement('div');
-                let isMarked = winner.marked.includes(num) || idx === 12;
-                wCell.className = 'w-cell' + (isMarked ? ' marked' : '');
-                wCell.innerText = idx === 12 ? '★' : num;
-                wGrid.appendChild(wCell);
-            });
+        function showWinnerModal(data) {
+            let winners = data.winners || [];
+            let prizePerWinner = data.prize_per_winner || 0;
+
+            let namesText = winners.map(w => `🏆 ${w.username} (Cartela #${w.cartela_number})`).join('<br>');
+            document.getElementById('wNameText').innerHTML = namesText || "Winner Won!";
+            document.getElementById('wCartelaTag').innerText = "Total Winners: " + winners.length;
+            document.getElementById('wPrizeText').innerText = "Prize per winner: " + prizePerWinner + " Birr";
+
+            if (winners.length > 0) {
+                let winner = winners[0];
+                let wGrid = document.getElementById('wBoardGrid');
+                wGrid.innerHTML = '';
+                winner.board.forEach((num, idx) => {
+                    let wCell = document.createElement('div');
+                    let isMarked = winner.marked.includes(num) || idx === 12;
+                    wCell.className = 'w-cell' + (isMarked ? ' marked' : '');
+                    wCell.innerText = idx === 12 ? '★' : num;
+                    wGrid.appendChild(wCell);
+                });
+            }
+
             document.getElementById('winnerModal').style.display = 'flex';
         }
 
@@ -642,6 +656,8 @@
                     document.getElementById('countdownTimer').innerText = data.countdown_remaining + 's';
                 } else if (data.status === 'active') {
                     document.getElementById('countdownTimer').innerText = 'Started';
+                } else if (data.status === 'finished') {
+                    document.getElementById('countdownTimer').innerText = 'Finished';
                 }
 
                 // 1. Colors: Current Call = Green, Previous/Called = Orange
@@ -691,7 +707,7 @@
                 });
 
                 if (data.winners && data.winners.length > 0) {
-                    showWinnerModal(data.winners[0]);
+                    showWinnerModal(data);
                 }
             })
             .catch(err => console.log(err));

@@ -67,7 +67,7 @@ def list_games():
     """Lîsteya lîstikên berdest (waiting û countdown)"""
     games_data = []
     for g_id, game in active_games.items():
-        if game.status in ["waiting", "countdown"]:
+        if game.status in ["waiting", "countdown", "active"]:
             games_data.append({
                 'id': g_id,
                 'players': len(game.players),
@@ -92,6 +92,10 @@ def create_game():
         user = User.query.filter_by(telegram_id=int(user_id)).first()
         if not user or user.is_blocked:
             return jsonify({'error': 'User not found or blocked.'}), 403
+
+        # Phone registration check
+        if not user.phone:
+            return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
 
         # 1. አሁን 'waiting' ላይ ያለ ክፍት ሩም መፈለግ (ሁሉም ወደዚህኛው እንዲገቡ ይደረጋል)
         waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status == 'waiting'), None)
@@ -140,6 +144,9 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
+    if not user.phone:
+        return "እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).", 400
+
     total_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
 
     used_cartelas = set()
@@ -168,6 +175,9 @@ def join_game(game_id):
     user = User.query.filter_by(telegram_id=user_id).first()
     if not user or user.is_blocked:
         return jsonify({'error': 'Your account is blocked or not found.'}), 403
+
+    if not user.phone:
+        return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
 
     data = request.json or {}
     cartela_number = data.get('cartela_number')
@@ -233,10 +243,10 @@ def play_game(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
-    if user.telegram_id not in game.players or not game.players[user.telegram_id]:
-        return redirect(url_for('index'))
+    if not user.phone:
+        return "እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).", 400
 
-    player_cards = game.players[user.telegram_id]
+    player_cards = game.players.get(user.telegram_id, [])
 
     current_number = None
     if game.status == "active" and game.called_numbers:
