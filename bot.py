@@ -25,11 +25,11 @@ from database import db, init_db
 from models import User, Transaction
 import aiohttp
 
-# Configure logging[cite: 6]
+# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Bot Configuration[cite: 6]
+# Bot Configuration
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
@@ -61,7 +61,7 @@ def get_welcome_photo():
     photo_ref = config.get('welcome_image_file_id', DEFAULT_WELCOME_IMAGE)
     return URLInputFile(photo_ref) if photo_ref.startswith("http") else photo_ref
 
-# States[cite: 6]
+# States
 class UserState(StatesGroup):
     waiting_for_deposit_method = State()
     waiting_for_deposit_amount = State()
@@ -746,22 +746,23 @@ async def process_price_selection(callback_query: CallbackQuery):
                         
                         try:
                             await callback_query.message.edit_caption(
-                                caption=f"Game created! Entry price: {price} Birr\n"
+                                caption=f"🎮 Room created for {price} Birr!\n"
                                         f"👤 Player: {user.username or 'Player'}\n"
                                         f"💰 Active Wallet Balance: {user.balance:.2f} Birr\n\n"
-                                        f"Please select your cartela number:",
+                                        f"Click below to select your cartela:",
                                 reply_markup=keyboard
                             )
                         except Exception:
                             await callback_query.message.answer(
-                                text=f"Game created! Entry price: {price} Birr\n"
+                                text=f"🎮 Room created for {price} Birr!\n"
                                      f"👤 Player: {user.username or 'Player'}\n"
                                      f"💰 Active Wallet Balance: {user.balance:.2f} Birr\n\n"
-                                     f"Please select your cartela number:",
+                                     f"Click below to select your cartela:",
                                 reply_markup=keyboard
                             )
                     else:
-                        await callback_query.answer("Failed to create game. Please try again.", show_alert=True)
+                        res_data = await response.json()
+                        await callback_query.answer(res_data.get('error', 'Failed to create game room.'), show_alert=True)
     except Exception as e:
         logger.error(f"Error processing price: {e}")
 

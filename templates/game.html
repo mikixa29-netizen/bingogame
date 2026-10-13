@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edil Bingo</title>
+    <title>Edil Bingo - Live Game</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 10px;
             background-color: #a483cf;
             font-family: Arial, sans-serif;
             color: #fff;
@@ -15,40 +15,51 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
         }
         .header-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 10px 0;
+            font-size: 26px;
+            font-weight: 900;
+            margin: 5px 0 10px 0;
             letter-spacing: 1px;
+            text-align: center;
         }
+
+        /* Top Stats Row - All 6 badges strictly in 1 line */
         .top-stats {
             display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            padding: 0 10px;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 12px;
+            padding: 0 5px;
+            box-sizing: border-box;
         }
         .stat-box {
             background: #ffffff;
             color: #333;
-            border-radius: 12px;
-            padding: 5px 12px;
+            border-radius: 8px;
+            padding: 4px 6px;
             text-align: center;
-            min-width: 50px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
         .stat-box .label {
-            font-size: 10px;
+            font-size: 9px;
             color: #666;
             text-transform: uppercase;
             font-weight: bold;
         }
         .stat-box .value {
-            font-size: 14px;
-            font-weight: bold;
-            color: #222;
+            font-size: 13px;
+            font-weight: 900;
+            color: #111;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Selection Screen Styles */
@@ -69,7 +80,7 @@
             width: 90%;
             max-width: 400px;
             margin-bottom: 15px;
-            max-height: 250px;
+            max-height: 230px;
             overflow-y: auto;
         }
         .num-cell {
@@ -97,7 +108,7 @@
             padding: 6px;
             border-radius: 6px;
             width: 150px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .mini-cell {
             background: #fff;
@@ -117,71 +128,57 @@
 
         .action-buttons {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             width: 90%;
             max-width: 380px;
             justify-content: center;
             margin-bottom: 20px;
         }
-        .btn-refresh {
-            background: #209cee;
-            color: white;
+        .btn-refresh, .btn-start {
             border: none;
             padding: 12px 0;
             flex: 1;
             border-radius: 25px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .btn-start {
-            background: #ff6600;
             color: white;
-            border: none;
-            padding: 12px 0;
-            flex: 1;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+        .btn-refresh { background: #209cee; }
+        .btn-start { background: #ff6600; }
 
         /* Active Game Screen Styles */
         #game-screen {
             display: none;
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             flex-direction: column;
             align-items: center;
         }
         .game-main-area {
             display: flex;
-            width: 95%;
+            width: 100%;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 5px;
         }
         .board-column {
-            background: #f3eafa;
-            border-radius: 8px;
-            padding: 5px;
-            width: 45%;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 6px;
+            width: 48%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            color: #333;
         }
         .bingo-header-row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             text-align: center;
-            font-weight: bold;
-            font-size: 14px;
+            font-weight: 900;
+            font-size: 12px;
             margin-bottom: 4px;
+            color: #d35400;
         }
-        .bingo-header-row div:nth-child(1) { color: #ff9800; }
-        .bingo-header-row div:nth-child(2) { color: #4caf50; }
-        .bingo-header-row div:nth-child(3) { color: #03a9f4; }
-        .bingo-header-row div:nth-child(4) { color: #f44336; }
-        .bingo-header-row div:nth-child(5) { color: #9c27b0; }
-
         .board-list {
             display: flex;
             flex-direction: column;
@@ -193,22 +190,16 @@
             gap: 2px;
         }
         .board-item {
-            background: #e2d1f9;
-            color: #333;
-            font-size: 11px;
+            background: #f0f0f0;
+            color: #444;
+            font-size: 10px;
             text-align: center;
-            padding: 4px 0;
-            border-radius: 2px;
+            padding: 3px 0;
+            border-radius: 3px;
             font-weight: bold;
         }
-        
         .board-item.current-green {
-            background-color: #2ecc71 !important;
-            color: #fff !important;
-            box-shadow: 0 0 6px #2ecc71;
-        }
-        .board-item.called-orange {
-            background-color: #e67e22 !important;
+            background-color: #008000 !important;
             color: #fff !important;
         }
 
@@ -216,48 +207,64 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
         .status-box {
-            background: #e2d1f9;
+            background: #e0d5f5;
             border-radius: 8px;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
-        }
-        .status-box .title {
-            font-size: 11px;
-            color: #555;
-            text-transform: uppercase;
-        }
-        .status-box .val {
-            font-size: 16px;
-            font-weight: bold;
             color: #4a154b;
         }
+        .status-box .title { font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .status-box .val { font-size: 14px; font-weight: 900; }
+
         .current-call-box {
-            background: #6c3483;
+            background: #5b2c6f;
             border-radius: 10px;
-            padding: 12px;
+            padding: 8px;
             text-align: center;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
         }
         .current-call-badge {
-            background: #ff6600;
+            background: #ff6f00;
             color: white;
-            font-size: 20px;
-            font-weight: bold;
-            padding: 12px;
-            border-radius: 50%;
+            font-size: 18px;
+            font-weight: 900;
+            padding: 8px 16px;
+            border-radius: 20px;
             display: inline-block;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            margin-top: 5px;
+            margin-top: 3px;
+        }
+
+        /* 5 Recent Calls Display Box */
+        .recent-calls-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .recent-title { font-size: 10px; font-weight: bold; margin-bottom: 3px; }
+        .recent-list { display: flex; justify-content: center; gap: 4px; }
+        .recent-ball {
+            background: #fff;
+            color: #4a154b;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 10px;
         }
 
         .user-cartela {
-            background: #f3eafa;
-            border-radius: 8px;
-            padding: 8px;
-            margin-top: 5px;
-            width: 100%;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 6px;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
         .user-cartela-grid {
             display: grid;
@@ -265,47 +272,98 @@
             gap: 3px;
         }
         .ucell {
-            background: #fff;
+            background: #f9f9f9;
             color: #333;
             font-size: 12px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 3px;
-            font-weight: bold;
+            border-radius: 4px;
+            font-weight: 900;
+            cursor: pointer;
         }
-        .ucell.marked {
+        .ucell.marked, .ucell.free-cell {
             background: #008000 !important;
             color: #fff !important;
         }
 
         .btn-bingo {
-            background: linear-gradient(to bottom, #ff9800, #ff5722);
+            background: #ff6f00;
             color: white;
             border: none;
-            width: 90%;
-            padding: 14px;
+            width: 100%;
+            padding: 12px;
             border-radius: 25px;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 900;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        
+        .btn-bingo:hover { background: #e66000; }
+
         .bottom-action-row {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
             gap: 8px;
-            width: 90%;
-            margin-top: 10px;
+            width: 100%;
+            margin-top: 8px;
             margin-bottom: 20px;
         }
-        .bottom-action-row button {
-            flex: 1;
+
+        /* Winner Modal Popup Overlay (Balageru Style) */
+        .winner-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         }
+        .winner-modal-card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 340px;
+            text-align: center;
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .crown-icon { font-size: 38px; }
+        .winner-title { font-size: 24px; font-weight: 900; color: #facc15; margin: 4px 0; }
+        .winner-name { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #38bdf8; }
+        .winning-cartela-tag {
+            background: #334155;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .winner-board-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            background: #0f172a;
+            padding: 6px;
+            border-radius: 10px;
+        }
+        .w-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            color: #000;
+            font-weight: 900;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .w-cell.marked { background: #eab308; color: #fff; }
+        .w-cell.winning-line { background: #16a34a; color: #fff; }
     </style>
 </head>
 <body>
@@ -316,36 +374,37 @@
     <div id="selection-screen">
         <div class="top-stats">
             <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
-            <div class="stat-box"><div class="label">Active Game</div><div class="value">2</div></div>
+            <div class="stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
             <div class="stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
         </div>
 
-        <!-- 1 እስከ 200 Cartelas Grid -->
+        <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px;">Select Your Cartela (1-200):</div>
         <div class="number-grid" id="numberGrid"></div>
 
-        <!-- Selected Cartela Preview -->
-        <div style="font-size:13px; margin-bottom:5px;" id="selectedCartelaLbl">Selected Cartela: #82</div>
+        <div style="font-size:12px; margin-bottom:4px;" id="selectedCartelaLbl">Selected Cartela: #1</div>
         <div class="mini-cartela-preview" id="miniCartela"></div>
 
         <div class="action-buttons">
             <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-            <button class="btn-start" onclick="startGame()">Start game</button>
+            <button class="btn-start" onclick="joinAndStartGame()">Join Game</button>
         </div>
     </div>
 
 
     <!-- 2. ACTIVE GAME PLAY SCREEN -->
     <div id="game-screen">
+        <!-- Top Stats Row (Strictly 1 Line) -->
         <div class="top-stats">
-            <div class="stat-box"><div class="label">Game</div><div class="value">EF0565</div></div>
-            <div class="stat-box"><div class="label">Derash</div><div class="value" id="pool-val">104</div></div>
-            <div class="stat-box"><div class="label">Bonus</div><div class="value">On</div></div>
-            <div class="stat-box"><div class="label">Players</div><div class="value" id="player-count">13</div></div>
+            <div class="stat-box"><div class="label">Game</div><div class="value">#{{ game_id }}</div></div>
+            <div class="stat-box"><div class="label">Derash</div><div class="value" id="poolVal">{{ pool }}</div></div>
+            <div class="stat-box"><div class="label">Bonus</div><div class="value" id="bonusVal">{{ bonus }}</div></div>
+            <div class="stat-box"><div class="label">Players</div><div class="value" id="playersVal">{{ active_players }}</div></div>
             <div class="stat-box"><div class="label">Bet</div><div class="value">{{ entry_price }}</div></div>
-            <div class="stat-box"><div class="label">Call</div><div class="value" id="call-count">0</div></div>
+            <div class="stat-box"><div class="label">Call</div><div class="value" id="callCountVal">{{ called_numbers|length }}</div></div>
         </div>
 
         <div class="game-main-area">
+            <!-- Left Side: 1-75 Board -->
             <div class="board-column">
                 <div class="bingo-header-row">
                     <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
@@ -353,39 +412,62 @@
                 <div class="board-list" id="mainBoardList"></div>
             </div>
 
+            <!-- Right Side -->
             <div class="call-area">
                 <div class="status-box">
                     <div class="title">Count Down</div>
-                    <div class="val" id="countdown-timer">Started</div>
+                    <div class="val" id="countdownTimer">
+                        {% if active_players < 2 %}Waiting (>=2)...{% else %}Started{% endif %}
+                    </div>
                 </div>
 
                 <div class="current-call-box">
-                    <div style="font-size:11px; color:#ddd;">Current Call</div>
-                    <div class="current-call-badge" id="currentCallBadge">-</div>
+                    <div style="font-size:10px; color:#ddd; font-weight: bold;">Current Call</div>
+                    <div class="current-call-badge" id="currentCallBadge">{{ current_number or '---' }}</div>
                 </div>
 
+                <!-- Last 5 Recent Calls -->
+                <div class="recent-calls-box">
+                    <div class="recent-title">Last 5 Calls</div>
+                    <div class="recent-list" id="recentList"></div>
+                </div>
+
+                <!-- User Cartela -->
                 <div class="user-cartela">
-                    <div class="bingo-header-row" style="font-size:11px;">
+                    <div class="bingo-header-row" style="font-size:10px;">
                         <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
                     </div>
                     <div class="user-cartela-grid" id="userCartelaGrid"></div>
-                    <div style="text-align:center; font-size:10px; margin-top:4px; color:#555;" id="boardNumberLbl">Board number 82</div>
+                    <div style="text-align:center; font-size:10px; margin-top:3px; color:#666;" id="boardNumberLbl">Board #1</div>
                 </div>
             </div>
         </div>
 
-        <button class="btn-bingo" onclick="triggerBingo()">BINGO! (4 Corners / Row / Col)</button>
+        <button class="btn-bingo" onclick="claimBingo()">BINGO!</button>
 
         <div class="bottom-action-row">
             <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-            <button class="btn-start" style="background:#e74c3c;" onclick="location.reload()">Leave</button>
+            <button class="btn-start" style="background:#e74c3c;" onclick="location.href='/'">Leave</button>
+        </div>
+    </div>
+
+    <!-- WINNER MODAL POPUP -->
+    <div id="winnerModal" class="winner-modal-overlay">
+        <div class="winner-modal-card">
+            <div class="crown-icon">👑</div>
+            <div class="winner-title">BINGO!</div>
+            <div class="winner-name" id="wNameText">Winner Won!</div>
+            <div class="winning-cartela-tag" id="wCartelaTag">Winning Cartela : --</div>
+            <div class="winner-board-grid" id="wBoardGrid"></div>
+            <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;" id="wRestartText">Auto-refreshing in 3s...</div>
         </div>
     </div>
 
     <script>
-        let selectedCartelaId = 82;
-        let calledNumbersList = [];
+        const gameId = {{ game_id }};
+        let selectedCartelaId = 1;
         let activeCartelaNumbers = [];
+        let calledNumbersList = {{ called_numbers|tojson|safe }};
 
         function generateCartelaNumbers(id) {
             let numbers = [];
@@ -416,7 +498,7 @@
             return arr.slice(0, count);
         }
 
-        // ከ 1 እስከ 200 ያሉትን ካርቴላዎች ማሳያ ግሪድ መፍጠር
+        // Populate Cartela Grid 1-200
         const gridContainer = document.getElementById('numberGrid');
         for (let i = 1; i <= 200; i++) {
             let cell = document.createElement('div');
@@ -427,116 +509,3 @@
                 cell.classList.add('selected');
                 selectedCartelaId = i;
                 document.getElementById('selectedCartelaLbl').innerText = "Selected Cartela: #" + i;
-                updatePreview();
-            };
-            gridContainer.appendChild(cell);
-        }
-
-        function updatePreview() {
-            activeCartelaNumbers = generateCartelaNumbers(selectedCartelaId);
-            const mini = document.getElementById('miniCartela');
-            mini.innerHTML = '';
-            activeCartelaNumbers.forEach(num => {
-                let mcell = document.createElement('div');
-                mcell.className = 'mini-cell' + (num === '*' ? ' star' : '');
-                mcell.innerText = num;
-                mini.appendChild(mcell);
-            });
-        }
-        updatePreview();
-
-        // Build Main 1-75 Board
-        const mainBoardList = document.getElementById('mainBoardList');
-        for (let r = 1; r <= 15; r++) {
-            let rowDiv = document.createElement('div');
-            rowDiv.className = 'board-row';
-            for (let c = 0; c < 5; c++) {
-                let num = r + (c * 15);
-                let item = document.createElement('div');
-                item.className = 'board-item';
-                item.id = 'bnum-' + num;
-                item.innerText = num;
-                rowDiv.appendChild(item);
-            }
-            mainBoardList.appendChild(rowDiv);
-        }
-
-        function startGame() {
-            document.getElementById('selection-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            document.getElementById('boardNumberLbl').innerText = "Board number " + selectedCartelaId;
-
-            const uGrid = document.getElementById('userCartelaGrid');
-            uGrid.innerHTML = '';
-            activeCartelaNumbers.forEach(num => {
-                let ucell = document.createElement('div');
-                ucell.className = 'ucell' + (num === '*' ? ' marked' : '');
-                ucell.innerText = num;
-                ucell.id = 'ucell-' + num;
-                uGrid.appendChild(ucell);
-            });
-
-            let count = 30;
-            let timerInterval = setInterval(() => {
-                count--;
-                if(count > 0) {
-                    document.getElementById('countdown-timer').innerText = count + 's';
-                } else {
-                    clearInterval(timerInterval);
-                    document.getElementById('countdown-timer').innerText = 'Started';
-                    startCallingNumbers();
-                }
-            }, 1000);
-        }
-
-        function startCallingNumbers() {
-            let availableNumbers = [];
-            for(let i=1; i<=75; i++) availableNumbers.push(i);
-            availableNumbers.sort(() => Math.random() - 0.5);
-
-            let callIndex = 0;
-            let callInterval = setInterval(() => {
-                if(callIndex >= availableNumbers.length) {
-                    clearInterval(callInterval);
-                    return;
-                }
-                let currentNum = availableNumbers[callIndex];
-                callIndex++;
-
-                calledNumbersList.forEach(num => {
-                    let prevItem = document.getElementById('bnum-' + num);
-                    if(prevItem) {
-                        prevItem.classList.remove('current-green');
-                        prevItem.classList.add('called-orange');
-                    }
-                });
-
-                calledNumbersList.push(currentNum);
-                document.getElementById('call-count').innerText = calledNumbersList.length;
-
-                let letter = 'B';
-                if(currentNum > 15 && currentNum <= 30) letter = 'I';
-                else if(currentNum > 30 && currentNum <= 45) letter = 'N';
-                else if(currentNum > 45 && currentNum <= 60) letter = 'G';
-                else if(currentNum > 60) letter = 'O';
-
-                document.getElementById('currentCallBadge').innerText = letter + '-' + currentNum;
-
-                let boardItem = document.getElementById('bnum-' + currentNum);
-                if(boardItem) {
-                    boardItem.classList.remove('called-orange');
-                    boardItem.classList.add('current-green');
-                }
-
-                let userCell = document.getElementById('ucell-' + currentNum);
-                if(userCell) userCell.classList.add('marked');
-
-            }, 3000);
-        }
-
-        function triggerBingo() {
-            alert('🎉 BINGO Claimed! 4 Corners, Row, Column or Diagonal win check submitted.');
-        }
-    </script>
-</body>
-</html>

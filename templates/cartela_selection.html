@@ -226,11 +226,9 @@
             let target = document.getElementById('cartela-' + number);
 
             if (index > -1) {
-                // Remove if already selected
                 selectedCartelas.splice(index, 1);
                 target.classList.remove('selected');
             } else {
-                // Add if under limit
                 if (selectedCartelas.length >= maxCards) {
                     alert('ከፍተኛው የካርቴላ ገደብ 4 ነው! (Maximum 4 cards allowed)');
                     return;
@@ -239,7 +237,6 @@
                 target.classList.add('selected');
             }
 
-            // Update UI preview and count
             document.getElementById('selected-count').innerText = selectedCartelas.length + '/' + maxCards;
             if (selectedCartelas.length > 0) {
                 document.getElementById('previewLbl').innerText = "Selected Cartelas: #" + selectedCartelas.join(', #');
@@ -261,7 +258,6 @@
                 return;
             }
 
-            // Send sequentially or loop to join multiple cards
             joinCardsSequentially(0);
         }
 

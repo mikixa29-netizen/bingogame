@@ -45,7 +45,7 @@ init_default_games()
 
 @app.route('/')
 def index():
-    """Lobby ገጽ፡ ያሉትን ጨዋታዎች እና የዩዘርን ባሌንስ ማሳየት"""
+    """Lobby ገጽ፡ ያሉትን ጨዋታዎች እና የዩዘርን ባሌንስ ማሳየት[cite: 8]"""
     if not session.get('user_id'):
         session['user_id'] = random.randint(100000, 999999)
     
@@ -70,7 +70,7 @@ def index():
 
 @app.route('/game/list', methods=['GET'])
 def list_games():
-    """Available games (waiting rooms) ዝርዝር በ JSON መልክ መመለስ"""
+    """Available games (waiting rooms) ዝርዝር በ JSON መልክ መመለስ[cite: 8]"""
     games_data = []
     for g_id, game in active_games.items():
         if game.status == "waiting":
@@ -85,7 +85,7 @@ def list_games():
 
 @app.route('/game/create', methods=['POST'])
 def create_game():
-    """አዲስ ሩም (Game Room) መፍጠር"""
+    """አዲስ ሩም (Game Room) መፍጠር (እስከ 3 አክቲቭ ሩሞች ብቻ እንዲኖሩ መቆጣጠር)[cite: 8]"""
     try:
         entry_price = int(request.json.get('entry_price', 10))
         if not session.get('user_id'):
@@ -95,6 +95,19 @@ def create_game():
         user = User.query.get(user_id)
         if user and user.is_blocked:
             return jsonify({'error': 'Your account is blocked.'}), 403
+
+        # በአותו Entry Price ያሉ waiting/active ሩሞችን መቁጠር (ቢበዛ 3 መሆን አለበት)
+        same_price_games = [
+            g for g in active_games.values() 
+            if g.entry_price == entry_price and g.status in ['waiting', 'active']
+        ]
+
+        if len(same_price_games) >= 3:
+            available_game = next((g for g in same_price_games if g.status == 'waiting'), None)
+            if available_game:
+                return jsonify({'success': True, 'game_id': available_game.game_id, 'entry_price': entry_price})
+            else:
+                return jsonify({'error': 'Maximum 3 active games running for this room. Please wait.'}), 400
 
         user_balance = user.balance if user else 0.0
 
@@ -118,7 +131,7 @@ def create_game():
 
 @app.route('/game/<int:game_id>/select_cartela')
 def select_cartela(game_id):
-    """ዩዘሩ የተመረጠውን ሩም አግኝቶ ከ 1-200 ካርቴላ የሚመርጥበት ገጽ"""
+    """ዩዘሩ የተመረጠውን ሩም አግኝቶ ከ 1-200 ካርቴላ የሚመርጥበት ገጽ[cite: 8]"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
@@ -133,7 +146,6 @@ def select_cartela(game_id):
 
     balance = user.balance if user else 50.0
 
-    # უკვე የተያዙ ካርቴላዎች ዝርዝር
     used_cartelas = set()
     for cards in game.players.values():
         for card in cards:
@@ -149,7 +161,7 @@ def select_cartela(game_id):
 
 @app.route('/game/<int:game_id>/join', methods=['POST'])
 def join_game(game_id):
-    """ዩዘሩ ካርቴላ መርጦ ጨዋታውን የሚቀላቀልበት እና ገንዘብ የሚቀነስበት ሎጂክ (እስከ 4 ካርቴላ)"""
+    """ዩዘሩ ካርቴላ መርጦ ጨዋታውን የሚቀላቀልበት እና ገንዘብ የሚቀነስበት ሎጂክ[cite: 8]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -180,7 +192,8 @@ def join_game(game_id):
         user.balance -= game.entry_price
         db.session.commit()
 
-    success, msg, board = game.add_player_card(user_id, cartela_number=int(cartela_number))
+    username = user.username if user else "Player"
+    success, msg, board = game.add_player_card(user_id, username=username, cartela_number=int(cartela_number))
     if not success:
         if user:
             user.balance += game.entry_price
@@ -196,7 +209,7 @@ def join_game(game_id):
 
 @app.route('/game/<int:game_id>')
 def play_game(game_id):
-    """የላይቭ ጨዋታ ማሳያ ገጽ"""
+    """የላይቭ ጨዋታ ማሳያ ገጽ[cite: 8]"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
@@ -216,28 +229,67 @@ def play_game(game_id):
 
     if game.status == "waiting" and len(game.players) >= game.min_players:
         game.start_game()
-        if game.status == "active":
-            game.call_number()
 
     current_number = None
     if game.status == "active" and game.called_numbers:
         current_number = game.format_number(game.called_numbers[-1])
 
+    pool, bonus_text = game.update_pool_and_bonus()
+
     return render_template('game.html',
                            game_id=game_id,
                            game=game,
                            player_cards=player_cards,
-                           called_numbers=game.called_numbers,
+                           called_numbers=[game.format_number(n) for n in game.called_numbers],
                            current_number=current_number,
                            active_players=len(game.players),
                            total_cards=game.get_total_cards(),
                            game_status=game.status,
                            entry_price=game.entry_price,
-                           pool=game.pool)
+                           pool=round(pool, 2),
+                           bonus=bonus_text)
+
+@app.route('/game/<int:game_id>/status', methods=['GET'])
+def game_status_api(game_id):
+    """የጨዋታውን ወቅታዊ መረጃዎች በእውነተኛ ሰዓት (Real-time) መመለስ[cite: 8]"""
+    if game_id not in active_games:
+        return jsonify({'error': 'Game not found'}), 404
+
+    game = active_games[game_id]
+    pool, bonus_text = game.update_pool_and_bonus()
+    
+    # Format called numbers
+    formatted_called = [game.format_number(n) for n in game.called_numbers]
+    
+    # Winner info formatting for frontend modal
+    formatted_winners = []
+    for w in game.winners:
+        formatted_winners.append({
+            'user_id': w['user_id'],
+            'username': w['username'],
+            'cartela_number': w['cartela_number'],
+            'board': w['board'],
+            'marked': w['marked']
+        })
+
+    prize_per_winner = round(pool / len(game.winners), 2) if game.winners else 0.0
+
+    return jsonify({
+        'game_id': game.game_id,
+        'active_players': len(game.players),
+        'total_cards': game.get_total_cards(),
+        'pool': round(pool, 2),
+        'bonus': bonus_text,
+        'status': game.status,
+        'called_numbers': formatted_called,
+        'current_call': formatted_called[-1] if formatted_called else '---',
+        'winners': formatted_winners,
+        'prize_per_winner': prize_per_winner
+    })
 
 @app.route('/game/<int:game_id>/call', methods=['POST'])
 def call_number(game_id):
-    """ቁጥር መጥሪያ ራውት"""
+    """ቁጥር መጥሪያ ራውት[cite: 8]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -249,13 +301,13 @@ def call_number(game_id):
     if number:
         return jsonify({
             'number': number,
-            'called_numbers': game.called_numbers
+            'called_numbers': [game.format_number(n) for n in game.called_numbers]
         })
     return jsonify({'error': 'No more numbers to call'}), 400
 
 @app.route('/game/<int:game_id>/mark', methods=['POST'])
 def mark_number(game_id):
-    """ቢንጎ ማረጋገጫ እና ምልክት ማድረጊያ ራውት"""
+    """ቢንጎ ማረጋገጫ እና ምልክት ማድረጊያ ራውት[cite: 8]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -276,15 +328,16 @@ def mark_number(game_id):
     check_win = data.get('check_win', False)
 
     if check_win:
-        winner, message, prize = game.claim_bingo(user_id, card_index)
+        winner, message, prize_per_winner = game.claim_bingo(user_id, card_index)
         if winner:
             if user:
-                user.balance += prize
+                user.balance += prize_per_winner
                 db.session.commit()
         return jsonify({
             'winner': winner,
             'message': message,
-            'prize': prize
+            'prize': prize_per_winner,
+            'winners': game.winners
         })
 
     number = data.get('number')
@@ -295,17 +348,18 @@ def mark_number(game_id):
     if not success:
         return jsonify({'error': 'Could not mark number'}), 400
 
-    winner, message, prize = game.claim_bingo(user_id, card_index)
+    winner, message, prize_per_winner = game.claim_bingo(user_id, card_index)
     if winner:
         if user:
-            user.balance += prize
+            user.balance += prize_per_winner
             db.session.commit()
 
     return jsonify({
         'marked': game.players[user_id][card_index]['marked'],
         'winner': winner,
         'message': message,
-        'prize': prize if winner else 0.0
+        'prize': prize_per_winner if winner else 0.0,
+        'winners': game.winners
     })
 
 
@@ -402,7 +456,7 @@ def admin_reject_withdrawal(tx_id):
         if user:
             user.balance += abs(tx.amount)
         db.session.commit()
-        flash('Withdrawal request rejected and amount refunded to user.', 'success')
+        flash('Withdrawal request rejected and refunded to user.', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin_dashboard'))

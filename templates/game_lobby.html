@@ -186,12 +186,12 @@
         <button class="btn-start" onclick="proceedToCartelaSelection()">Start game</button>
     </div>
 
-    <!-- Low Balance Modal Popup -->
+    <!-- Notification / Warning Modal Popup -->
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
-            <h3>⚠️ Low Balance</h3>
+            <h3>⚠️ Notice</h3>
             <p id="modal-error-text">Please top up your wallet first to play this game!</p>
-            <button class="modal-btn" onclick="closeModal()">Top Up / OK</button>
+            <button class="modal-btn" onclick="closeModal()">OK</button>
         </div>
     </div>
 
@@ -213,17 +213,17 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.low_balance || (data.error && data.error.includes('balance'))) {
-                    document.getElementById('modal-error-text').innerText = data.error || "Please top up your wallet first to play this game!";
+                if (data.error) {
+                    // Display any error (low balance or max 3 active games limit) inside the modal popup
+                    document.getElementById('modal-error-text').innerText = data.error;
                     document.getElementById('topupModal').style.display = 'flex';
-                } else if (data.error) {
-                    alert(data.error);
                 } else if (data.game_id) {
                     window.location.href = `/game/${data.game_id}/select_cartela`;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
+                document.getElementById('modal-error-text').innerText = "An error occurred while connecting to the server.";
                 document.getElementById('topupModal').style.display = 'flex';
             });
         }
@@ -234,3 +234,4 @@
     </script>
 </body>
 </html>
+```[cite: 11]

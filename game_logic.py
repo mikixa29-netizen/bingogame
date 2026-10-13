@@ -6,20 +6,53 @@ class BingoGame:
     def __init__(self, game_id: int, entry_price: int = 10, max_cards_per_player: int = 4):
         self.game_id = game_id
         self.entry_price = entry_price
-        self.pool = 0
+        self.pool = 0.0
         self.players: Dict[int, List[dict]] = {} # user_id -> list of cards
         self.called_numbers: List[int] = []
         self.status = "waiting"  # waiting, active, finished
-        self.winners: List[Dict[str, int]] = []
+        self.winners: List[Dict[str, any]] = []
         self.created_at = datetime.utcnow()
         self.finished_at = None
-        self.min_players = 1
+        self.min_players = 2  # Aatavannu aarambhisaalu kammi endare 2 players beku
         self.max_cards_per_player = max_cards_per_player
         self.max_total_cards = 200
         self.last_call_time = None
+        self.bonus_text = "Off"
 
     def get_total_cards(self) -> int:
         return sum(len(cards) for cards in self.players.values())
+
+    def update_pool_and_bonus(self):
+        """Room entry price aadharamele commission cut maadi pool mattu bonus calculate madutte"""
+        total_collected = self.get_total_cards() * self.entry_price
+        
+        # Commission percentage based on room entry price
+        if self.entry_price == 10:
+            commission = 0.15
+        elif self.entry_price == 20:
+            commission = 0.20
+        elif self.entry_price == 50:
+            commission = 0.25
+        elif self.entry_price == 100:
+            commission = 0.30
+        else:
+            commission = 0.15
+            
+        self.pool = total_collected * (1 - commission)
+        
+        # Bonus percentage calculation based on pool amount
+        if self.pool >= 1500:
+            self.bonus_text = "7%"
+        elif self.pool >= 1000:
+            self.bonus_text = "5%"
+        elif self.pool >= 500:
+            self.bonus_text = "4%"
+        elif self.pool >= 200:
+            self.bonus_text = "2%"
+        else:
+            self.bonus_text = "Off"
+            
+        return self.pool, self.bonus_text
 
     def generate_board(self, cartela_number: int) -> List[int]:
         random.seed(cartela_number)
@@ -35,7 +68,7 @@ class BingoGame:
             board.extend([b_numbers[i], i_numbers[i], n_numbers[i], g_numbers[i], o_numbers[i]])
         return board
 
-    def add_player_card(self, user_id: int, cartela_number: int = None) -> Tuple[bool, str, Optional[List[int]]]:
+    def add_player_card(self, user_id: int, username: str = "Player", cartela_number: int = None) -> Tuple[bool, str, Optional[List[int]]]:
         if self.status != "waiting":
             return False, "Game already started or finished", None
 
@@ -64,10 +97,13 @@ class BingoGame:
         card_data = {
             'board': board,
             'marked': [board[12]],
-            'cartela_number': cartela_number
+            'cartela_number': cartela_number,
+            'username': username
         }
         self.players[user_id].append(card_data)
-        self.pool += self.entry_price
+        
+        # Pool mattu bonus update madona
+        self.update_pool_and_bonus()
 
         if len(self.players) >= self.min_players and self.status == "waiting":
             self.start_game()
@@ -146,8 +182,17 @@ class BingoGame:
         if not is_win:
             return False, msg, 0.0
 
-        winner_entry = {'user_id': user_id, 'card_index': card_index}
-        if winner_entry not in self.winners:
+        card = self.players[user_id][card_index]
+        winner_entry = {
+            'user_id': user_id,
+            'card_index': card_index,
+            'username': card.get('username', 'Player'),
+            'cartela_number': card['cartela_number'],
+            'board': card['board'],
+            'marked': card['marked']
+        }
+        
+        if not any(w['user_id'] == user_id and w['card_index'] == card_index for w in self.winners):
             self.winners.append(winner_entry)
 
         self.status = "finished"
