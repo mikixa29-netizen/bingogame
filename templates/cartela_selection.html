@@ -62,7 +62,7 @@
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            max-height: 240px;
+            max-height: 250px;
             overflow-y: auto;
         }
         .cartela-number {
@@ -72,7 +72,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
@@ -171,26 +171,30 @@
             <div class="value">#{{ game_id }}</div>
         </div>
         <div class="stat-box">
-            <div class="label">Stake</div>
-            <div class="value">{{ entry_price }}</div>
+            <div class="label">Stake/Card</div>
+            <div class="value" id="entry-price">{{ entry_price }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Selected</div>
+            <div class="value" id="selected-count">0/4</div>
         </div>
     </div>
 
-    <div style="font-size: 15px; font-weight: bold; margin-bottom: 8px;">Select Your Cartela Number</div>
+    <div style="font-size: 15px; font-weight: bold; margin-bottom: 8px;">Select Up to 4 Cartelas (1-200)</div>
 
     <div class="cartela-container">
         <div class="cartela-grid">
-            {% for i in range(1, 101) %}
+            {% for i in range(1, 201) %}
                 <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
                      id="cartela-{{ i }}"
-                     onclick="selectCartela({{ i }}, {{ 'false' if i in used_cartelas else 'true' }})">
+                     onclick="toggleCartela({{ i }}, {{ 'false' if i in used_cartelas else 'true' }})">
                     {{ i }}
                 </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="preview-box" id="previewLbl">Selected Cartela: None</div>
+    <div class="preview-box" id="previewLbl">Selected Cartelas: None</div>
 
     <div class="action-buttons">
         <button class="btn-refresh" onclick="location.reload()">Refresh</button>
@@ -200,50 +204,87 @@
     <!-- Top Up Warning Modal Popup -->
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
-            <h3>⚠️ Low Balance</h3>
-            <p>Please top up your wallet first to play this game!</p>
-            <button class="modal-btn" onclick="closeModal()">Top Up / OK</button>
+            <h3>⚠️ Low Balance / Error</h3>
+            <p id="modal-error-text">Please top up your wallet first to play this game!</p>
+            <button class="modal-btn" onclick="closeModal()">OK</button>
         </div>
     </div>
 
     <script>
-        let chosenCartela = null;
+        let selectedCartelas = [];
+        let maxCards = 4;
+        let entryPrice = parseFloat(document.getElementById('entry-price').innerText) || 10;
+        let userWallet = parseFloat(document.getElementById('wallet-val').innerText) || 0;
 
-        function selectCartela(number, available) {
+        function toggleCartela(number, available) {
             if (!available) {
                 alert('This cartela number is already taken.');
                 return;
             }
-            document.querySelectorAll('.cartela-number').forEach(el => {
-                if (!el.classList.contains('unavailable')) el.classList.remove('selected');
-            });
+
+            let index = selectedCartelas.indexOf(number);
             let target = document.getElementById('cartela-' + number);
-            if (target) {
+
+            if (index > -1) {
+                // Remove if already selected
+                selectedCartelas.splice(index, 1);
+                target.classList.remove('selected');
+            } else {
+                // Add if under limit
+                if (selectedCartelas.length >= maxCards) {
+                    alert('ከፍተኛው የካርቴላ ገደብ 4 ነው! (Maximum 4 cards allowed)');
+                    return;
+                }
+                selectedCartelas.push(number);
                 target.classList.add('selected');
-                chosenCartela = number;
-                document.getElementById('previewLbl').innerText = "Selected Cartela: #" + number;
+            }
+
+            // Update UI preview and count
+            document.getElementById('selected-count').innerText = selectedCartelas.length + '/' + maxCards;
+            if (selectedCartelas.length > 0) {
+                document.getElementById('previewLbl').innerText = "Selected Cartelas: #" + selectedCartelas.join(', #');
+            } else {
+                document.getElementById('previewLbl').innerText = "Selected Cartela: None";
             }
         }
 
         function confirmJoin() {
-            if (!chosenCartela) {
-                alert('እባክዎ መጀመሪያ ከ 1 እስከ 100 ካሉት ውስጥ አንድ ካርቴላ ይምረጡ!');
+            if (selectedCartelas.length === 0) {
+                alert('እባክዎ ቢያንስ 1 ካርቴላ ይምረጡ!');
+                return;
+            }
+
+            let totalCost = selectedCartelas.length * entryPrice;
+            if (userWallet < totalCost) {
+                document.getElementById('modal-error-text').innerText = `Insufficient balance! You need ${totalCost} Birr for ${selectedCartelas.length} cards.`;
+                document.getElementById('topupModal').style.display = 'flex';
+                return;
+            }
+
+            // Send sequentially or loop to join multiple cards
+            joinCardsSequentially(0);
+        }
+
+        function joinCardsSequentially(index) {
+            if (index >= selectedCartelas.length) {
+                window.location.href = `/game/{{ game_id }}`;
                 return;
             }
 
             fetch(`/game/{{ game_id }}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cartela_number: chosenCartela })
+                body: JSON.stringify({ cartela_number: selectedCartelas[index] })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.low_balance || (data.error && data.error.includes('balance'))) {
+                    document.getElementById('modal-error-text').innerText = data.error || "Low balance!";
                     document.getElementById('topupModal').style.display = 'flex';
                 } else if (data.error) {
                     alert(data.error);
                 } else {
-                    window.location.href = `/game/${data.game_id}`;
+                    joinCardsSequentially(index + 1);
                 }
             })
             .catch(error => {

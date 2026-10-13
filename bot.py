@@ -125,7 +125,6 @@ async def cmd_start(message: Message):
                 db.session.commit()
                 logger.info(f"New user registered: {user_id} ({username})")
 
-        # ፎቶ ማውረድ ሳይሳካ ሲቀር ቦቱ እንዳይወድቅ ב-try-except ተጠብቋል
         try:
             await message.answer_photo(
                 photo=get_welcome_photo(),
@@ -253,12 +252,12 @@ async def process_play_bingo_command_or_callback(event):
     message = event.message if isinstance(event, CallbackQuery) else event
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🎮 Play10", callback_data="price_10"),
-            InlineKeyboardButton(text="🎮 Play20", callback_data="price_20")
+            InlineKeyboardButton(text="🎮 10 Birr Room", callback_data="price_10"),
+            InlineKeyboardButton(text="🎮 20 Birr Room", callback_data="price_20")
         ],
         [
-            InlineKeyboardButton(text="🎮 Play50", callback_data="price_50"),
-            InlineKeyboardButton(text="🎮 Play100", callback_data="price_100")
+            InlineKeyboardButton(text="🎮 50 Birr Room", callback_data="price_50"),
+            InlineKeyboardButton(text="🎮 100 Birr Room", callback_data="price_100")
         ],
         [
             InlineKeyboardButton(text="🎮 Play Demo", callback_data="play_demo")
@@ -271,12 +270,12 @@ async def process_play_bingo_command_or_callback(event):
     if isinstance(event, CallbackQuery):
         try:
             await message.edit_caption(
-                caption="🍀 Best of luck on your Bingo game adventure! 🎮",
+                caption="🍀 Select your room to start playing Bingo! 🎮",
                 reply_markup=keyboard
             )
         except Exception:
             await message.answer(
-                "🍀 Best of luck on your Bingo game adventure! 🎮",
+                "🍀 Select your room to start playing Bingo! 🎮",
                 reply_markup=keyboard
             )
         await event.answer()
@@ -284,12 +283,12 @@ async def process_play_bingo_command_or_callback(event):
         try:
             await message.answer_photo(
                 photo=get_welcome_photo(),
-                caption="🍀 Best of luck on your Bingo game adventure! 🎮",
+                caption="🍀 Select your room to start playing Bingo! 🎮",
                 reply_markup=keyboard
             )
         except Exception:
             await message.answer(
-                "🍀 Best of luck on your Bingo game adventure! 🎮",
+                "🍀 Select your room to start playing Bingo! 🎮",
                 reply_markup=keyboard
             )
 
@@ -839,55 +838,4 @@ async def cancel_state(message: Message, state: FSMContext):
     await message.answer("Action cancelled.")
 
 @router.message(AdminState.waiting_for_news)
-async def process_admin_broadcast(message: Message, state: FSMContext):
-    await state.clear()
-    await message.answer("Starting broadcast process...")
-    
-    success_count = 0
-    with app.app_context():
-        users = User.query.all()
-        for user in users:
-            try:
-                if message.photo:
-                    await message.bot.send_photo(
-                        chat_id=user.telegram_id, 
-                        photo=message.photo[-1].file_id, 
-                        caption=message.caption or ""
-                    )
-                else:
-                    await message.bot.send_message(chat_id=user.telegram_id, text=message.text or "")
-                success_count += 1
-                await asyncio.sleep(0.05)
-            except Exception as e:
-                logger.warning(f"Failed to broadcast to {user.telegram_id}: {e}")
-                
-    await message.answer(f"✅ Broadcast complete! Message successfully sent to {success_count} users.")
-
-async def setup_bot():
-    storage = MemoryStorage()
-    dp = Dispatcher(storage=storage)
-    bot = Bot(token=TOKEN)
-    await set_bot_commands(bot)
-    dp.include_router(router)
-    return bot, dp
-
-async def run_bot():
-    try:
-        bot, dp = await setup_bot()
-        logger.info("Starting Telegram Bot Polling...")
-        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
-    except Exception as e:
-        logger.error(f"Error in bot polling: {e}")
-
-def run_flask():
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
-
-if __name__ == "__main__":
-    import threading
-    
-    bot_thread = threading.Thread(target=lambda: asyncio.run(run_bot()))
-    bot_thread.daemon = True
-    bot_thread.start()
-    
-    run_flask()
+async def process_admin_

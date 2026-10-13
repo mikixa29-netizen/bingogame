@@ -11,6 +11,9 @@ class User(db.Model):
     games_won = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     referrer_id = db.Column(db.BigInteger, nullable=True)
+    
+    # ዩዘርን ማገድ (Block) ወይም መክፈት (Unblock) ለማድረግ የተጨመረ መስክ
+    is_blocked = db.Column(db.Boolean, default=False)
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)

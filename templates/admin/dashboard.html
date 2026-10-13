@@ -18,7 +18,7 @@
         }
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
         }
         .header-row {
             display: flex;
@@ -51,6 +51,7 @@
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         .stat-card {
             background: #fff;
@@ -58,6 +59,7 @@
             padding: 15px 20px;
             border-radius: 12px;
             flex: 1;
+            min-width: 200px;
             box-shadow: 0 3px 6px rgba(0,0,0,0.1);
             text-align: center;
         }
@@ -97,6 +99,7 @@
             border-radius: 8px;
             overflow: hidden;
             font-size: 14px;
+            margin-bottom: 10px;
         }
         th, td {
             padding: 10px 12px;
@@ -108,14 +111,19 @@
             color: white;
             font-size: 13px;
         }
-        input[type="number"] {
+        input[type="number"], input[type="text"], textarea {
             padding: 6px;
             border-radius: 6px;
             border: 1px solid #ccc;
             background: #fff;
             color: #333;
-            width: 90px;
             font-size: 13px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+        input[type="number"] {
+            width: 90px;
         }
         button {
             background: #008000;
@@ -130,10 +138,33 @@
         button:hover {
             background: #006600;
         }
+        .btn-danger {
+            background: #c0392b;
+        }
+        .btn-danger:hover {
+            background: #962d22;
+        }
+        .btn-warning {
+            background: #d35400;
+        }
+        .btn-warning:hover {
+            background: #ba4a00;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+        }
         .flashes {
             list-style: none;
             padding: 0;
             margin-bottom: 15px;
+            width: 100%;
         }
         .flashes li {
             background: #27ae60;
@@ -150,7 +181,7 @@
 <body>
     <div class="container">
         <div class="header-row">
-            <h2>Edil Bingo Admin</h2>
+            <h2>Edil Bingo Admin Dashboard</h2>
             <a href="{{ url_for('admin_logout') }}" class="logout-btn">Logout</a>
         </div>
 
@@ -174,6 +205,54 @@
                 <h3>Active Games</h3>
                 <p><strong>{{ active_games }}</strong></p>
             </div>
+            <div class="stat-card">
+                <h3>Pending Withdrawals</h3>
+                <p><strong>{{ pending_withdrawals|length if pending_withdrawals is defined else 0 }}</strong></p>
+            </div>
+        </div>
+
+        <!-- Withdrawal Requests Section -->
+        <div class="section-box">
+            <h3>Pending Withdrawal Requests</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User ID</th>
+                        <th>Amount</th>
+                        <th>Method & Account</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if pending_withdrawals %}
+                        {% for tx in pending_withdrawals %}
+                        <tr>
+                            <td>#{{ tx.id }}</td>
+                            <td>{{ tx.user_id }}</td>
+                            <td>{{ tx.amount | abs }} Birr</td>
+                            <td>{{ tx.withdrawal_phone }}</td>
+                            <td><span style="color: #d35400; font-weight: bold;">{{ tx.status }}</span></td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <form action="{{ url_for('admin_approve_withdrawal', tx_id=tx.id) }}" method="POST">
+                                        <button type="submit">Approve</button>
+                                    </form>
+                                    <form action="{{ url_for('admin_reject_withdrawal', tx_id=tx.id) }}" method="POST">
+                                        <button type="submit" class="btn-danger">Reject</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #666;">No pending withdrawal requests.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
 
         <!-- Active Games Section -->
@@ -184,8 +263,8 @@
                     <tr>
                         <th>Game ID</th>
                         <th>Players Count</th>
+                        <th>Stake / Price</th>
                         <th>Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -193,27 +272,28 @@
                     <tr>
                         <td>#{{ g.game_id }}</td>
                         <td>{{ g.players|length }}</td>
+                        <td>{{ g.entry_price }} Birr</td>
                         <td>{{ g.status }}</td>
-                        <td>-</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" style="text-align: center; color: #666;">No active games running.</td>
+                        <td colspan="4" style="text-align: center; color: #666;">No active games running[cite: 11].</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- User Management Section -->
+        <!-- User Management & Block/Unblock Section -->
         <div class="section-box">
-            <h3>Users Management & Balance Control</h3>
+            <h3>Users Management, Balance & Status Control</h3>
             <table>
                 <thead>
                     <tr>
                         <th>User ID</th>
                         <th>Username / Phone</th>
                         <th>Balance</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -221,20 +301,87 @@
                     {% for u in users %}
                     <tr>
                         <td>{{ u.id }}</td>
-                        <td>{{ u.username or u.phone }}</td>
+                        <td>{{ u.username or u.phone or 'N/A' }}</td>
                         <td>{{ u.balance }} Birr</td>
                         <td>
-                            <form action="{{ url_for('admin_add_balance', user_id=u.id) }}" method="POST" style="display:inline; display:flex; gap:6px; align-items:center;">
-                                <input type="number" name="amount" placeholder="Amount" step="0.5" required>
-                                <button type="submit">Add</button>
-                            </form>
+                            {% if u.is_blocked %}
+                                <span style="color: #c0392b; font-weight: bold;">Blocked</span>
+                            {% else %}
+                                <span style="color: #27ae60; font-weight: bold;">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                <form action="{{ url_for('admin_add_balance', user_id=u.id) }}" method="POST" style="display:flex; gap:4px; align-items:center;">
+                                    <input type="number" name="amount" placeholder="Amount" step="0.5" required>
+                                    <button type="submit">Add</button>
+                                </form>
+                                <form action="{{ url_for('admin_toggle_block', user_id=u.id) }}" method="POST">
+                                    {% if u.is_blocked %}
+                                        <button type="submit" class="btn-warning" style="width: 100%;">Unblock</button>
+                                    {% else %}
+                                        <button type="submit" class="btn-danger" style="width: 100%;">Block</button>
+                                    {% endif %}
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" style="text-align: center; color: #666;">No registered users found in the database.</td>
+                        <td colspan="5" style="text-align: center; color: #666;">No registered users found in the database[cite: 11].</td>
                     </tr>
                     {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Broadcast News & Welcome Photo Section -->
+        <div class="section-box">
+            <h3>Bot Broadcast News & Welcome Image Settings</h3>
+            <form action="{{ url_for('admin_broadcast_news') }}" method="POST" class="form-group">
+                <label>Broadcast Message / News:</label>
+                <textarea name="broadcast_text" rows="3" placeholder="Enter news or announcement for all users..." required></textarea>
+                <button type="submit">Send Broadcast to All Users</button>
+            </form>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+            <form action="{{ url_for('admin_update_welcome_image') }}" method="POST" class="form-group">
+                <label>Update Welcome Image URL:</label>
+                <input type="text" name="image_url" placeholder="https://i.imgur.com/example.jpg" required>
+                <button type="submit">Update Welcome Image</button>
+            </form>
+        </div>
+
+        <!-- Financial Transactions Log Section -->
+        <div class="section-box">
+            <h3>Recent Financial Transactions (Deposits & Withdrawals)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tx ID</th>
+                        <th>User ID</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date / Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if transactions %}
+                        {% for tx in transactions %}
+                        <tr>
+                            <td>#{{ tx.id }}</td>
+                            <td>{{ tx.user_id }}</td>
+                            <td><span style="text-transform: uppercase; font-weight: bold;">{{ tx.type }}</span></td>
+                            <td>{{ tx.amount }} Birr</td>
+                            <td>{{ tx.status }}</td>
+                            <td>{{ tx.withdrawal_phone or tx.completed_at or 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #666;">No recent transactions recorded.</td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>

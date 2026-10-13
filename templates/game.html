@@ -69,7 +69,7 @@
             width: 90%;
             max-width: 400px;
             margin-bottom: 15px;
-            max-height: 220px;
+            max-height: 250px;
             overflow-y: auto;
         }
         .num-cell {
@@ -79,7 +79,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
@@ -201,8 +201,14 @@
             border-radius: 2px;
             font-weight: bold;
         }
-        .board-item.called {
-            background: #008000 !important;
+        
+        .board-item.current-green {
+            background-color: #2ecc71 !important;
+            color: #fff !important;
+            box-shadow: 0 0 6px #2ecc71;
+        }
+        .board-item.called-orange {
+            background-color: #e67e22 !important;
             color: #fff !important;
         }
 
@@ -287,18 +293,24 @@
             margin-top: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
+        
         .bottom-action-row {
             display: flex;
-            gap: 10px;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 8px;
             width: 90%;
             margin-top: 10px;
             margin-bottom: 20px;
+        }
+        .bottom-action-row button {
+            flex: 1;
         }
     </style>
 </head>
 <body>
 
-    <div class="header-title">Addis Bingo</div>
+    <div class="header-title">Edil Bingo</div>
 
     <!-- 1. SELECTION SCREEN -->
     <div id="selection-screen">
@@ -308,7 +320,7 @@
             <div class="stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
         </div>
 
-        <!-- 1 to 100 Cartelas Grid -->
+        <!-- 1 እስከ 200 Cartelas Grid -->
         <div class="number-grid" id="numberGrid"></div>
 
         <!-- Selected Cartela Preview -->
@@ -328,7 +340,7 @@
             <div class="stat-box"><div class="label">Game</div><div class="value">EF0565</div></div>
             <div class="stat-box"><div class="label">Derash</div><div class="value" id="pool-val">104</div></div>
             <div class="stat-box"><div class="label">Bonus</div><div class="value">On</div></div>
-            <div class="stat-box"><div class="label">Players</div><div class="value">13</div></div>
+            <div class="stat-box"><div class="label">Players</div><div class="value" id="player-count">13</div></div>
             <div class="stat-box"><div class="label">Bet</div><div class="value">{{ entry_price }}</div></div>
             <div class="stat-box"><div class="label">Call</div><div class="value" id="call-count">0</div></div>
         </div>
@@ -362,7 +374,7 @@
             </div>
         </div>
 
-        <button class="btn-bingo" onclick="triggerBingo()">BINGO!</button>
+        <button class="btn-bingo" onclick="triggerBingo()">BINGO! (4 Corners / Row / Col)</button>
 
         <div class="bottom-action-row">
             <button class="btn-refresh" onclick="location.reload()">Refresh</button>
@@ -375,22 +387,15 @@
         let calledNumbersList = [];
         let activeCartelaNumbers = [];
 
-        // 1 እስከ 100 ያሉትን 100 የተለዩ ካርቴላዎች በቁጥር ልኬት (Seed) ማመንጫ ሎጂክ
         function generateCartelaNumbers(id) {
             let numbers = [];
-            // B column (1-15)
             let bCol = getUniqueRandoms(1, 15, 5, id);
-            // I column (16-30)
             let iCol = getUniqueRandoms(16, 30, 5, id + 10);
-            // N column (31-45), center is '*'
             let nCol = getUniqueRandoms(31, 45, 4, id + 20);
             nCol.splice(2, 0, '*');
-            // G column (46-60)
             let gCol = getUniqueRandoms(46, 60, 5, id + 30);
-            // O column (61-75)
             let oCol = getUniqueRandoms(61, 75, 5, id + 40);
 
-            // አቀማመጡን በረድፍ (Row-wise) ማስተካከል
             for (let r = 0; r < 5; r++) {
                 numbers.push(bCol[r]);
                 numbers.push(iCol[r]);
@@ -404,7 +409,6 @@
         function getUniqueRandoms(min, max, count, seed) {
             let arr = [];
             for (let i = min; i <= max; i++) arr.push(i);
-            // በ seed ላይ ተመስርቶ ቁጥሮቹን መቀያየር (Pseudorandom per cartela ID)
             for (let i = arr.length - 1; i > 0; i--) {
                 let j = Math.floor((Math.sin(seed + i) + 1) * 0.5 * (i + 1));
                 [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -412,9 +416,9 @@
             return arr.slice(0, count);
         }
 
-        // 1 እስከ 100 ካሉት ቁጥሮች የካርቴላ መምረጫ ግሪድ መሥራት
+        // ከ 1 እስከ 200 ያሉትን ካርቴላዎች ማሳያ ግሪድ መፍጠር
         const gridContainer = document.getElementById('numberGrid');
-        for (let i = 1; i <= 100; i++) {
+        for (let i = 1; i <= 200; i++) {
             let cell = document.createElement('div');
             cell.className = 'num-cell' + (i === selectedCartelaId ? ' selected' : '');
             cell.innerText = i;
@@ -462,7 +466,6 @@
             document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('boardNumberLbl').innerText = "Board number " + selectedCartelaId;
 
-            // የተመረጠውን ካርቴላ ወደ ጨዋታው ሰሌዳ ማስገባት
             const uGrid = document.getElementById('userCartelaGrid');
             uGrid.innerHTML = '';
             activeCartelaNumbers.forEach(num => {
@@ -473,7 +476,6 @@
                 uGrid.appendChild(ucell);
             });
 
-            // የ 30 ሰከንድ ቆጠራ
             let count = 30;
             let timerInterval = setInterval(() => {
                 count--;
@@ -501,6 +503,14 @@
                 let currentNum = availableNumbers[callIndex];
                 callIndex++;
 
+                calledNumbersList.forEach(num => {
+                    let prevItem = document.getElementById('bnum-' + num);
+                    if(prevItem) {
+                        prevItem.classList.remove('current-green');
+                        prevItem.classList.add('called-orange');
+                    }
+                });
+
                 calledNumbersList.push(currentNum);
                 document.getElementById('call-count').innerText = calledNumbersList.length;
 
@@ -513,7 +523,10 @@
                 document.getElementById('currentCallBadge').innerText = letter + '-' + currentNum;
 
                 let boardItem = document.getElementById('bnum-' + currentNum);
-                if(boardItem) boardItem.classList.add('called');
+                if(boardItem) {
+                    boardItem.classList.remove('called-orange');
+                    boardItem.classList.add('current-green');
+                }
 
                 let userCell = document.getElementById('ucell-' + currentNum);
                 if(userCell) userCell.classList.add('marked');
@@ -522,7 +535,7 @@
         }
 
         function triggerBingo() {
-            alert('🎉 BINGO! Congratulations, your claim has been submitted!');
+            alert('🎉 BINGO Claimed! 4 Corners, Row, Column or Diagonal win check submitted.');
         }
     </script>
 </body>

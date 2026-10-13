@@ -174,10 +174,10 @@
     <div class="main-container">
         <div class="section-label">Select Your Game Stake (Birr)</div>
         <div class="stake-options">
-            <button class="stake-btn selected" onclick="setStake(10, this)">10 Birr</button>
-            <button class="stake-btn" onclick="setStake(20, this)">20 Birr</button>
-            <button class="stake-btn" onclick="setStake(50, this)">50 Birr</button>
-            <button class="stake-btn" onclick="setStake(100, this)">100 Birr</button>
+            <button class="stake-btn selected" onclick="setStake(10, this)">10 Birr Room</button>
+            <button class="stake-btn" onclick="setStake(20, this)">20 Birr Room</button>
+            <button class="stake-btn" onclick="setStake(50, this)">50 Birr Room</button>
+            <button class="stake-btn" onclick="setStake(100, this)">100 Birr Room</button>
         </div>
     </div>
 
@@ -190,7 +190,7 @@
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
             <h3>⚠️ Low Balance</h3>
-            <p>Please top up your wallet first to play this game!</p>
+            <p id="modal-error-text">Please top up your wallet first to play this game!</p>
             <button class="modal-btn" onclick="closeModal()">Top Up / OK</button>
         </div>
     </div>
@@ -214,6 +214,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.low_balance || (data.error && data.error.includes('balance'))) {
+                    document.getElementById('modal-error-text').innerText = data.error || "Please top up your wallet first to play this game!";
                     document.getElementById('topupModal').style.display = 'flex';
                 } else if (data.error) {
                     alert(data.error);
