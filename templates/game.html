@@ -195,8 +195,14 @@
             border-radius: 3px;
             font-weight: bold;
         }
+        /* Current Call Green */
         .board-item.current-green {
-            background-color: #008000 !important;
+            background-color: #27ae60 !important;
+            color: #fff !important;
+        }
+        /* Called Orange */
+        .board-item.called-orange {
+            background-color: #f39c12 !important;
             color: #fff !important;
         }
 
@@ -223,8 +229,9 @@
             text-align: center;
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
         }
+        /* Current Call Badge - Green */
         .current-call-badge {
-            background: #ff6f00;
+            background: #27ae60 !important;
             color: white;
             font-size: 18px;
             font-weight: 900;
@@ -242,9 +249,10 @@
         }
         .recent-title { font-size: 10px; font-weight: bold; margin-bottom: 3px; }
         .recent-list { display: flex; justify-content: center; gap: 4px; }
+        /* Recent Balls - Orange */
         .recent-ball {
-            background: #fff;
-            color: #4a154b;
+            background: #f39c12 !important;
+            color: #fff;
             width: 22px;
             height: 22px;
             border-radius: 50%;
@@ -280,7 +288,7 @@
             cursor: pointer;
         }
         .ucell.marked, .ucell.free-cell {
-            background: #008000 !important;
+            background: #27ae60 !important;
             color: #fff !important;
         }
 
@@ -445,7 +453,7 @@
             <div class="winner-name" id="wNameText">Winner Won!</div>
             <div class="winning-cartela-tag" id="wCartelaTag">Winning Cartela : --</div>
             <div class="winner-board-grid" id="wBoardGrid"></div>
-            <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;" id="wRestartText">Auto-refreshing in 4s...</div>
+            <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;" id="wRestartText">Winner declared!</div>
         </div>
     </div>
 
@@ -572,34 +580,11 @@
                 let isMarked = markedNumbers.includes(num) || idx === 12;
                 uCell.className = 'ucell' + (isMarked ? ' marked' : '');
                 uCell.innerText = idx === 12 ? '★' : num;
-                uCell.onclick = () => {
-                    if (idx === 12) return;
-                    markNumberOnServer(num, 0);
-                };
                 uGrid.appendChild(uCell);
             });
         }
         if (playerBoard.length > 0) {
             renderUserCartela();
-        }
-
-        function markNumberOnServer(num, cardIndex) {
-            fetch(`/game/${gameId}/mark`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ number: num, card_index: cardIndex })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.marked) {
-                    markedNumbers = data.marked;
-                    renderUserCartela();
-                }
-                if (data.winner) {
-                    showWinnerModal(data.winners[0]);
-                }
-            })
-            .catch(err => console.error(err));
         }
 
         function claimBingo() {
@@ -624,12 +609,8 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'}
             })
-            .then(() => {
-                window.location.href = '/';
-            })
-            .catch(() => {
-                window.location.href = '/';
-            });
+            .then(() => { window.location.href = '/'; })
+            .catch(() => { window.location.href = '/'; });
         }
 
         function showWinnerModal(winner) {
@@ -645,7 +626,6 @@
                 wGrid.appendChild(wCell);
             });
             document.getElementById('winnerModal').style.display = 'flex';
-            setTimeout(() => { location.href = '/'; }, 4000);
         }
 
         setInterval(() => {
@@ -664,12 +644,41 @@
                     document.getElementById('countdownTimer').innerText = 'Started';
                 }
 
-                document.querySelectorAll('.board-item').forEach(el => el.classList.remove('current-green'));
+                // 1. Colors: Current Call = Green, Previous/Called = Orange
+                document.querySelectorAll('.board-item').forEach(el => {
+                    el.classList.remove('current-green', 'called-orange');
+                });
+
+                let currentCallNum = null;
+                if (data.current_call && data.current_call !== '---') {
+                    currentCallNum = parseInt(data.current_call.split('-')[1]);
+                }
+
+                let calledRawNumbers = [];
                 data.called_numbers.forEach(callStr => {
                     let num = parseInt(callStr.split('-')[1]);
+                    calledRawNumbers.push(num);
                     let el = document.getElementById('bnum-' + num);
-                    if (el) el.classList.add('current-green');
+                    if (el) {
+                        if (num === currentCallNum) {
+                            el.classList.add('current-green'); // Green for current call
+                        } else {
+                            el.classList.add('called-orange'); // Orange for previous calls
+                        }
+                    }
                 });
+
+                // 2. Automatic marking on player cartela
+                let autoMarked = false;
+                playerBoard.forEach(num => {
+                    if (num !== '*' && calledRawNumbers.includes(num) && !markedNumbers.includes(num)) {
+                        markedNumbers.push(num);
+                        autoMarked = true;
+                    }
+                });
+                if (autoMarked) {
+                    renderUserCartela();
+                }
 
                 let recentList = document.getElementById('recentList');
                 recentList.innerHTML = '';

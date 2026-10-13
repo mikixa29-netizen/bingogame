@@ -13,7 +13,7 @@ class BingoGame:
         self.winners: List[Dict[str, any]] = []
         self.created_at = datetime.utcnow()
         self.finished_at = None
-        self.min_players = 2  # ጨዋታው ለመጀመር ቢያንስ 2 ተጫዋቾች ያስፈልጋሉ
+        self.min_players = 2  
         self.max_cards_per_player = max_cards_per_player
         self.max_total_cards = 200
         self.last_call_time = None
@@ -25,7 +25,6 @@ class BingoGame:
         return sum(len(cards) for cards in self.players.values())
 
     def update_pool_and_bonus(self):
-        """Room entry price ላይ በመመስረት ኮሚሽን ቀንሶ ፖል እና ቦነስ ያሰላል"""
         total_collected = self.get_total_cards() * self.entry_price
         
         if self.entry_price == 10:
@@ -111,7 +110,6 @@ class BingoGame:
         return True, "Card added successfully", board
 
     def get_remaining_countdown(self) -> int:
-        """የቀረውን የሰከንድ ብዛት ይመልሳል (30 ሰከንድ)"""
         if self.status == "countdown" and self.countdown_start_time:
             elapsed = (datetime.utcnow() - self.countdown_start_time).total_seconds()
             remaining = self.countdown_seconds - elapsed
@@ -122,7 +120,6 @@ class BingoGame:
         return self.countdown_seconds
 
     def update_active_game(self):
-        """ጨዋታው active ሲሆን በየ 3 ሰከንዱ አዲስ ቁጥር በራሱ እንዲጠራ ያደርጋል"""
         if self.status == "active":
             if not self.last_call_time:
                 self.call_number()
@@ -158,6 +155,31 @@ class BingoGame:
         number = random.choice(available)
         self.called_numbers.append(number)
         self.last_call_time = datetime.utcnow()
+
+        # Automatic marking & checking win condition for all cards automatically
+        for u_id, cards in self.players.items():
+            for c_idx, card in enumerate(cards):
+                if number in card['board'] and number not in card['marked']:
+                    card['marked'].append(number)
+                    card['marked'].sort()
+                
+                # Check if this card has won automatically
+                if self.check_winner_silent(u_id, c_idx):
+                    winner_entry = {
+                        'user_id': u_id,
+                        'card_index': c_idx,
+                        'username': card.get('username', 'Player'),
+                        'cartela_number': card['cartela_number'],
+                        'board': card['board'],
+                        'marked': card['marked']
+                    }
+                    if not any(w['user_id'] == u_id and w['card_index'] == c_idx for w in self.winners):
+                        self.winners.append(winner_entry)
+
+        if self.winners:
+            self.status = "finished"
+            self.finished_at = datetime.utcnow()
+
         return self.format_number(number)
 
     @staticmethod
@@ -180,9 +202,9 @@ class BingoGame:
             return True
         return False
 
-    def check_winner(self, user_id: int, card_index: int) -> Tuple[bool, str]:
+    def check_winner_silent(self, user_id: int, card_index: int) -> bool:
         if user_id not in self.players or card_index >= len(self.players[user_id]):
-            return False, "Player or card not found"
+            return False
 
         card = self.players[user_id][card_index]
         marked = set(card['marked'])
@@ -190,34 +212,40 @@ class BingoGame:
 
         for num in marked:
             if num not in board and num != board[12]:
-                return False, "Invalid marked numbers detected"
+                return False
             if num not in self.called_numbers and num != board[12]:
-                return False, "Number has not been called yet"
+                return False
 
         for i in range(0, 25, 5):
             if all(board[i + j] in marked for j in range(5)):
-                return True, "Winner - Row complete!"
+                return True
 
         for i in range(5):
             if all(board[i + j*5] in marked for j in range(5)):
-                return True, "Winner - Column complete!"
+                return True
 
         if all(board[i] in marked for i in [0, 6, 12, 18, 24]):
-            return True, "Winner - Diagonal complete!"
+            return True
         if all(board[i] in marked for i in [4, 8, 12, 16, 20]):
-            return True, "Winner - Diagonal complete!"
+            return True
 
         if all(board[i] in marked for i in [0, 4, 20, 24]):
-            return True, "Winner - 4 Corners complete!"
+            return True
 
+        return False
+
+    def check_winner(self, user_id: int, card_index: int) -> Tuple[bool, str]:
+        is_w = self.check_winner_silent(user_id, card_index)
+        if is_w:
+            return True, "Winner - Complete!"
         return False, "Keep playing"
 
     def claim_bingo(self, user_id: int, card_index: int) -> Tuple[bool, str, float]:
-        if self.status != "active":
+        if self.status != "active" and self.status != "finished":
             return False, "Game is not active", 0.0
 
         is_win, msg = self.check_winner(user_id, card_index)
-        if not is_win:
+        if not is_win and not self.winners:
             return False, msg, 0.0
 
         card = self.players[user_id][card_index]

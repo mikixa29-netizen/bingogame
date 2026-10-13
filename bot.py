@@ -160,10 +160,10 @@ async def cmd_start(message: Message, state: FSMContext):
 async def process_register_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
+    user_id = event.from_user.id
+    username = event.from_user.username or event.from_user.first_name
     message = event.message if isinstance(event, CallbackQuery) else event
     try:
-        user_id = message.from_user.id
-        username = message.from_user.username or message.from_user.first_name
         with app.app_context():
             user = get_or_create_user(user_id, username)
             if user and user.phone:
@@ -236,12 +236,12 @@ async def process_phone_number(message: Message, state: FSMContext):
 async def process_balance_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
+    user_id = event.from_user.id
+    username = event.from_user.username or event.from_user.first_name
     message = event.message if isinstance(event, CallbackQuery) else event
-    user_id = message.from_user.id
-    username = message.from_user.username or message.from_user.first_name
     with app.app_context():
         user = get_or_create_user(user_id, username)
-        name = user.username or message.from_user.first_name or "Unknown"
+        name = user.username or username or "Unknown"
         phone = user.phone or "Not provided"
         
         details_html = (
@@ -263,9 +263,9 @@ async def process_balance_command_or_callback(event, state: FSMContext = None):
 async def process_play_bingo_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
+    user_id = event.from_user.id
+    username = event.from_user.username or event.from_user.first_name
     message = event.message if isinstance(event, CallbackQuery) else event
-    user_id = message.from_user.id
-    username = message.from_user.username or message.from_user.first_name
     
     with app.app_context():
         get_or_create_user(user_id, username)
@@ -361,9 +361,9 @@ async def process_menu_invite(callback_query: CallbackQuery, state: FSMContext):
 async def process_deposit_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
+    user_id = event.from_user.id
+    username = event.from_user.username or event.from_user.first_name
     message = event.message if isinstance(event, CallbackQuery) else event
-    user_id = message.from_user.id
-    username = message.from_user.username or message.from_user.first_name
     with app.app_context():
         get_or_create_user(user_id, username)
 
@@ -528,13 +528,13 @@ async def process_deposit_reference(message: Message, state: FSMContext):
 async def process_withdraw_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
+    user_id = event.from_user.id
     message = event.message if isinstance(event, CallbackQuery) else event
-    user_id = message.from_user.id
     
     with app.app_context():
         user = User.query.filter_by(telegram_id=user_id).first()
         if not user:
-            user = get_or_create_user(user_id, message.from_user.username)
+            user = get_or_create_user(user_id, event.from_user.username)
         
         if user.balance < 50:
             text = f"⚠️ Insufficient Main Balance for withdrawal. Your Main Balance is {user.balance:.2f} birr. Minimum required is 50 birr."
