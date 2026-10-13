@@ -1,7 +1,7 @@
 import os
 import asyncio
 from app import app
-from bot import run_bot as bot_main  # እዚህ ጋር from bot import run_bot ተብሎ ተስተካክሏል
+from bot import main as bot_main  # Imported 'main' instead of 'run_bot'
 from multiprocessing import Process
 import signal
 import sys
@@ -26,13 +26,12 @@ def run_flask():
         def load(self):
             return self.application
 
-    # Render የሚሰጠውን ፖርት ይቀበላል፣ ካላገኘ 5000 ይጠቀማል
     port = int(os.environ.get('PORT', 5000))
     
     options = {
         'bind': f'0.0.0.0:{port}',
         'workers': 1,
-        'reload': False  # Render ላይ error እንዳያመጣ False መሆን አለበት
+        'reload': False
     }
     FlaskApplication(app, options).run()
 
