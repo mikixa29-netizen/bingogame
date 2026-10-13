@@ -156,7 +156,7 @@ async def cmd_start(message: Message, state: FSMContext):
         await message.answer("Sorry, there was an error. Please try again later.")
 
 @router.message(Command("register"))
-@router.callback_query(F.data == "menu_register", state="*")
+@router.callback_query(F.data == "menu_register")
 async def process_register_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
@@ -232,7 +232,7 @@ async def process_phone_number(message: Message, state: FSMContext):
         logger.error(f"Error processing phone number: {e}")
 
 @router.message(Command("balance"))
-@router.callback_query(F.data == "menu_balance", state="*")
+@router.callback_query(F.data == "menu_balance")
 async def process_balance_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
@@ -259,7 +259,7 @@ async def process_balance_command_or_callback(event, state: FSMContext = None):
         await event.answer()
 
 @router.message(Command("playbingo"))
-@router.callback_query(F.data == "menu_play_bingo", state="*")
+@router.callback_query(F.data == "menu_play_bingo")
 async def process_play_bingo_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
@@ -312,13 +312,12 @@ async def process_play_bingo_command_or_callback(event, state: FSMContext = None
                 reply_markup=keyboard
             )
 
-@router.callback_query(F.data == "play_demo", state="*")
+@router.callback_query(F.data == "play_demo")
 async def process_play_demo(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback_query.answer("Demo mode coming soon!", show_alert=True)
 
-# Instruction & Invite handlers (Newly added for missing buttons)
-@router.callback_query(F.data == "menu_instruction", state="*")
+@router.callback_query(F.data == "menu_instruction")
 async def process_menu_instruction(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
     text = (
@@ -335,7 +334,7 @@ async def process_menu_instruction(callback_query: CallbackQuery, state: FSMCont
         await callback_query.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
     await callback_query.answer()
 
-@router.callback_query(F.data == "menu_invite", state="*")
+@router.callback_query(F.data == "menu_invite")
 async def process_menu_invite(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
     user_id = callback_query.from_user.id
@@ -358,7 +357,7 @@ async def process_menu_invite(callback_query: CallbackQuery, state: FSMContext):
 # ==========================================
 
 @router.message(Command("deposit"))
-@router.callback_query(F.data == "menu_deposit", state="*")
+@router.callback_query(F.data == "menu_deposit")
 async def process_deposit_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
@@ -525,7 +524,7 @@ async def process_deposit_reference(message: Message, state: FSMContext):
 # ==========================================
 
 @router.message(Command("withdraw"))
-@router.callback_query(F.data == "menu_withdraw", state="*")
+@router.callback_query(F.data == "menu_withdraw")
 async def process_withdraw_command_or_callback(event, state: FSMContext = None):
     if state:
         await state.clear()
@@ -774,7 +773,7 @@ async def handle_admin_withdrawal_action(callback_query: CallbackQuery):
 #         PRICE SELECTION & WEBAPP LINK
 # ==========================================
 
-@router.callback_query(lambda c: c.data.startswith('price_'), state="*")
+@router.callback_query(lambda c: c.data.startswith('price_'))
 async def process_price_selection(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
     try:
@@ -823,7 +822,7 @@ async def process_price_selection(callback_query: CallbackQuery, state: FSMConte
     except Exception as e:
         logger.error(f"Error processing price: {e}")
 
-@router.callback_query(F.data == "menu_main", state="*")
+@router.callback_query(F.data == "menu_main")
 async def process_back_to_main(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
     try:
