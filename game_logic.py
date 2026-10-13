@@ -69,7 +69,6 @@ class BingoGame:
         return board
 
     def add_player_card(self, user_id: int, username: str = "Player", cartela_number: int = None) -> Tuple[bool, str, Optional[List[int]]]:
-        # ጨዋታው waiting ወይም countdown ላይ ከሆነ ብቻ ካርቴላ መምረጥ ይቻላል
         if self.status not in ["waiting", "countdown"]:
             return False, "Game already started or finished", None
 
@@ -105,7 +104,6 @@ class BingoGame:
         
         self.update_pool_and_bonus()
 
-        # ቢያንስ 2 ተጫዋቾች ሲገቡ እና ስተተሱ waiting ከሆነ የ 30 ሰከንድ ቆጠራ (Countdown) ይጀምራል
         if len(self.players) >= self.min_players and self.status == "waiting":
             self.status = "countdown"
             self.countdown_start_time = datetime.utcnow()
@@ -123,23 +121,27 @@ class BingoGame:
             return int(remaining)
         return self.countdown_seconds
 
+    def update_active_game(self):
+        """ጨዋታው active ሲሆን በየ 3 ሰከንዱ አዲስ ቁጥር በራሱ እንዲጠራ ያደርጋል"""
+        if self.status == "active":
+            if not self.last_call_time:
+                self.call_number()
+            else:
+                elapsed = (datetime.utcnow() - self.last_call_time).total_seconds()
+                if elapsed >= 3:
+                    self.call_number()
+
     def player_leave(self, user_id: int) -> Tuple[bool, str, bool]:
-        """
-        ተጫዋቹ ከጨዋታው ሲወጣ (Leave):
-        ጨዋታው ከጀመረ ወይም ቆጠራ ላይ ከሆነ balance (Stake) እንዲቀነስ flag (balance_deducted=True) ይመልሳል።
-        """
         if user_id not in self.players:
             return False, "Player not found in this game", False
 
         balance_deducted = False
-        # ጨዋታው countdown ወይም active ከሆነ ዋሌቱ እንዲቀነስ ይደረጋል
         if self.status in ["countdown", "active"]:
             balance_deducted = True
 
         del self.players[user_id]
         self.update_pool_and_bonus()
 
-        # ጨዋታው እየተጫወቱ ሳለ 1 ሰው ብቻ ከቀረ ጨዋታው ይጠናቀቃል/አሸናፊ ይለያል
         if self.status == "active" and len(self.players) < self.min_players:
             self.status = "finished"
             self.finished_at = datetime.utcnow()
@@ -241,7 +243,7 @@ class BingoGame:
             return False
         self.status = "active"
         self.call_number() 
-        return True
+        return `True`
 
     def end_game(self):
         self.status = "finished"

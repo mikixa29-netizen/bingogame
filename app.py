@@ -264,6 +264,10 @@ def game_status_api(game_id):
         return jsonify({'error': 'Game not found'}), 404
 
     game = active_games[game_id]
+    
+    # Automatic number calling trigger update
+    game.update_active_game()
+
     pool, bonus_text = game.update_pool_and_bonus()
     
     formatted_called = [game.format_number(n) for n in game.called_numbers]
