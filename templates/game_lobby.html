@@ -162,8 +162,8 @@
             <div class="value" id="walletVal">{{ balance | default('50.00') }}</div>
         </div>
         <div class="stat-box">
-            <div class="label">Active Game</div>
-            <div class="value">Live</div>
+            <div class="label">Active Games</div>
+            <div class="value" id="activeGamesVal">0</div>
         </div>
         <div class="stat-box">
             <div class="label">Stake</div>
@@ -198,6 +198,20 @@
     <script>
         let selectedStake = 10;
 
+        // Active games ብዛት በሰርቨር በኩል በየ 3 ሰከንድ እንዲያሳይ ፖሊንግ ማድረግ
+        function fetchActiveGamesCount() {
+            fetch('/game/list')
+            .then(res => res.json())
+            .then(games => {
+                let activeCount = games.filter(g => g.status === 'active' || g.status === 'countdown' || g.status === 'waiting').length;
+                document.getElementById('activeGamesVal').innerText = activeCount;
+            })
+            .catch(err => console.log('Error fetching games:', err));
+        }
+
+        setInterval(fetchActiveGamesCount, 3000);
+        fetchActiveGamesCount();
+
         function setStake(amount, btnElement) {
             document.querySelectorAll('.stake-btn').forEach(btn => btn.classList.remove('selected'));
             btnElement.classList.add('selected');
@@ -214,7 +228,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    // Display any error (low balance or max 3 active games limit) inside the modal popup
+                    // የ 3 active games ገደብ ሲሞላ ወይም የባሌንስ እጥረት ሲኖር በሞዳል (Modal) ማሳየት
                     document.getElementById('modal-error-text').innerText = data.error;
                     document.getElementById('topupModal').style.display = 'flex';
                 } else if (data.game_id) {
@@ -234,4 +248,3 @@
     </script>
 </body>
 </html>
-```[cite: 11]

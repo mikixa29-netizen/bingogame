@@ -9,24 +9,25 @@ class BingoGame:
         self.pool = 0.0
         self.players: Dict[int, List[dict]] = {} # user_id -> list of cards
         self.called_numbers: List[int] = []
-        self.status = "waiting"  # waiting, active, finished
+        self.status = "waiting"  # waiting, countdown, active, finished
         self.winners: List[Dict[str, any]] = []
         self.created_at = datetime.utcnow()
         self.finished_at = None
-        self.min_players = 2  # Aatavannu aarambhisaalu kammi endare 2 players beku
+        self.min_players = 2  # ጨዋታው ለመጀመር ቢያንስ 2 ተጫዋቾች ያስፈልጋሉ
         self.max_cards_per_player = max_cards_per_player
         self.max_total_cards = 200
         self.last_call_time = None
         self.bonus_text = "Off"
+        self.countdown_seconds = 30
+        self.countdown_start_time = None
 
     def get_total_cards(self) -> int:
         return sum(len(cards) for cards in self.players.values())
 
     def update_pool_and_bonus(self):
-        """Room entry price aadharamele commission cut maadi pool mattu bonus calculate madutte"""
+        """Room entry price ላይ በመመስረት ኮሚሽን ቀንሶ ፖል እና ቦነስ ያሰላል"""
         total_collected = self.get_total_cards() * self.entry_price
         
-        # Commission percentage based on room entry price
         if self.entry_price == 10:
             commission = 0.15
         elif self.entry_price == 20:
@@ -40,7 +41,6 @@ class BingoGame:
             
         self.pool = total_collected * (1 - commission)
         
-        # Bonus percentage calculation based on pool amount
         if self.pool >= 1500:
             self.bonus_text = "7%"
         elif self.pool >= 1000:
@@ -69,7 +69,8 @@ class BingoGame:
         return board
 
     def add_player_card(self, user_id: int, username: str = "Player", cartela_number: int = None) -> Tuple[bool, str, Optional[List[int]]]:
-        if self.status != "waiting":
+        # ጨዋታው waiting ወይም countdown ላይ ከሆነ ብቻ ካርቴላ መምረጥ ይቻላል
+        if self.status not in ["waiting", "countdown"]:
             return False, "Game already started or finished", None
 
         if user_id not in self.players:
@@ -102,13 +103,48 @@ class BingoGame:
         }
         self.players[user_id].append(card_data)
         
-        # Pool mattu bonus update madona
         self.update_pool_and_bonus()
 
+        # ቢያንስ 2 ተጫዋቾች ሲገቡ እና ስተተሱ waiting ከሆነ የ 30 ሰከንድ ቆጠራ (Countdown) ይጀምራል
         if len(self.players) >= self.min_players and self.status == "waiting":
-            self.start_game()
+            self.status = "countdown"
+            self.countdown_start_time = datetime.utcnow()
 
         return True, "Card added successfully", board
+
+    def get_remaining_countdown(self) -> int:
+        """የቀረውን የሰከንድ ብዛት ይመልሳል (30 ሰከንድ)"""
+        if self.status == "countdown" and self.countdown_start_time:
+            elapsed = (datetime.utcnow() - self.countdown_start_time).total_seconds()
+            remaining = self.countdown_seconds - elapsed
+            if remaining <= 0:
+                self.start_game()
+                return 0
+            return int(remaining)
+        return self.countdown_seconds
+
+    def player_leave(self, user_id: int) -> Tuple[bool, str, bool]:
+        """
+        ተጫዋቹ ከጨዋታው ሲወጣ (Leave):
+        ጨዋታው ከጀመረ ወይም ቆጠራ ላይ ከሆነ balance (Stake) እንዲቀነስ flag (balance_deducted=True) ይመልሳል።
+        """
+        if user_id not in self.players:
+            return False, "Player not found in this game", False
+
+        balance_deducted = False
+        # ጨዋታው countdown ወይም active ከሆነ ዋሌቱ እንዲቀነስ ይደረጋል
+        if self.status in ["countdown", "active"]:
+            balance_deducted = True
+
+        del self.players[user_id]
+        self.update_pool_and_bonus()
+
+        # ጨዋታው እየተጫወቱ ሳለ 1 ሰው ብቻ ከቀረ ጨዋታው ይጠናቀቃል/አሸናፊ ይለያል
+        if self.status == "active" and len(self.players) < self.min_players:
+            self.status = "finished"
+            self.finished_at = datetime.utcnow()
+
+        return True, "Player left successfully", balance_deducted
 
     def call_number(self) -> Optional[str]:
         if self.status != "active":

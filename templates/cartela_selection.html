@@ -50,6 +50,16 @@
             font-weight: bold;
             color: #222;
         }
+        .timer-banner {
+            background: #ff6600;
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: none;
+        }
         .cartela-container {
             width: 92%;
             max-width: 420px;
@@ -78,11 +88,16 @@
             cursor: pointer;
         }
         .cartela-number.selected {
-            background: #008000 !important;
+            background: #ff6600 !important; /* የራስህ የተመረጠ በኦሬንጅ */
             color: #fff !important;
         }
+        .cartela-number.other-selected {
+            background: #209cee !important; /* የሌሎች ተጫዋቾች በሰማያዊ/ግሪን */
+            color: #fff !important;
+            cursor: not-allowed;
+        }
         .cartela-number.unavailable {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
             color: #888;
             cursor: not-allowed;
         }
@@ -167,7 +182,7 @@
             <div class="value" id="wallet-val">{{ balance | default('50.00') }}</div>
         </div>
         <div class="stat-box">
-            <div class="label">Game</div>
+            <div class="label">Room</div>
             <div class="value">#{{ game_id }}</div>
         </div>
         <div class="stat-box">
@@ -180,14 +195,15 @@
         </div>
     </div>
 
+    <div class="timer-banner" id="timerBanner">Game starts in: <span id="countdownTimer">30</span>s</div>
     <div style="font-size: 15px; font-weight: bold; margin-bottom: 8px;">Select Up to 4 Cartelas (1-200)</div>
 
     <div class="cartela-container">
-        <div class="cartela-grid">
+        <div class="cartela-grid" id="cartelaGrid">
             {% for i in range(1, 201) %}
                 <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
                      id="cartela-{{ i }}"
-                     onclick="toggleCartela({{ i }}, {{ 'false' if i in used_cartelas else 'true' }})">
+                     onclick="toggleCartela({{ i }})">
                     {{ i }}
                 </div>
             {% endfor %}
@@ -201,10 +217,10 @@
         <button class="btn-start" onclick="confirmJoin()">Start Game</button>
     </div>
 
-    <!-- Top Up Warning Modal Popup -->
+    <!-- Warning Modal Popup -->
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
-            <h3>⚠️ Low Balance / Error</h3>
+            <h3>⚠️ Notice / Error</h3>
             <p id="modal-error-text">Please top up your wallet first to play this game!</p>
             <button class="modal-btn" onclick="closeModal()">OK</button>
         </div>
@@ -215,15 +231,47 @@
         let maxCards = 4;
         let entryPrice = parseFloat(document.getElementById('entry-price').innerText) || 10;
         let userWallet = parseFloat(document.getElementById('wallet-val').innerText) || 0;
+        let gameId = {{ game_id }};
 
-        function toggleCartela(number, available) {
-            if (!available) {
+        // Check Active Games & Room Status periodically
+        setInterval(checkGameStatus, 2000);
+
+        function checkGameStatus() {
+            fetch(`/game/${gameId}/status`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'countdown') {
+                    document.getElementById('timerBanner').style.display = 'block';
+                    document.getElementById('countdownTimer').innerText = data.countdown_remaining;
+                    if (data.countdown_remaining <= 0) {
+                        window.location.href = `/game/${gameId}`;
+                    }
+                } else if (data.status === 'active') {
+                    window.location.href = `/game/${gameId}`;
+                }
+            }).catch(err => console.log(err));
+
+            // Check if max 3 active games limit reached
+            fetch(`/game/list`)
+            .then(res => res.json())
+            .then(games => {
+                let activeCount = games.filter(g => g.status === 'active' || g.status === 'countdown').length;
+                if (activeCount >= 3) {
+                    // Lock selection if 3 active games are running and current room isn't joined yet
+                    document.getElementById('modal-error-text').innerText = "All active games are full (Maximum 3). Please wait until at least 1 active game finishes.";
+                    // Optionally show modal if not already joined
+                }
+            }).catch(err => console.log(err));
+        }
+
+        function toggleCartela(number) {
+            let target = document.getElementById('cartela-' + number);
+            if (target.classList.contains('unavailable') || target.classList.contains('other-selected')) {
                 alert('This cartela number is already taken.');
                 return;
             }
 
             let index = selectedCartelas.indexOf(number);
-            let target = document.getElementById('cartela-' + number);
 
             if (index > -1) {
                 selectedCartelas.splice(index, 1);
@@ -241,7 +289,7 @@
             if (selectedCartelas.length > 0) {
                 document.getElementById('previewLbl').innerText = "Selected Cartelas: #" + selectedCartelas.join(', #');
             } else {
-                document.getElementById('previewLbl').innerText = "Selected Cartela: None";
+                document.getElementById('previewLbl').innerText = "Selected Cartelas: None";
             }
         }
 
@@ -263,11 +311,11 @@
 
         function joinCardsSequentially(index) {
             if (index >= selectedCartelas.length) {
-                window.location.href = `/game/{{ game_id }}`;
+                window.location.href = `/game/${gameId}`;
                 return;
             }
 
-            fetch(`/game/{{ game_id }}/join`, {
+            fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ cartela_number: selectedCartelas[index] })
@@ -285,6 +333,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
+                document.getElementById('modal-error-text').innerText = "Connection error while joining game.";
                 document.getElementById('topupModal').style.display = 'flex';
             });
         }

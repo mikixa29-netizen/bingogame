@@ -31,7 +31,7 @@ from models import User, Game, GameParticipant, Transaction
 # Global active games rooms storage
 active_games = {}
 
-# Initial default rooms መፍጠር (ሲስተሙ ሲነሳ ጨዋታዎች እንዲኖሩ)[cite: 4]
+# Initial default rooms mîhengkirin
 def init_default_games():
     if not active_games:
         active_games[1] = BingoGame(1, entry_price=10, max_cards_per_player=4)
@@ -45,7 +45,6 @@ init_default_games()
 
 @app.route('/')
 def index():
-    """Lobby ገጽ፡ ያሉትን ጨዋታዎች እና የዩዘርን ባሌንስ (Main + Bonus) ማሳየት[cite: 4]"""
     user_id = request.args.get('user_id') or session.get('user_id')
     if not user_id:
         return "Please open this game through the Telegram Bot (@EdilBingoBot).", 403
@@ -65,22 +64,23 @@ def index():
 
 @app.route('/game/list', methods=['GET'])
 def list_games():
-    """Available games (waiting rooms) ዝርዝር በ JSON መልክ መመለስ[cite: 4]"""
+    """Lîsteya lîstikên berdest (waiting û countdown)"""
     games_data = []
     for g_id, game in active_games.items():
-        if game.status == "waiting":
+        if game.status in ["waiting", "countdown"]:
             games_data.append({
                 'id': g_id,
                 'players': len(game.players),
                 'total_cards': game.get_total_cards(),
                 'entry_price': game.entry_price,
-                'status': game.status
+                'status': game.status,
+                'countdown_remaining': game.get_remaining_countdown() if game.status == 'countdown' else 30
             })
     return jsonify(games_data)
 
 @app.route('/game/create', methods=['POST'])
 def create_game():
-    """አዲስ ሩም (Game Room) መፍጠር እና የጠቅላላ ባሌንስ በቂ መሆኑን ማረጋገጥ[cite: 4]"""
+    """Çêkirina jûreyeke nû ya lîstikê û kontrolkirina balansa bikarhêner"""
     try:
         data = request.json or {}
         entry_price = int(data.get('entry_price', 10))
@@ -93,14 +93,13 @@ def create_game():
         if not user or user.is_blocked:
             return jsonify({'error': 'User not found or blocked.'}), 403
 
-        # በአותו Entry Price ያሉ waiting/active ሩሞችን መቁጠር (ቢበዛ 3 መሆን አለበት)[cite: 4]
         same_price_games = [
             g for g in active_games.values() 
-            if g.entry_price == entry_price and g.status in ['waiting', 'active']
+            if g.entry_price == entry_price and g.status in ['waiting', 'countdown', 'active']
         ]
 
         if len(same_price_games) >= 3:
-            available_game = next((g for g in same_price_games if g.status == 'waiting'), None)
+            available_game = next((g for g in same_price_games if g.status in ['waiting', 'countdown']), None)
             if available_game:
                 return jsonify({'success': True, 'game_id': available_game.game_id, 'entry_price': entry_price})
             else:
@@ -128,7 +127,6 @@ def create_game():
 
 @app.route('/game/<int:game_id>/select_cartela')
 def select_cartela(game_id):
-    """ዩዘሩ የተመረጠውን ሩም አግኝቶ ከ 1-200 ካርቴላ የሚመርጥበት ገጽ[cite: 4]"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
@@ -161,7 +159,6 @@ def select_cartela(game_id):
 
 @app.route('/game/<int:game_id>/join', methods=['POST'])
 def join_game(game_id):
-    """ጨዋታ መቀላቀል፡ ክፍያ ከቦነስ ቀድሞ በመቀነስ፣ ኮይን በመጨመር እና 10 ኮይን ሲሞላ ወደ ቦነስ በመቀየር[cite: 4]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -187,7 +184,7 @@ def join_game(game_id):
             'low_balance': True
         }), 400
 
-    # 1. Split-balance deduction: Bonus balance first, then Main balance
+    # 1. Split-balance deduction
     remaining_cost = float(game.entry_price)
     if user.bonus_balance >= remaining_cost:
         user.bonus_balance -= remaining_cost
@@ -197,11 +194,11 @@ def join_game(game_id):
         user.bonus_balance = 0.0
         user.balance -= remaining_cost
 
-    # 2. Add Coins based on stake (10 Birr = 1 coin, 20 Birr = 2 coins, etc.)
+    # 2. Add Coins
     earned_coins = int(game.entry_price // 10)
     user.coin = (user.coin or 0) + earned_coins
 
-    # 3. Auto-convert 10 coins into 10 Birr Bonus Balance
+    # 3. Auto-convert coins to bonus
     if user.coin >= 10:
         conversion_count = user.coin // 10
         user.bonus_balance += conversion_count * 10.0
@@ -212,7 +209,7 @@ def join_game(game_id):
     username = user.username or "Player"
     success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=int(cartela_number))
     if not success:
-        # Refund if failed (simplified back to main/bonus)
+        # Refund if failed
         user.balance += game.entry_price
         db.session.commit()
         return jsonify({'error': msg}), 400
@@ -226,7 +223,6 @@ def join_game(game_id):
 
 @app.route('/game/<int:game_id>')
 def play_game(game_id):
-    """የላይቭ ጨዋታ ማሳያ ገጽ[cite: 4]"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
@@ -243,9 +239,6 @@ def play_game(game_id):
         return redirect(url_for('index'))
 
     player_cards = game.players[user.telegram_id]
-
-    if game.status == "waiting" and len(game.players) >= game.min_players:
-        game.start_game()
 
     current_number = None
     if game.status == "active" and game.called_numbers:
@@ -268,7 +261,7 @@ def play_game(game_id):
 
 @app.route('/game/<int:game_id>/status', methods=['GET'])
 def game_status_api(game_id):
-    """የጨዋታውን ወቅታዊ መረጃዎች በእውነተኛ ሰዓት (Real-time) መመለስ[cite: 4]"""
+    """Agahdariya zindî ya lîstikê û demamayî ya countdown"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -296,6 +289,7 @@ def game_status_api(game_id):
         'pool': round(pool, 2),
         'bonus': bonus_text,
         'status': game.status,
+        'countdown_remaining': game.get_remaining_countdown() if game.status == 'countdown' else 0,
         'called_numbers': formatted_called,
         'current_call': formatted_called[-1] if formatted_called else '---',
         'winners': formatted_winners,
@@ -304,7 +298,6 @@ def game_status_api(game_id):
 
 @app.route('/game/<int:game_id>/call', methods=['POST'])
 def call_number(game_id):
-    """ቁጥር መጥሪያ ራውት[cite: 4]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -322,7 +315,6 @@ def call_number(game_id):
 
 @app.route('/game/<int:game_id>/mark', methods=['POST'])
 def mark_number(game_id):
-    """ቢንጎ ማረጋገጫ (አሸናፊ ሲሆን ሽልማቱ በቀጥታ ወደ Main Balance ይገባል)[cite: 4]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -346,7 +338,6 @@ def mark_number(game_id):
         winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
         if winner:
             if user:
-                # Winnings go strictly to MAIN BALANCE
                 user.balance += prize_per_winner
                 user.games_won += 1
                 db.session.commit()
@@ -382,7 +373,7 @@ def mark_number(game_id):
 
 @app.route('/game/<int:game_id>/leave', methods=['POST'])
 def leave_game(game_id):
-    """ተጫዋቹ ጨዋታውን መልቀቅ ሲፈልግ ከግሩም ማስወገድ"""
+    """Lîstikvan ji jûreyê derdikeve; ger lîstik dest pê kiribe an di countdown de be, ceza (balance deduction) tê sepandin"""
     try:
         if game_id not in active_games:
             return jsonify({'success': True})
@@ -391,11 +382,20 @@ def leave_game(game_id):
         if user_id:
             user = User.query.filter_by(telegram_id=user_id).first()
             if user and user.telegram_id in game.players:
-                del game.players[user.telegram_id]
-                game.update_pool_and_bonus()
+                success, msg, balance_deducted = game.player_leave(user.telegram_id)
+                if balance_deducted:
+                    # Ji balansa sereke an bonusê heqê têketinê tê birîn
+                    if user.balance >= game.entry_price:
+                        user.balance -= game.entry_price
+                    else:
+                        remainder = game.entry_price - user.balance
+                        user.balance = 0.0
+                        user.bonus_balance = max(0.0, user.bonus_balance - remainder)
+                    db.session.commit()
         session.pop('active_game_id', None)
         return jsonify({'success': True})
     except Exception as e:
+        logger.exception(f"Error in leave_game: {str(e)}")
         return jsonify({'error': 'Failed'}), 500
 
 
@@ -429,7 +429,7 @@ def admin_login():
 @admin_required
 def admin_dashboard():
     game_list = list(active_games.values())
-    active_count = len([g for g in game_list if hasattr(g, 'status') and g.status == "active"])
+    active_count = len([g for g in game_list if hasattr(g, 'status') and g.status in ["active", "countdown"]])
     users_list = User.query.all()
     
     pending_ws = Transaction.query.filter_by(type='withdraw', status='pending').all()
@@ -449,7 +449,6 @@ def admin_dashboard():
 @app.route('/admin/user/<int:user_id>/update', methods=['POST'])
 @admin_required
 def admin_update_user(user_id):
-    """አድሚኑ የዩዘርን Main Balance, Bonus Balance እና Coin ማስተካከል እንዲችል"""
     try:
         user = User.query.get(user_id)
         if user:
@@ -486,7 +485,7 @@ def admin_reject_withdrawal(tx_id):
         tx.status = 'rejected'
         user = User.query.get(tx.user_id)
         if user:
-            user.balance += abs(tx.amount) # Refund to main balance
+            user.balance += abs(tx.amount)
         db.session.commit()
         flash('Withdrawal request rejected and refunded to user main balance.', 'success')
     else:

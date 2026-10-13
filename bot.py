@@ -127,7 +127,8 @@ async def set_bot_commands(bot: Bot):
     await bot.set_my_commands(commands)
 
 @router.message(Command("start"))
-async def cmd_start(message: Message):
+async def cmd_start(message: Message, state: FSMContext):
+    await state.clear()
     try:
         user_id = message.from_user.id
         username = message.from_user.username or message.from_user.first_name
@@ -155,8 +156,10 @@ async def cmd_start(message: Message):
         await message.answer("Sorry, there was an error. Please try again later.")
 
 @router.message(Command("register"))
-@router.callback_query(F.data == "menu_register")
-async def process_register_command_or_callback(event):
+@router.callback_query(F.data == "menu_register", state="*")
+async def process_register_command_or_callback(event, state: FSMContext = None):
+    if state:
+        await state.clear()
     message = event.message if isinstance(event, CallbackQuery) else event
     try:
         user_id = message.from_user.id
@@ -189,7 +192,8 @@ async def process_register_command_or_callback(event):
             await event.answer("An error occurred.", show_alert=True)
 
 @router.message(F.contact)
-async def process_phone_number(message: Message):
+async def process_phone_number(message: Message, state: FSMContext):
+    await state.clear()
     if not message.contact or message.contact.user_id != message.from_user.id:
         await message.answer("Please share your own contact information.")
         return
@@ -228,8 +232,10 @@ async def process_phone_number(message: Message):
         logger.error(f"Error processing phone number: {e}")
 
 @router.message(Command("balance"))
-@router.callback_query(F.data == "menu_balance")
-async def process_balance_command_or_callback(event):
+@router.callback_query(F.data == "menu_balance", state="*")
+async def process_balance_command_or_callback(event, state: FSMContext = None):
+    if state:
+        await state.clear()
     message = event.message if isinstance(event, CallbackQuery) else event
     user_id = message.from_user.id
     username = message.from_user.username or message.from_user.first_name
@@ -253,8 +259,10 @@ async def process_balance_command_or_callback(event):
         await event.answer()
 
 @router.message(Command("playbingo"))
-@router.callback_query(F.data == "menu_play_bingo")
-async def process_play_bingo_command_or_callback(event):
+@router.callback_query(F.data == "menu_play_bingo", state="*")
+async def process_play_bingo_command_or_callback(event, state: FSMContext = None):
+    if state:
+        await state.clear()
     message = event.message if isinstance(event, CallbackQuery) else event
     user_id = message.from_user.id
     username = message.from_user.username or message.from_user.first_name
@@ -304,9 +312,45 @@ async def process_play_bingo_command_or_callback(event):
                 reply_markup=keyboard
             )
 
-@router.callback_query(F.data == "play_demo")
-async def process_play_demo(callback_query: CallbackQuery):
+@router.callback_query(F.data == "play_demo", state="*")
+async def process_play_demo(callback_query: CallbackQuery, state: FSMContext):
+    await state.clear()
     await callback_query.answer("Demo mode coming soon!", show_alert=True)
+
+# Instruction & Invite handlers (Newly added for missing buttons)
+@router.callback_query(F.data == "menu_instruction", state="*")
+async def process_menu_instruction(callback_query: CallbackQuery, state: FSMContext):
+    await state.clear()
+    text = (
+        "📖 <b>Edil Bingo Instructions</b>:\n\n"
+        "1. Select a room according to your stake (10, 20, 50, 100 Birr).\n"
+        "2. Choose up to 4 Cartelas (1-200).\n"
+        "3. Wait for the countdown and game to start.\n"
+        "4. Mark called numbers and claim Bingo to win the prize pool!\n"
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")]])
+    try:
+        await callback_query.message.edit_caption(caption=text, reply_markup=keyboard, parse_mode="HTML")
+    except Exception:
+        await callback_query.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+    await callback_query.answer()
+
+@router.callback_query(F.data == "menu_invite", state="*")
+async def process_menu_invite(callback_query: CallbackQuery, state: FSMContext):
+    await state.clear()
+    user_id = callback_query.from_user.id
+    bot_info = await callback_query.bot.get_me()
+    referral_link = f"https://t.me/{bot_info.username}?start={user_id}"
+    text = (
+        "✉️ <b>Invite Friends & Earn!</b>\n\n"
+        f"Share your referral link with friends:\n<code>{referral_link}</code>"
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")]])
+    try:
+        await callback_query.message.edit_caption(caption=text, reply_markup=keyboard, parse_mode="HTML")
+    except Exception:
+        await callback_query.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+    await callback_query.answer()
 
 
 # ==========================================
@@ -314,8 +358,10 @@ async def process_play_demo(callback_query: CallbackQuery):
 # ==========================================
 
 @router.message(Command("deposit"))
-@router.callback_query(F.data == "menu_deposit")
+@router.callback_query(F.data == "menu_deposit", state="*")
 async def process_deposit_command_or_callback(event, state: FSMContext = None):
+    if state:
+        await state.clear()
     message = event.message if isinstance(event, CallbackQuery) else event
     user_id = message.from_user.id
     username = message.from_user.username or message.from_user.first_name
@@ -479,8 +525,10 @@ async def process_deposit_reference(message: Message, state: FSMContext):
 # ==========================================
 
 @router.message(Command("withdraw"))
-@router.callback_query(F.data == "menu_withdraw")
+@router.callback_query(F.data == "menu_withdraw", state="*")
 async def process_withdraw_command_or_callback(event, state: FSMContext = None):
+    if state:
+        await state.clear()
     message = event.message if isinstance(event, CallbackQuery) else event
     user_id = message.from_user.id
     
@@ -726,8 +774,9 @@ async def handle_admin_withdrawal_action(callback_query: CallbackQuery):
 #         PRICE SELECTION & WEBAPP LINK
 # ==========================================
 
-@router.callback_query(lambda c: c.data.startswith('price_'))
-async def process_price_selection(callback_query: CallbackQuery):
+@router.callback_query(lambda c: c.data.startswith('price_'), state="*")
+async def process_price_selection(callback_query: CallbackQuery, state: FSMContext):
+    await state.clear()
     try:
         price = int(callback_query.data.split('_')[1])
         user_id = callback_query.from_user.id
@@ -774,8 +823,9 @@ async def process_price_selection(callback_query: CallbackQuery):
     except Exception as e:
         logger.error(f"Error processing price: {e}")
 
-@router.callback_query(F.data == "menu_main")
-async def process_back_to_main(callback_query: CallbackQuery):
+@router.callback_query(F.data == "menu_main", state="*")
+async def process_back_to_main(callback_query: CallbackQuery, state: FSMContext):
+    await state.clear()
     try:
         await callback_query.message.delete()
         try:
