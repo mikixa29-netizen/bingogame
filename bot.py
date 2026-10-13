@@ -25,11 +25,11 @@ from database import db, init_db
 from models import User, Transaction
 import aiohttp
 
-# Configure logging
+# Configure logging[cite: 6]
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Bot Configuration
+# Bot Configuration[cite: 6]
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
@@ -61,7 +61,7 @@ def get_welcome_photo():
     photo_ref = config.get('welcome_image_file_id', DEFAULT_WELCOME_IMAGE)
     return URLInputFile(photo_ref) if photo_ref.startswith("http") else photo_ref
 
-# States
+# States[cite: 6]
 class UserState(StatesGroup):
     waiting_for_deposit_method = State()
     waiting_for_deposit_amount = State()
@@ -838,4 +838,40 @@ async def cancel_state(message: Message, state: FSMContext):
     await message.answer("Action cancelled.")
 
 @router.message(AdminState.waiting_for_news)
-async def process_admin_
+async def process_admin_news(message: Message, state: FSMContext):
+    news_text = message.text or message.caption or ""
+    photo = message.photo[-1].file_id if message.photo else None
+    await state.clear()
+    
+    success_count = 0
+    with app.app_context():
+        users = User.query.all()
+        for u in users:
+            try:
+                if photo:
+                    await message.bot.send_photo(chat_id=u.telegram_id, photo=photo, caption=news_text, parse_mode="HTML")
+                else:
+                    await message.bot.send_message(chat_id=u.telegram_id, text=news_text, parse_mode="HTML")
+                success_count += 1
+                await asyncio.sleep(0.04) # Telegram rate limit protection
+            except Exception as e:
+                logger.error(f"Failed to send broadcast to user {u.telegram_id}: {e}")
+                
+    await message.answer(f"✅ Broadcast successfully sent to {success_count} users!")
+
+
+# ==========================================
+#             BOT ENTRYPOINT
+# ==========================================
+
+async def main():
+    bot = Bot(token=TOKEN)
+    dp = Dispatcher(storage=MemoryStorage())
+    dp.include_router(router)
+    
+    await set_bot_commands(bot)
+    logger.info("Starting Aiogram bot polling...")
+    await dp.start_polling(bot)
+
+if __name__ == '__main__':
+    asyncio.run(main())
