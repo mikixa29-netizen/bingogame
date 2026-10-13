@@ -107,12 +107,13 @@
             cursor: pointer;
             transition: transform 0.1s;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            user-select: none;
         }
         .cartela-number:active {
             transform: scale(0.92);
         }
         
-        /* User selection: Bold Green */
+        /* Cartela seleccionada por el usuario: Verde */
         .cartela-number.selected {
             background: #27ae60 !important;
             color: #fff !important;
@@ -120,7 +121,7 @@
             box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4);
         }
 
-        /* Occupied/Taken by other players: Bold Orange */
+        /* Cartela ocupada por otros jugadores: Naranja intenso */
         .cartela-number.other-selected,
         .cartela-number.unavailable {
             background: #ff6600 !important;
@@ -130,7 +131,7 @@
             opacity: 0.9;
         }
 
-        /* Preview Area for Selected Cartelas */
+        /* Vista previa (Preview Box) */
         .previews-wrapper {
             width: 100%;
             max-width: 420px;
@@ -221,7 +222,7 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
-        /* Modal Popup */
+
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -283,14 +284,13 @@
             {% for i in range(1, 201) %}
                 <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
                      id="cartela-{{ i }}"
-                     data-cartela-number="{{ i }}">
+                     data-number="{{ i }}">
                     {{ i }}
                 </div>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Previews Container -->
     <div class="previews-wrapper">
         <div class="preview-box" id="previewLbl">Selected Cartelas: None</div>
         <div class="mini-cartelas-row" id="miniCartelasRow"></div>
@@ -301,7 +301,6 @@
         <button class="btn-start" onclick="confirmJoin()">Start Game</button>
     </div>
 
-    <!-- Warning Modal Popup -->
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
             <h3>⚠️ Notice / Error</h3>
@@ -310,14 +309,24 @@
         </div>
     </div>
 
-    <div id="game-data" data-game-id='{{ game_id | tojson | safe }}' style="display:none;"></div>
+    <div id="game-data" data-game-id="{{ game_id }}" style="display:none;"></div>
 
     <script>
         let selectedCartelas = [];
         let maxCards = 4;
         let entryPrice = parseFloat(document.getElementById('entry-price').innerText) || 10;
         let userWallet = parseFloat(document.getElementById('wallet-val').innerText) || 0;
-        let gameId = JSON.parse(document.getElementById('game-data').dataset.gameId);
+        let gameId = parseInt(document.getElementById('game-data').dataset.gameId, 10) || 0;
+
+        // Agregar los eventos onclick de forma limpia sin errores de Jinja2
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.cartela-number').forEach(item => {
+                item.addEventListener('click', () => {
+                    const num = parseInt(item.getAttribute('data-number'));
+                    toggleCartela(num);
+                });
+            });
+        });
 
         setInterval(checkGameStatus, 2000);
 
@@ -346,7 +355,6 @@
             }).catch(err => console.log(err));
         }
 
-        // 5x5 Bingo Cartela Generator logic (matching server-side math)
         function generateCartelaNumbers(id) {
             let numbers = [];
             let bCol = getUniqueRandoms(1, 15, 5, id);
@@ -378,7 +386,7 @@
 
         function toggleCartela(number) {
             let target = document.getElementById('cartela-' + number);
-            if (target.classList.contains('unavailable') || target.classList.contains('other-selected')) {
+            if (!target || target.classList.contains('unavailable') || target.classList.contains('other-selected')) {
                 alert('This cartela number is already taken.');
                 return;
             }
@@ -390,7 +398,7 @@
                 target.classList.remove('selected');
             } else {
                 if (selectedCartelas.length >= maxCards) {
-                    alert('ከፍተኛው የካርቴላ ገደብ 4 ነው! (Maximum 4 cards allowed)');
+                    alert('Maximum 4 cards allowed!');
                     return;
                 }
                 selectedCartelas.push(number);
@@ -406,7 +414,6 @@
             if (selectedCartelas.length > 0) {
                 previewLbl.innerText = "Selected Cartelas: #" + selectedCartelas.join(', #');
                 
-                // Render visual mini-grids for each selected card
                 selectedCartelas.forEach(cardId => {
                     let cardBox = document.createElement('div');
                     cardBox.className = 'mini-card-preview';
@@ -437,7 +444,7 @@
 
         function confirmJoin() {
             if (selectedCartelas.length === 0) {
-                alert('እባክዎ ቢያንስ 1 ካርቴላ ይምረጡ!');
+                alert('Please select at least 1 cartela!');
                 return;
             }
 
