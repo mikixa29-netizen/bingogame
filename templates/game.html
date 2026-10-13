@@ -2,55 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edil Bingo - Live Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Edil Bingo</title>
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
             margin: 0;
             padding: 10px;
             background-color: #a483cf;
-            font-family: Arial, sans-serif;
             color: #fff;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
-        }
-        .header-title {
-            font-size: 26px;
-            font-weight: 900;
-            margin: 5px 0 10px 0;
-            letter-spacing: 1px;
-            text-align: center;
+            overflow-x: hidden;
         }
 
+        /* Top Stats Bar */
         .top-stats {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             width: 100%;
-            max-width: 500px;
-            margin-bottom: 12px;
-            padding: 0 5px;
-            box-sizing: border-box;
+            max-width: 420px;
+            margin-top: 4px;
+            margin-bottom: 8px;
         }
         .stat-box {
             background: #ffffff;
             color: #333;
-            border-radius: 8px;
-            padding: 4px 6px;
+            border-radius: 12px;
+            padding: 6px 4px;
             text-align: center;
             flex: 1;
             min-width: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
         }
         .stat-box .label {
             font-size: 9px;
             color: #666;
             text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 800;
+            letter-spacing: 0.3px;
         }
         .stat-box .value {
             font-size: 13px;
@@ -59,73 +57,119 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            margin-top: 2px;
         }
 
         #selection-screen {
             width: 100%;
-            max-width: 450px;
+            max-width: 420px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
+
+        .select-subtitle {
+            font-size: 14px;
+            font-weight: 800;
+            margin: 8px 0 10px 0;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* Responsive 10-Column Grid */
         .number-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 10px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 400px;
-            margin-bottom: 15px;
-            max-height: 230px;
+            background: rgba(255, 255, 255, 0.18);
+            padding: 8px;
+            border-radius: 14px;
+            width: 100%;
+            max-height: 280px;
             overflow-y: auto;
+            margin-bottom: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
         }
+        
         .num-cell {
             background: #e2d1f9;
-            color: #333;
+            color: #2d2d2d;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 11px;
-            font-weight: bold;
-            border-radius: 4px;
+            font-weight: 800;
+            border-radius: 6px;
             cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        /* User's selected cartela is green */
-        .num-cell.selected {
-            background: #27ae60 !important;
-            color: #fff !important;
-        }
-        /* Cartelas taken by other players are bold orange */
-        .num-cell.taken-by-other {
-            background: #e67e22 !important;
-            color: #fff !important;
-            font-weight: 900;
-            cursor: not-allowed;
+        .num-cell:active {
+            transform: scale(0.92);
         }
 
-        .mini-cartela-preview {
+        /* 1. ተጠቃሚው የመረጣቸው ካርቴላዎች - ደማቅ አረንጓዴ (Green) */
+        .num-cell.selected {
+            background-color: #27ae60 !important;
+            color: #ffffff !important;
+            font-weight: 900;
+            box-shadow: 0 2px 5px rgba(39, 174, 96, 0.4);
+        }
+
+        /* 2. ሌሎች ተጫዋቾች የያዟቸው - ደማቅ ብርቱካናማ (Bold Orange) */
+        .num-cell.taken-by-other {
+            background-color: #ff6600 !important;
+            color: #ffffff !important;
+            cursor: not-allowed;
+            font-weight: 900;
+            opacity: 0.9;
+        }
+
+        .selected-info-box {
+            background: #ffffff;
+            color: #222;
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+        }
+
+        /* Mini Cartela Preview */
+        .cartela-preview-container {
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .mini-cartela-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
-            background: #f3eafa;
-            padding: 6px;
-            border-radius: 6px;
-            width: 150px;
-            margin-bottom: 12px;
+            gap: 4px;
+            width: 160px;
         }
         .mini-cell {
-            background: #fff;
+            background: #f0f0f0;
             color: #333;
-            font-size: 11px;
+            font-size: 10px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 2px;
-            font-weight: bold;
+            border-radius: 4px;
+            font-weight: 800;
         }
         .mini-cell.star {
             background: #27ae60;
@@ -134,66 +178,67 @@
 
         .action-buttons {
             display: flex;
-            gap: 12px;
-            width: 90%;
-            max-width: 380px;
-            justify-content: center;
-            margin-bottom: 20px;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 15px;
         }
         .btn-refresh, .btn-start {
             border: none;
-            padding: 12px 0;
+            padding: 14px 0;
             flex: 1;
             border-radius: 25px;
             font-size: 15px;
-            font-weight: bold;
+            font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+            transition: opacity 0.2s;
+        }
+        .btn-refresh:active, .btn-start:active {
+            opacity: 0.85;
         }
         .btn-refresh { background: #209cee; }
         .btn-start { background: #ff6600; }
 
+        /* Game Screen Area */
         #game-screen {
             display: none;
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             flex-direction: column;
             align-items: center;
         }
         .game-main-area {
             display: flex;
             width: 100%;
-            gap: 10px;
+            gap: 8px;
             margin-top: 5px;
         }
         .board-column {
             background: #ffffff;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 6px;
             width: 48%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
         }
-        
         .bingo-header-row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             text-align: center;
             font-weight: 900;
-            font-size: 12px;
+            font-size: 11px;
             margin-bottom: 4px;
         }
         .bingo-header-row div {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white !important;
             margin: 0 auto;
-            font-size: 10px;
         }
         .bingo-header-row div:nth-child(1) { background-color: #3498db; }
         .bingo-header-row div:nth-child(2) { background-color: #e74c3c; }
@@ -201,16 +246,8 @@
         .bingo-header-row div:nth-child(4) { background-color: #e67e22; }
         .bingo-header-row div:nth-child(5) { background-color: #9b59b6; }
 
-        .board-list {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .board-row {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 2px;
-        }
+        .board-list { display: flex; flex-direction: column; gap: 2px; }
+        .board-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
         .board-item {
             background: #f0f0f0;
             color: #444;
@@ -218,76 +255,35 @@
             text-align: center;
             padding: 3px 0;
             border-radius: 3px;
-            font-weight: bold;
+            font-weight: 800;
         }
-        .board-item.current-green {
-            background-color: #2ecc71 !important;
-            color: #fff !important;
-            border-radius: 50% !important;
-        }
-        .board-item.called-orange {
-            background-color: #e67e22 !important;
-            color: #fff !important;
-            border-radius: 50% !important;
-        }
+        .board-item.current-green { background-color: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
+        .board-item.called-orange { background-color: #ff6600 !important; color: #fff !important; border-radius: 50% !important; }
 
-        .call-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .status-box {
-            background: #e0d5f5;
-            border-radius: 8px;
-            padding: 6px;
-            text-align: center;
-            color: #4a154b;
-        }
-        .status-box .title { font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .status-box .val { font-size: 14px; font-weight: 900; }
+        .call-area { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .status-box { background: #e0d5f5; border-radius: 8px; padding: 6px; text-align: center; color: #4a154b; }
+        .status-box .title { font-size: 9px; font-weight: bold; }
+        .status-box .val { font-size: 13px; font-weight: 900; }
 
-        .current-call-box {
-            background: #5b2c6f;
-            border-radius: 10px;
-            padding: 8px;
-            text-align: center;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-        }
+        .current-call-box { background: #5b2c6f; border-radius: 10px; padding: 6px; text-align: center; }
         .current-call-badge {
-            background: #e67e22 !important;
+            background: #ff6600 !important;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 900;
-            width: 55px;
-            height: 55px;
+            width: 50px; height: 50px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             margin: 4px auto;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
         }
 
-        .recent-calls-box {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .recent-title { font-size: 10px; font-weight: bold; margin-bottom: 3px; }
-        .recent-list { display: flex; justify-content: center; gap: 5px; }
-        
+        .recent-calls-box { background: rgba(255, 255, 255, 0.2); padding: 5px; border-radius: 8px; text-align: center; }
+        .recent-list { display: flex; justify-content: center; gap: 4px; }
         .recent-ball {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 10px;
-            color: #fff !important;
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 10px; color: #fff !important;
         }
         .ball-b { background-color: #3498db !important; }
         .ball-i { background-color: #e74c3c !important; }
@@ -295,141 +291,57 @@
         .ball-g { background-color: #e67e22 !important; }
         .ball-o { background-color: #9b59b6 !important; }
 
-        .user-cartelas-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 260px;
-            overflow-y: auto;
-        }
-        .user-cartela {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 6px;
-            color: #333;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-        .user-cartela-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
-        }
+        .user-cartelas-container { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+        .user-cartela { background: #ffffff; border-radius: 8px; padding: 5px; color: #333; }
+        .user-cartela-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
         .ucell {
-            background: #f9f9f9;
-            color: #333;
-            font-size: 11px;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            font-weight: 900;
+            background: #f9f9f9; color: #333; font-size: 10px; aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 3px; font-weight: 900;
         }
-        .ucell.marked, .ucell.free-cell {
-            background: #27ae60 !important;
-            color: #fff !important;
-            border-radius: 50% !important;
-        }
+        .ucell.marked { background: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
 
         .btn-bingo {
-            background: #ff6f00;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 12px;
-            border-radius: 25px;
-            font-size: 18px;
-            font-weight: 900;
-            cursor: pointer;
-            margin-top: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .btn-bingo:hover { background: #e66000; }
-
-        .bottom-action-row {
-            display: flex;
-            gap: 8px;
-            width: 100%;
-            margin-top: 8px;
-            margin-bottom: 20px;
+            background: #ff6600; color: white; border: none; width: 100%;
+            padding: 12px; border-radius: 20px; font-size: 16px; font-weight: 900;
+            cursor: pointer; margin-top: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .winner-modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: none;
+            justify-content: center; align-items: center; z-index: 9999;
         }
         .winner-modal-card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 20px;
-            width: 90%;
-            max-width: 340px;
-            text-align: center;
-            color: #fff;
+            background: #1e293b; border-radius: 16px; padding: 18px;
+            width: 90%; max-width: 320px; text-align: center; color: #fff;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        .crown-icon { font-size: 38px; }
-        .winner-title { font-size: 24px; font-weight: 900; color: #facc15; margin: 4px 0; }
-        .winner-name { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #38bdf8; }
-        .winning-cartela-tag {
-            background: #334155;
-            padding: 5px 10px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            display: inline-block;
-        }
-        .winner-board-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
-            background: #0f172a;
-            padding: 6px;
-            border-radius: 10px;
-        }
-        .w-cell {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fff;
-            color: #000;
-            font-weight: 900;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-        .w-cell.marked { background: #eab308; color: #fff; }
-        .w-cell.winning-line { background: #16a34a; color: #fff; }
     </style>
 </head>
 <body>
 
-    <!-- Single Top Header Title -->
-    <div class="header-title">Edil Bingo</div>
-
+    <!-- SELECTION SCREEN -->
     <div id="selection-screen">
         <div class="top-stats">
             <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
             <div class="stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
             <div class="stat-box"><div class="label">Stake/Card</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
+            <div class="stat-box"><div class="label">Selected</div><div class="value" id="selectedCountLbl">0/4</div></div>
         </div>
 
-        <div class="stat-box" style="width: 110px; margin-bottom: 8px;">
-            <div class="label">Selected</div>
-            <div class="value" id="selectedCountLbl">1/4</div>
-        </div>
-
-        <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px;">Select Up to 4 Cartelas (1-200)</div>
+        <div class="select-subtitle">Select Up to 4 Cartelas (1-200)</div>
         <div class="number-grid" id="numberGrid"></div>
 
-        <div style="font-size:12px; font-weight:bold; margin-bottom:4px;" id="selectedCartelaLbl">Selected Cartela: #1</div>
-        <div class="mini-cartela-preview" id="miniCartela"></div>
+        <div class="selected-info-box" id="selectedCartelasListLbl">
+            Selected Cartelas: None
+        </div>
+
+        <!-- Live Mini Preview -->
+        <div class="cartela-preview-container" id="previewContainer" style="display:none;">
+            <div style="font-size: 11px; color:#444; text-align:center; font-weight:800; margin-bottom:6px;" id="previewTitleLbl">Cartela Preview</div>
+            <div class="mini-cartela-grid" id="miniCartela"></div>
+        </div>
 
         <div class="action-buttons">
             <button class="btn-refresh" onclick="location.reload()">Refresh</button>
@@ -437,8 +349,8 @@
         </div>
     </div>
 
+    <!-- GAME SCREEN -->
     <div id="game-screen">
-        <!-- Inside Game Screen: Only Game Stats & Board, no duplicate title -->
         <div class="top-stats">
             <div class="stat-box"><div class="label">Game</div><div class="value">#{{ game_id }}</div></div>
             <div class="stat-box"><div class="label">Pool</div><div class="value" id="poolVal">{{ pool }}</div></div>
@@ -465,12 +377,12 @@
                 </div>
 
                 <div class="current-call-box">
-                    <div style="font-size:10px; color:#ddd; font-weight: bold;">Current Call</div>
+                    <div style="font-size:9px; color:#ddd; font-weight: bold;">Current Call</div>
                     <div class="current-call-badge" id="currentCallBadge">{{ current_number or '---' }}</div>
                 </div>
 
                 <div class="recent-calls-box">
-                    <div class="recent-title">Last 4 Calls</div>
+                    <div style="font-size:9px; font-weight:bold; margin-bottom:3px;">Last 4 Calls</div>
                     <div class="recent-list" id="recentList"></div>
                 </div>
 
@@ -480,22 +392,21 @@
 
         <button class="btn-bingo" onclick="claimBingo()">BINGO!</button>
 
-        <div class="bottom-action-row">
+        <div style="display:flex; gap:8px; width:100%; margin-top:8px;">
             <button class="btn-refresh" onclick="location.reload()">Refresh</button>
             <button class="btn-start" style="background:#e74c3c;" onclick="leaveGame()">Leave</button>
         </div>
     </div>
 
+    <!-- WINNER MODAL -->
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
-            <div class="crown-icon" id="modalCrown">👑</div>
-            <div class="winner-title" id="modalTitle">BINGO!</div>
-            <div class="winner-name" id="wNameText">You Win!</div>
-            <div class="winning-cartela-tag" id="wCartelaTag">Winning Cartela : --</div>
-            <div class="winner-board-grid" id="wBoardGrid"></div>
-            <div style="margin-top: 12px; font-size: 12px; font-weight: bold; color: #38bdf8;" id="wPrizeText">Prize: -- Birr</div>
-            <div style="margin-top: 8px;">
-                <button onclick="window.location.href='/'" style="background: #209cee; color: white; border: none; padding: 8px 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">Back to Lobby</button>
+            <div style="font-size:36px;" id="modalCrown">👑</div>
+            <div style="font-size:22px; font-weight:900; color:#facc15;" id="modalTitle">BINGO!</div>
+            <div style="font-size:14px; font-weight:bold; margin: 8px 0;" id="wNameText">You Win!</div>
+            <div style="background:#334155; padding:4px 8px; border-radius:8px; font-size:12px; font-weight:bold;" id="wCartelaTag">Winning Cartela: --</div>
+            <div style="margin-top:10px;">
+                <button onclick="window.location.href='/'" style="background:#209cee; color:white; border:none; padding:8px 16px; border-radius:12px; font-weight:bold;">Back to Lobby</button>
             </div>
         </div>
     </div>
@@ -511,9 +422,8 @@
         const serverData = document.getElementById('game-server-data');
         const gameId = JSON.parse(serverData.dataset.gameId || 'null');
         const currentUserId = JSON.parse(serverData.dataset.userId || 'null');
-        let selectedCartelaId = 1;
-        let selectedCartelas = [1];
-
+        
+        let selectedCartelas = [];
         let playerCards = JSON.parse(serverData.dataset.cards || '[]');
         let gameStatus = serverData.dataset.status;
 
@@ -559,31 +469,49 @@
             return arr.slice(0, count);
         }
 
+        // Generate Grid (1-200)
         const gridContainer = document.getElementById('numberGrid');
         if (gridContainer) {
             for (let i = 1; i <= 200; i++) {
                 let cell = document.createElement('div');
-                cell.className = 'num-cell' + (i === selectedCartelaId ? ' selected' : '');
+                cell.className = 'num-cell';
                 cell.innerText = i;
                 cell.id = 'cartela-grid-' + i;
-                
+
                 cell.onclick = () => {
                     if (cell.classList.contains('taken-by-other')) return;
-                    
-                    document.querySelectorAll('.num-cell').forEach(c => {
-                        if (!c.classList.contains('taken-by-other')) {
-                            c.classList.remove('selected');
+
+                    if (selectedCartelas.includes(i)) {
+                        selectedCartelas = selectedCartelas.filter(id => id !== i);
+                        cell.classList.remove('selected');
+                    } else {
+                        if (selectedCartelas.length >= 4) {
+                            alert("Maximum 4 cartelas allowed!");
+                            return;
                         }
-                    });
-                    
-                    cell.classList.add('selected');
-                    selectedCartelaId = i;
-                    selectedCartelas = [i];
-                    document.getElementById('selectedCartelaLbl').innerText = "Selected Cartela: #" + i;
-                    document.getElementById('selectedCountLbl').innerText = "1/4";
-                    renderMiniPreview(i);
+                        selectedCartelas.push(i);
+                        cell.classList.add('selected'); // Turns green
+                    }
+
+                    updateSelectionUI(i);
                 };
                 gridContainer.appendChild(cell);
+            }
+        }
+
+        function updateSelectionUI(lastClickedId) {
+            document.getElementById('selectedCountLbl').innerText = `${selectedCartelas.length}/4`;
+            
+            if (selectedCartelas.length === 0) {
+                document.getElementById('selectedCartelasListLbl').innerText = "Selected Cartelas: None";
+                document.getElementById('previewContainer').style.display = 'none';
+            } else {
+                let formattedList = selectedCartelas.map(id => `#${id}`).join(', ');
+                document.getElementById('selectedCartelasListLbl').innerText = "Selected Cartelas: " + formattedList;
+                
+                document.getElementById('previewContainer').style.display = 'flex';
+                document.getElementById('previewTitleLbl').innerText = `Preview Cartela #${lastClickedId}`;
+                renderMiniPreview(lastClickedId);
             }
         }
 
@@ -599,13 +527,17 @@
                 mini.appendChild(mCell);
             });
         }
-        renderMiniPreview(selectedCartelaId);
 
         function joinAndStartGame() {
+            if (selectedCartelas.length === 0) {
+                alert("Please select at least 1 cartela!");
+                return;
+            }
+
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cartela_number: selectedCartelaId, cartelas: selectedCartelas })
+                body: JSON.stringify({ cartela_number: selectedCartelas[0], cartelas: selectedCartelas })
             })
             .then(res => res.json())
             .then(data => {
@@ -646,7 +578,7 @@
 
                 let headerRow = document.createElement('div');
                 headerRow.className = 'bingo-header-row';
-                headerRow.style.fontSize = '10px';
+                headerRow.style.fontSize = '9px';
                 headerRow.innerHTML = '<div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>';
                 cartelaDiv.appendChild(headerRow);
 
@@ -665,8 +597,8 @@
 
                 let labelDiv = document.createElement('div');
                 labelDiv.style.textAlign = 'center';
-                labelDiv.style.fontSize = '10px';
-                labelDiv.style.marginTop = '3px';
+                labelDiv.style.fontSize = '9px';
+                labelDiv.style.marginTop = '2px';
                 labelDiv.style.color = '#666';
                 labelDiv.innerText = `Cartela #${card.cartela_number}`;
                 cartelaDiv.appendChild(labelDiv);
@@ -715,29 +647,13 @@
                 document.getElementById('modalCrown').innerText = '👑';
                 document.getElementById('modalTitle').innerText = 'YOU WIN!';
                 document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 ${w.username} (Cartela #${w.cartela_number})`).join('<br>');
-                document.getElementById('wPrizeText').innerText = "Prize won: " + prizePerWinner + " Birr";
             } else {
                 document.getElementById('modalCrown').innerText = '❌';
                 document.getElementById('modalTitle').innerText = 'GAME OVER';
                 document.getElementById('wNameText').innerHTML = 'You Lose!<br><span style="font-size:12px; color:#facc15;">Winner(s): ' + winners.map(w => w.username).join(', ') + '</span>';
-                document.getElementById('wPrizeText').innerText = "Better luck next time!";
             }
 
-            document.getElementById('wCartelaTag').innerText = "Total Winners: " + winners.length;
-
-            if (winners.length > 0) {
-                let winner = winners[0];
-                let wGrid = document.getElementById('wBoardGrid');
-                wGrid.innerHTML = '';
-                winner.board.forEach((num, idx) => {
-                    let wCell = document.createElement('div');
-                    let isMarked = winner.marked.includes(num) || idx === 12;
-                    wCell.className = 'w-cell' + (isMarked ? ' marked' : '');
-                    wCell.innerText = idx === 12 ? '★' : num;
-                    wGrid.appendChild(wCell);
-                });
-            }
-
+            document.getElementById('wCartelaTag').innerText = "Prize: " + prizePerWinner + " Birr";
             document.getElementById('winnerModal').style.display = 'flex';
         }
 
@@ -765,10 +681,11 @@
                     document.getElementById('countdownTimer').innerText = 'Finished';
                 }
 
+                // ሌሎች ሰዎች የያዟቸውን በደማቅ ብርቱካናማ (Bold Orange) ማሳየት
                 if (data.taken_cartelas) {
                     data.taken_cartelas.forEach(cNum => {
                         let cEl = document.getElementById('cartela-grid-' + cNum);
-                        if (cEl && !cEl.classList.contains('selected')) {
+                        if (cEl && !selectedCartelas.includes(cNum)) {
                             cEl.classList.add('taken-by-other');
                         }
                     });
@@ -799,7 +716,7 @@
 
                 let autoMarked = false;
                 playerCards.forEach(card => {
-                    card.board.forEach((num, idx) => {
+                    card.board.forEach((num) => {
                         if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
                             card.marked.push(num);
                             autoMarked = true;
