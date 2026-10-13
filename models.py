@@ -43,7 +43,7 @@ class GameParticipant(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)[cite: 5]
 
     __table_args__ = (
-        db.UniqueConstraint('game_id', 'cartela_number', name='unique_cartela_per_game'),[cite: 5]
+        db.UniqueConstraint('game_id', 'cartela_number', name='unique_cartela_per_game'),
     )
 
 class Transaction(db.Model):
