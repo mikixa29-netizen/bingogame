@@ -25,7 +25,6 @@
             text-align: center;
         }
 
-        /* Top Stats Row - All 6 badges strictly in 1 line */
         .top-stats {
             display: flex;
             justify-content: space-between;
@@ -62,7 +61,6 @@
             text-overflow: ellipsis;
         }
 
-        /* Selection Screen Styles */
         #selection-screen {
             width: 100%;
             max-width: 450px;
@@ -148,7 +146,6 @@
         .btn-refresh { background: #209cee; }
         .btn-start { background: #ff6600; }
 
-        /* Active Game Screen Styles */
         #game-screen {
             display: none;
             width: 100%;
@@ -237,7 +234,6 @@
             margin-top: 3px;
         }
 
-        /* 5 Recent Calls Display Box */
         .recent-calls-box {
             background: rgba(255, 255, 255, 0.2);
             padding: 6px;
@@ -311,7 +307,6 @@
             margin-bottom: 20px;
         }
 
-        /* Winner Modal Popup Overlay (Balageru Style) */
         .winner-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -370,7 +365,6 @@
 
     <div class="header-title">Edil Bingo</div>
 
-    <!-- 1. SELECTION SCREEN -->
     <div id="selection-screen">
         <div class="top-stats">
             <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
@@ -390,13 +384,10 @@
         </div>
     </div>
 
-
-    <!-- 2. ACTIVE GAME PLAY SCREEN -->
     <div id="game-screen">
-        <!-- Top Stats Row (Strictly 1 Line) -->
         <div class="top-stats">
             <div class="stat-box"><div class="label">Game</div><div class="value">#{{ game_id }}</div></div>
-            <div class="stat-box"><div class="label">Derash</div><div class="value" id="poolVal">{{ pool }}</div></div>
+            <div class="stat-box"><div class="label">Pool</div><div class="value" id="poolVal">{{ pool }}</div></div>
             <div class="stat-box"><div class="label">Bonus</div><div class="value" id="bonusVal">{{ bonus }}</div></div>
             <div class="stat-box"><div class="label">Players</div><div class="value" id="playersVal">{{ active_players }}</div></div>
             <div class="stat-box"><div class="label">Bet</div><div class="value">{{ entry_price }}</div></div>
@@ -404,7 +395,6 @@
         </div>
 
         <div class="game-main-area">
-            <!-- Left Side: 1-75 Board -->
             <div class="board-column">
                 <div class="bingo-header-row">
                     <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
@@ -412,10 +402,9 @@
                 <div class="board-list" id="mainBoardList"></div>
             </div>
 
-            <!-- Right Side -->
             <div class="call-area">
                 <div class="status-box">
-                    <div class="title">Count Down</div>
+                    <div class="title">Status</div>
                     <div class="val" id="countdownTimer">
                         {% if active_players < 2 %}Waiting (>=2)...{% else %}Started{% endif %}
                     </div>
@@ -426,19 +415,17 @@
                     <div class="current-call-badge" id="currentCallBadge">{{ current_number or '---' }}</div>
                 </div>
 
-                <!-- Last 5 Recent Calls -->
                 <div class="recent-calls-box">
                     <div class="recent-title">Last 5 Calls</div>
                     <div class="recent-list" id="recentList"></div>
                 </div>
 
-                <!-- User Cartela -->
                 <div class="user-cartela">
                     <div class="bingo-header-row" style="font-size:10px;">
                         <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
                     </div>
                     <div class="user-cartela-grid" id="userCartelaGrid"></div>
-                    <div style="text-align:center; font-size:10px; margin-top:3px; color:#666;" id="boardNumberLbl">Board #1</div>
+                    <div style="text-align:center; font-size:10px; margin-top:3px; color:#666;" id="boardNumberLbl">My Cartela</div>
                 </div>
             </div>
         </div>
@@ -447,11 +434,10 @@
 
         <div class="bottom-action-row">
             <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-            <button class="btn-start" style="background:#e74c3c;" onclick="location.href='/'">Leave</button>
+            <button class="btn-start" style="background:#e74c3c;" onclick="leaveGame()">Leave</button>
         </div>
     </div>
 
-    <!-- WINNER MODAL POPUP -->
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
             <div class="crown-icon">👑</div>
@@ -459,15 +445,29 @@
             <div class="winner-name" id="wNameText">Winner Won!</div>
             <div class="winning-cartela-tag" id="wCartelaTag">Winning Cartela : --</div>
             <div class="winner-board-grid" id="wBoardGrid"></div>
-            <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;" id="wRestartText">Auto-refreshing in 3s...</div>
+            <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;" id="wRestartText">Auto-refreshing in 4s...</div>
         </div>
     </div>
 
+    <div id="game-server-data" 
+         data-board='{{ (player_cards[0].board if player_cards else []) | tojson | safe }}'
+         data-marked='{{ (player_cards[0].marked if player_cards else []) | tojson | safe }}'
+         data-status='{{ game_status | default("waiting") }}'
+         style="display: none;"></div>
+
     <script>
-        const gameId = {{ game_id }};
+        const gameId = {{ game_id | tojson | safe }};
         let selectedCartelaId = 1;
-        let activeCartelaNumbers = [];
-        let calledNumbersList = {{ called_numbers|tojson|safe }};
+
+        const serverData = document.getElementById('game-server-data');
+        let playerBoard = JSON.parse(serverData.dataset.board || '[]');
+        let markedNumbers = JSON.parse(serverData.dataset.marked || '[]');
+        let gameStatus = serverData.dataset.status;
+
+        if (playerBoard.length > 0 || gameStatus === 'active' || gameStatus === 'countdown') {
+            document.getElementById('selection-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+        }
 
         function generateCartelaNumbers(id) {
             let numbers = [];
@@ -498,14 +498,195 @@
             return arr.slice(0, count);
         }
 
-        // Populate Cartela Grid 1-200
         const gridContainer = document.getElementById('numberGrid');
-        for (let i = 1; i <= 200; i++) {
-            let cell = document.createElement('div');
-            cell.className = 'num-cell' + (i === selectedCartelaId ? ' selected' : '');
-            cell.innerText = i;
-            cell.onclick = () => {
-                document.querySelectorAll('.num-cell').forEach(c => c.classList.remove('selected'));
-                cell.classList.add('selected');
-                selectedCartelaId = i;
-                document.getElementById('selectedCartelaLbl').innerText = "Selected Cartela: #" + i;
+        if (gridContainer) {
+            for (let i = 1; i <= 200; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'num-cell' + (i === selectedCartelaId ? ' selected' : '');
+                cell.innerText = i;
+                cell.onclick = () => {
+                    document.querySelectorAll('.num-cell').forEach(c => c.classList.remove('selected'));
+                    cell.classList.add('selected');
+                    selectedCartelaId = i;
+                    document.getElementById('selectedCartelaLbl').innerText = "Selected Cartela: #" + i;
+                    renderMiniPreview(i);
+                };
+                gridContainer.appendChild(cell);
+            }
+        }
+
+        function renderMiniPreview(id) {
+            let mini = document.getElementById('miniCartela');
+            if (!mini) return;
+            mini.innerHTML = '';
+            let numbers = generateCartelaNumbers(id);
+            numbers.forEach((num, idx) => {
+                let mCell = document.createElement('div');
+                mCell.className = 'mini-cell' + (idx === 12 ? ' star' : '');
+                mCell.innerText = idx === 12 ? '★' : num;
+                mini.appendChild(mCell);
+            });
+        }
+        renderMiniPreview(selectedCartelaId);
+
+        function joinAndStartGame() {
+            fetch(`/game/${gameId}/join`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ cartela_number: selectedCartelaId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to join game');
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        const mainBoardList = document.getElementById('mainBoardList');
+        if (mainBoardList) {
+            for(let i=0; i<15; i++) {
+                let row = document.createElement('div');
+                row.className = 'board-row';
+                for(let col=0; col<5; col++) {
+                    let num = col * 15 + i + 1;
+                    let item = document.createElement('div');
+                    item.className = 'board-item';
+                    item.id = 'bnum-' + num;
+                    item.innerText = num;
+                    row.appendChild(item);
+                }
+                mainBoardList.appendChild(row);
+            }
+        }
+
+        function renderUserCartela() {
+            let uGrid = document.getElementById('userCartelaGrid');
+            if (!uGrid) return;
+            uGrid.innerHTML = '';
+            playerBoard.forEach((num, idx) => {
+                let uCell = document.createElement('div');
+                let isMarked = markedNumbers.includes(num) || idx === 12;
+                uCell.className = 'ucell' + (isMarked ? ' marked' : '');
+                uCell.innerText = idx === 12 ? '★' : num;
+                uCell.onclick = () => {
+                    if (idx === 12) return;
+                    markNumberOnServer(num, 0);
+                };
+                uGrid.appendChild(uCell);
+            });
+        }
+        if (playerBoard.length > 0) {
+            renderUserCartela();
+        }
+
+        function markNumberOnServer(num, cardIndex) {
+            fetch(`/game/${gameId}/mark`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ number: num, card_index: cardIndex })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.marked) {
+                    markedNumbers = data.marked;
+                    renderUserCartela();
+                }
+                if (data.winner) {
+                    showWinnerModal(data.winners[0]);
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function claimBingo() {
+            fetch(`/game/${gameId}/mark`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ check_win: true, card_index: 0 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.winner) {
+                    showWinnerModal(data.winners[0]);
+                } else {
+                    alert(data.message || 'Not a winning bingo yet!');
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function leaveGame() {
+            fetch(`/game/${gameId}/leave`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(() => {
+                window.location.href = '/';
+            })
+            .catch(() => {
+                window.location.href = '/';
+            });
+        }
+
+        function showWinnerModal(winner) {
+            document.getElementById('wNameText').innerText = winner.username + " Won!";
+            document.getElementById('wCartelaTag').innerText = "Winning Cartela: #" + winner.cartela_number;
+            let wGrid = document.getElementById('wBoardGrid');
+            wGrid.innerHTML = '';
+            winner.board.forEach((num, idx) => {
+                let wCell = document.createElement('div');
+                let isMarked = winner.marked.includes(num) || idx === 12;
+                wCell.className = 'w-cell' + (isMarked ? ' marked' : '');
+                wCell.innerText = idx === 12 ? '★' : num;
+                wGrid.appendChild(wCell);
+            });
+            document.getElementById('winnerModal').style.display = 'flex';
+            setTimeout(() => { location.href = '/'; }, 4000);
+        }
+
+        setInterval(() => {
+            fetch(`/game/${gameId}/status`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('poolVal').innerText = data.pool;
+                document.getElementById('bonusVal').innerText = data.bonus;
+                document.getElementById('playersVal').innerText = data.active_players;
+                document.getElementById('callCountVal').innerText = data.called_numbers.length;
+                document.getElementById('currentCallBadge').innerText = data.current_call;
+
+                if (data.status === 'countdown') {
+                    document.getElementById('countdownTimer').innerText = data.countdown_remaining + 's';
+                } else if (data.status === 'active') {
+                    document.getElementById('countdownTimer').innerText = 'Started';
+                }
+
+                document.querySelectorAll('.board-item').forEach(el => el.classList.remove('current-green'));
+                data.called_numbers.forEach(callStr => {
+                    let num = parseInt(callStr.split('-')[1]);
+                    let el = document.getElementById('bnum-' + num);
+                    if (el) el.classList.add('current-green');
+                });
+
+                let recentList = document.getElementById('recentList');
+                recentList.innerHTML = '';
+                let last5 = data.called_numbers.slice(-5).reverse();
+                last5.forEach(callStr => {
+                    let ball = document.createElement('div');
+                    ball.className = 'recent-ball';
+                    ball.innerText = callStr.split('-')[1];
+                    recentList.appendChild(ball);
+                });
+
+                if (data.winners && data.winners.length > 0) {
+                    showWinnerModal(data.winners[0]);
+                }
+            })
+            .catch(err => console.log(err));
+        }, 2000);
+    </script>
+</body>
+</html>
