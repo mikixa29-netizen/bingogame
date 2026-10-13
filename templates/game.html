@@ -287,6 +287,13 @@
         .ball-g { background-color: #e67e22 !important; }
         .ball-o { background-color: #9b59b6 !important; }
 
+        .user-cartelas-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
         .user-cartela {
             background: #ffffff;
             border-radius: 10px;
@@ -302,7 +309,7 @@
         .ucell {
             background: #f9f9f9;
             color: #333;
-            font-size: 12px;
+            font-size: 11px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
@@ -417,6 +424,9 @@
     </div>
 
     <div id="game-screen">
+        <!-- Edil Bingo Title at Top -->
+        <div class="header-title" style="font-size: 22px; margin: 0 0 8px 0;">Edil Bingo</div>
+
         <div class="top-stats">
             <div class="stat-box"><div class="label">Game</div><div class="value">#{{ game_id }}</div></div>
             <div class="stat-box"><div class="label">Pool</div><div class="value" id="poolVal">{{ pool }}</div></div>
@@ -452,13 +462,8 @@
                     <div class="recent-list" id="recentList"></div>
                 </div>
 
-                <div class="user-cartela">
-                    <div class="bingo-header-row" style="font-size:10px;">
-                        <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
-                    </div>
-                    <div class="user-cartela-grid" id="userCartelaGrid"></div>
-                    <div style="text-align:center; font-size:10px; margin-top:3px; color:#666;" id="boardNumberLbl">My Cartela</div>
-                </div>
+                <!-- Multiple User Cartelas Container -->
+                <div class="user-cartelas-container" id="userCartelasContainer"></div>
             </div>
         </div>
 
@@ -486,8 +491,7 @@
     </div>
 
     <div id="game-server-data" 
-         data-board='{{ (player_cards[0].board if player_cards else []) | tojson | safe }}'
-         data-marked='{{ (player_cards[0].marked if player_cards else []) | tojson | safe }}'
+         data-cards='{{ player_cards | tojson | safe }}'
          data-status='{{ game_status | default("waiting") }}'
          data-game-id='{{ game_id | tojson | safe }}'
          data-user-id='{{ session.get("user_id") | tojson | safe }}'
@@ -499,11 +503,10 @@
         const currentUserId = JSON.parse(serverData.dataset.userId || 'null');
         let selectedCartelaId = 1;
 
-        let playerBoard = JSON.parse(serverData.dataset.board || '[]');
-        let markedNumbers = JSON.parse(serverData.dataset.marked || '[]');
+        let playerCards = JSON.parse(serverData.dataset.cards || '[]');
         let gameStatus = serverData.dataset.status;
 
-        if (playerBoard.length > 0 || gameStatus === 'active' || gameStatus === 'countdown' || gameStatus === 'finished') {
+        if (playerCards.length > 0 || gameStatus === 'active' || gameStatus === 'countdown' || gameStatus === 'finished') {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
         }
@@ -610,20 +613,49 @@
             }
         }
 
-        function renderUserCartela() {
-            let uGrid = document.getElementById('userCartelaGrid');
-            if (!uGrid) return;
-            uGrid.innerHTML = '';
-            playerBoard.forEach((num, idx) => {
-                let uCell = document.createElement('div');
-                let isMarked = markedNumbers.includes(num) || idx === 12;
-                uCell.className = 'ucell' + (isMarked ? ' marked' : '');
-                uCell.innerText = idx === 12 ? '★' : num;
-                uGrid.appendChild(uCell);
+        // Render all selected user cartelas dynamically
+        function renderUserCartelas() {
+            let container = document.getElementById('userCartelasContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            playerCards.forEach((card) => {
+                let cartelaDiv = document.createElement('div');
+                cartelaDiv.className = 'user-cartela';
+
+                let headerRow = document.createElement('div');
+                headerRow.className = 'bingo-header-row';
+                headerRow.style.fontSize = '10px';
+                headerRow.innerHTML = '<div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>';
+                cartelaDiv.appendChild(headerRow);
+
+                let gridDiv = document.createElement('div');
+                gridDiv.className = 'user-cartela-grid';
+
+                card.board.forEach((num, idx) => {
+                    let uCell = document.createElement('div');
+                    let isMarked = card.marked.includes(num) || idx === 12;
+                    uCell.className = 'ucell' + (isMarked ? ' marked' : '');
+                    uCell.innerText = idx === 12 ? '★' : num;
+                    gridDiv.appendChild(uCell);
+                });
+
+                cartelaDiv.appendChild(gridDiv);
+
+                let labelDiv = document.createElement('div');
+                labelDiv.style.textAlign = 'center';
+                labelDiv.style.fontSize = '10px';
+                labelDiv.style.marginTop = '3px';
+                labelDiv.style.color = '#666';
+                labelDiv.innerText = `Cartela #${card.cartela_number}`;
+                cartelaDiv.appendChild(labelDiv);
+
+                container.appendChild(cartelaDiv);
             });
         }
-        if (playerBoard.length > 0) {
-            renderUserCartela();
+
+        if (playerCards.length > 0) {
+            renderUserCartelas();
         }
 
         function claimBingo() {
@@ -736,14 +768,16 @@
                 });
 
                 let autoMarked = false;
-                playerBoard.forEach(num => {
-                    if (num !== '*' && calledRawNumbers.includes(num) && !markedNumbers.includes(num)) {
-                        markedNumbers.push(num);
-                        autoMarked = true;
-                    }
+                playerCards.forEach(card => {
+                    card.board.forEach((num, idx) => {
+                        if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
+                            card.marked.push(num);
+                            autoMarked = true;
+                        }
+                    });
                 });
                 if (autoMarked) {
-                    renderUserCartela();
+                    renderUserCartelas();
                 }
 
                 let recentList = document.getElementById('recentList');
