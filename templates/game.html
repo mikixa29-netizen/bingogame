@@ -9,7 +9,7 @@
             margin: 0;
             padding: 10px;
             background-color: #a483cf;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #fff;
             display: flex;
             flex-direction: column;
@@ -20,9 +20,11 @@
         .header-title {
             font-size: 26px;
             font-weight: 900;
-            margin: 5px 0 10px 0;
+            margin: 5px 0 15px 0;
             letter-spacing: 1px;
             text-align: center;
+            text-transform: uppercase;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.3);
         }
 
         .top-stats {
@@ -96,6 +98,14 @@
         .num-cell.selected {
             background: #008000;
             color: #fff;
+        }
+        /* Cartelas taken by other players shown in bold orange and unselectable */
+        .num-cell.taken-by-other {
+            background: #e67e22 !important;
+            color: #fff !important;
+            font-weight: 900;
+            cursor: not-allowed;
+            opacity: 0.85;
         }
 
         .mini-cartela-preview {
@@ -402,6 +412,7 @@
 </head>
 <body>
 
+    <!-- Single Top Header Title -->
     <div class="header-title">Edil Bingo</div>
 
     <div id="selection-screen">
@@ -424,9 +435,6 @@
     </div>
 
     <div id="game-screen">
-        <!-- Edil Bingo Title at Top -->
-        <div class="header-title" style="font-size: 22px; margin: 0 0 8px 0;">Edil Bingo</div>
-
         <div class="top-stats">
             <div class="stat-box"><div class="label">Game</div><div class="value">#{{ game_id }}</div></div>
             <div class="stat-box"><div class="label">Pool</div><div class="value" id="poolVal">{{ pool }}</div></div>
@@ -458,11 +466,10 @@
                 </div>
 
                 <div class="recent-calls-box">
-                    <div class="recent-title">Last 5 Calls</div>
+                    <div class="recent-title">Last 4 Calls</div>
                     <div class="recent-list" id="recentList"></div>
                 </div>
 
-                <!-- Multiple User Cartelas Container -->
                 <div class="user-cartelas-container" id="userCartelasContainer"></div>
             </div>
         </div>
@@ -475,7 +482,6 @@
         </div>
     </div>
 
-    <!-- Winner/Loser Modal -->
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
             <div class="crown-icon" id="modalCrown">👑</div>
@@ -552,10 +558,15 @@
         if (gridContainer) {
             for (let i = 1; i <= 200; i++) {
                 let cell = document.createElement('div');
-                cell.className = 'num-cell' + (i === selectedCartelaId ? ' selected' : '');
+                cell.className = 'num-cell';
                 cell.innerText = i;
+                cell.id = 'cartela-grid-' + i;
+                
                 cell.onclick = () => {
-                    document.querySelectorAll('.num-cell').forEach(c => c.classList.remove('selected'));
+                    if (cell.classList.contains('taken-by-other')) return;
+                    document.querySelectorAll('.num-cell').forEach(c => {
+                        if (!c.classList.contains('taken-by-other')) c.classList.remove('selected');
+                    });
                     cell.classList.add('selected');
                     selectedCartelaId = i;
                     document.getElementById('selectedCartelaLbl').innerText = "Selected Cartela: #" + i;
@@ -613,7 +624,6 @@
             }
         }
 
-        // Render all selected user cartelas dynamically
         function renderUserCartelas() {
             let container = document.getElementById('userCartelasContainer');
             if (!container) return;
@@ -744,6 +754,16 @@
                     document.getElementById('countdownTimer').innerText = 'Finished';
                 }
 
+                // Highlight taken cartelas by other players in bold orange
+                if (data.taken_cartelas) {
+                    data.taken_cartelas.forEach(cNum => {
+                        let cEl = document.getElementById('cartela-grid-' + cNum);
+                        if (cEl && !cEl.classList.contains('selected')) {
+                            cEl.classList.add('taken-by-other');
+                        }
+                    });
+                }
+
                 document.querySelectorAll('.board-item').forEach(el => {
                     el.classList.remove('current-green', 'called-orange');
                 });
@@ -782,8 +802,8 @@
 
                 let recentList = document.getElementById('recentList');
                 recentList.innerHTML = '';
-                let last5 = data.called_numbers.slice(-5).reverse();
-                last5.forEach(callStr => {
+                let last4 = data.called_numbers.slice(-4).reverse();
+                last4.forEach(callStr => {
                     let numVal = parseInt(callStr.split('-')[1]);
                     let ball = document.createElement('div');
                     ball.className = 'recent-ball ' + getBallClass(numVal);
