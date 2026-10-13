@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edil Bingo - Select Cartela</title>
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
         body {
             margin: 0;
-            padding: 0;
+            padding: 10px;
             background-color: #a483cf;
-            font-family: Arial, sans-serif;
             color: #fff;
             display: flex;
             flex-direction: column;
@@ -17,62 +20,78 @@
             min-height: 100vh;
         }
         .header-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 10px 0;
+            font-size: 26px;
+            font-weight: 900;
+            margin: 8px 0 12px 0;
             letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-align: center;
         }
         .top-stats {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             justify-content: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             flex-wrap: wrap;
-            padding: 0 10px;
+            width: 100%;
+            max-width: 420px;
+            padding: 0 4px;
         }
         .stat-box {
             background: #ffffff;
             color: #333;
             border-radius: 12px;
-            padding: 6px 14px;
+            padding: 6px 10px;
             text-align: center;
-            min-width: 60px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 70px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
         }
         .stat-box .label {
-            font-size: 10px;
+            font-size: 9px;
             color: #666;
             text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 800;
         }
         .stat-box .value {
-            font-size: 15px;
-            font-weight: bold;
-            color: #222;
+            font-size: 14px;
+            font-weight: 900;
+            color: #111;
         }
         .timer-banner {
             background: #ff6600;
             color: white;
             padding: 6px 15px;
             border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 13px;
+            font-weight: 800;
             margin-bottom: 10px;
             display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .select-subtitle {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-align: center;
         }
         .cartela-container {
-            width: 92%;
+            width: 100%;
             max-width: 420px;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.18);
+            padding: 10px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .cartela-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            max-height: 250px;
+            max-height: 260px;
             overflow-y: auto;
         }
         .cartela-number {
@@ -83,70 +102,83 @@
             align-items: center;
             justify-content: center;
             font-size: 11px;
-            font-weight: bold;
-            border-radius: 4px;
+            font-weight: 800;
+            border-radius: 6px;
             cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+        .cartela-number:active {
+            transform: scale(0.92);
+        }
+        
+        /* 1. ተጠቃሚው የመረጠው በደማቅ አረንጓዴ (Green) */
         .cartela-number.selected {
-            background: #ff6600 !important; /* የራስህ የተመረጠ በኦሬንጅ */
+            background: #27ae60 !important;
             color: #fff !important;
+            font-weight: 900 !important;
+            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4);
         }
-        .cartela-number.other-selected {
-            background: #209cee !important; /* የሌሎች ተጫዋቾች በሰማያዊ/ግሪን */
-            color: #fff !important;
-            cursor: not-allowed;
-        }
+
+        /* 2. ሌሎች ተጫዋቾች የያዟቸው በደማቅ ብርቱካናማ (Bold Orange) */
+        .cartela-number.other-selected,
         .cartela-number.unavailable {
-            background: rgba(0, 0, 0, 0.3);
-            color: #888;
+            background: #ff6600 !important;
+            color: #fff !important;
+            font-weight: 900 !important;
             cursor: not-allowed;
+            opacity: 0.9;
         }
+
         .preview-box {
-            background: #f3eafa;
-            color: #333;
+            background: #ffffff;
+            color: #222;
             padding: 10px;
-            border-radius: 8px;
-            width: 92%;
+            border-radius: 12px;
+            width: 100%;
             max-width: 420px;
             text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 800;
+            font-size: 13px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
         }
         .action-buttons {
             display: flex;
-            gap: 12px;
-            width: 92%;
+            gap: 10px;
+            width: 100%;
             max-width: 420px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         .btn-refresh {
             background: #209cee;
             color: white;
             border: none;
-            padding: 12px 0;
+            padding: 14px 0;
             flex: 1;
             border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 15px;
+            font-weight: 800;
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         .btn-start {
             background: #ff6600;
             color: white;
             border: none;
-            padding: 12px 0;
+            padding: 14px 0;
             flex: 1;
             border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 15px;
+            font-weight: 800;
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         /* Modal Popup */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.75);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -154,21 +186,22 @@
             display: none;
         }
         .modal-box {
-            background: #4a154b;
+            background: #1e293b;
             color: white;
             width: 85%;
             max-width: 320px;
             padding: 20px;
             border-radius: 16px;
             text-align: center;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
             border: 2px solid #ff6600;
         }
-        .modal-box h3 { margin-top: 0; color: #ff9800; font-size: 20px; }
-        .modal-box p { font-size: 14px; color: #f3eafa; margin-bottom: 20px; }
+        .modal-box h3 { margin-top: 0; color: #facc15; font-size: 20px; font-weight: 900; }
+        .modal-box p { font-size: 13px; color: #cbd5e1; margin-bottom: 20px; font-weight: 600; }
         .modal-btn {
             background: #ff6600; color: white; border: none; padding: 10px 20px;
-            border-radius: 20px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%;
+            border-radius: 20px; font-size: 14px; font-weight: 800; cursor: pointer; width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -196,14 +229,14 @@
     </div>
 
     <div class="timer-banner" id="timerBanner">Game starts in: <span id="countdownTimer">30</span>s</div>
-    <div style="font-size: 15px; font-weight: bold; margin-bottom: 8px;">Select Up to 4 Cartelas (1-200)</div>
+    <div class="select-subtitle">Select Up to 4 Cartelas (1-200)</div>
 
     <div class="cartela-container">
         <div class="cartela-grid" id="cartelaGrid">
             {% for i in range(1, 201) %}
                 <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
                      id="cartela-{{ i }}"
-                     onclick="toggleCartela({{ i }})">
+                     onclick="toggleCartela('{{ i }}')">
                     {{ i }}
                 </div>
             {% endfor %}
@@ -226,14 +259,15 @@
         </div>
     </div>
 
+    <div id="game-data" data-game-id="{{ game_id }}" style="display:none;"></div>
+
     <script>
         let selectedCartelas = [];
         let maxCards = 4;
         let entryPrice = parseFloat(document.getElementById('entry-price').innerText) || 10;
         let userWallet = parseFloat(document.getElementById('wallet-val').innerText) || 0;
-        let gameId = {{ game_id }};
+        let gameId = document.getElementById('game-data').dataset.gameId;
 
-        // Check Active Games & Room Status periodically
         setInterval(checkGameStatus, 2000);
 
         function checkGameStatus() {
@@ -249,17 +283,14 @@
                 } else if (data.status === 'active') {
                     window.location.href = `/game/${gameId}`;
                 }
-            }).catch(err => console.log(err));
 
-            // Check if max 3 active games limit reached
-            fetch(`/game/list`)
-            .then(res => res.json())
-            .then(games => {
-                let activeCount = games.filter(g => g.status === 'active' || g.status === 'countdown').length;
-                if (activeCount >= 3) {
-                    // Lock selection if 3 active games are running and current room isn't joined yet
-                    document.getElementById('modal-error-text').innerText = "All active games are full (Maximum 3). Please wait until at least 1 active game finishes.";
-                    // Optionally show modal if not already joined
+                if (data.taken_cartelas) {
+                    data.taken_cartelas.forEach(cNum => {
+                        let cEl = document.getElementById('cartela-' + cNum);
+                        if (cEl && !selectedCartelas.includes(cNum)) {
+                            cEl.classList.add('unavailable');
+                        }
+                    });
                 }
             }).catch(err => console.log(err));
         }
