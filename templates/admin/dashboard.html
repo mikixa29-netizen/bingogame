@@ -18,7 +18,7 @@
         }
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
         }
         .header-row {
             display: flex;
@@ -118,12 +118,8 @@
             background: #fff;
             color: #333;
             font-size: 13px;
-            width: 100%;
             box-sizing: border-box;
-            margin-bottom: 8px;
-        }
-        input[type="number"] {
-            width: 90px;
+            margin-bottom: 4px;
         }
         button {
             background: #008000;
@@ -277,14 +273,14 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" style="text-align: center; color: #666;">No active games running[cite: 11].</td>
+                        <td colspan="4" style="text-align: center; color: #666;">No active games running.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- User Management & Block/Unblock Section -->
+        <!-- User Management & Balance & Status Control -->
         <div class="section-box">
             <h3>Users Management, Balance & Status Control</h3>
             <table>
@@ -292,7 +288,7 @@
                     <tr>
                         <th>User ID</th>
                         <th>Username / Phone</th>
-                        <th>Balance</th>
+                        <th>Main | Bonus | Coin</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -302,7 +298,14 @@
                     <tr>
                         <td>{{ u.id }}</td>
                         <td>{{ u.username or u.phone or 'N/A' }}</td>
-                        <td>{{ u.balance }} Birr</td>
+                        <td>
+                            <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; align-items: center;">
+                                <input type="number" step="0.01" name="balance" value="{{ u.balance }}" placeholder="Main" title="Main Balance" style="width: 75px;">
+                                <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" placeholder="Bonus" title="Bonus Balance" style="width: 75px;">
+                                <input type="number" name="coin" value="{{ u.coin }}" placeholder="Coin" title="Coins" style="width: 55px;">
+                                <button type="submit" style="padding: 6px 10px; font-size: 11px;">Save</button>
+                            </form>
+                        </td>
                         <td>
                             {% if u.is_blocked %}
                                 <span style="color: #c0392b; font-weight: bold;">Blocked</span>
@@ -312,10 +315,6 @@
                         </td>
                         <td>
                             <div style="display:flex; flex-direction:column; gap:6px;">
-                                <form action="{{ url_for('admin_add_balance', user_id=u.id) }}" method="POST" style="display:flex; gap:4px; align-items:center;">
-                                    <input type="number" name="amount" placeholder="Amount" step="0.5" required>
-                                    <button type="submit">Add</button>
-                                </form>
                                 <form action="{{ url_for('admin_toggle_block', user_id=u.id) }}" method="POST">
                                     {% if u.is_blocked %}
                                         <button type="submit" class="btn-warning" style="width: 100%;">Unblock</button>
@@ -328,7 +327,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" style="text-align: center; color: #666;">No registered users found in the database[cite: 11].</td>
+                        <td colspan="5" style="text-align: center; color: #666;">No registered users found in the database.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -346,7 +345,7 @@
             <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
             <form action="{{ url_for('admin_update_welcome_image') }}" method="POST" class="form-group">
                 <label>Update Welcome Image URL:</label>
-                <input type="text" name="image_url" placeholder="https://i.imgur.com/example.jpg" required>
+                <input type="text" name="image_url" placeholder="https://i.imgur.com/example.jpg" style="width: 100%;" required>
                 <button type="submit">Update Welcome Image</button>
             </form>
         </div>

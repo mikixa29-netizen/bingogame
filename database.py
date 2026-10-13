@@ -27,11 +27,25 @@ def init_db(app):
         import models  # Import models here to avoid circular imports
         db.create_all()
         
-        # 'is_blocked' የሚባል カラム (Column) ከሌለ በራሱ ጨምሮ 500 Internal Server Error እንዳያመጣ መከላከል
-        try:
-            with db.engine.connect() as conn:
+        # የጠየቋቸውን አዳዲስ አምዶች (Columns) ዳታቤዝ ላይ ከሌሉ በራሱ ጨምሮ ኤረር እንዳያመጣ መከላከል
+        with db.engine.connect() as conn:
+            # 1. is_blocked
+            try:
                 conn.execute(text("ALTER TABLE \"user\" ADD COLUMN is_blocked BOOLEAN DEFAULT FALSE;"))
                 conn.commit()
-        except Exception:
-            # Column ቀደም ብሎ ካለ ወይም ዳታቤዙ አዲስ ከሆነ ችግር እንዳይፈጥር ማለፍ
-            pass
+            except Exception:
+                pass
+
+            # 2. bonus_balance
+            try:
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN bonus_balance FLOAT DEFAULT 20.0;"))
+                conn.commit()
+            except Exception:
+                pass
+
+            # 3. coin
+            try:
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN coin INTEGER DEFAULT 0;"))
+                conn.commit()
+            except Exception:
+                pass

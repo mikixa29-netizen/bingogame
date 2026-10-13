@@ -31,7 +31,7 @@ from models import User, Game, GameParticipant, Transaction
 # Global active games rooms storage
 active_games = {}
 
-# Initial default rooms መፍጠር (ሲስተሙ ሲነሳ ጨዋታዎች እንዲኖሩ)
+# Initial default rooms መፍጠር (ሲስተሙ ሲነሳ ጨዋታዎች እንዲኖሩ)[cite: 4]
 def init_default_games():
     if not active_games:
         active_games[1] = BingoGame(1, entry_price=10, max_cards_per_player=4)
@@ -45,32 +45,27 @@ init_default_games()
 
 @app.route('/')
 def index():
-    """Lobby ገጽ፡ ያሉትን ጨዋታዎች እና የዩዘርን ባሌንስ ማሳየት[cite: 8]"""
-    if not session.get('user_id'):
-        session['user_id'] = random.randint(100000, 999999)
+    """Lobby ገጽ፡ ያሉትን ጨዋታዎች እና የዩዘርን ባሌንስ (Main + Bonus) ማሳየት[cite: 4]"""
+    user_id = request.args.get('user_id') or session.get('user_id')
+    if not user_id:
+        return "Please open this game through the Telegram Bot (@EdilBingoBot).", 403
     
-    user_id = int(session['user_id'])
+    user_id = int(user_id)
+    session['user_id'] = user_id
     
-    user = User.query.get(user_id)
+    user = User.query.filter_by(telegram_id=user_id).first()
     if not user:
-        user = User(
-            id=user_id,
-            telegram_id=user_id,
-            username=f"Player_{user_id}",
-            balance=50.0,
-            is_blocked=False
-        )
-        db.session.add(user)
-        db.session.commit()
+        return "User not registered. Please start the Telegram bot first.", 403
         
     if user.is_blocked:
         return "Your account has been blocked by the administrator.", 403
 
-    return render_template('game_lobby.html', balance=user.balance)
+    total_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
+    return render_template('game_lobby.html', balance=total_balance, main_balance=user.balance, bonus_balance=user.bonus_balance, coin=user.coin)
 
 @app.route('/game/list', methods=['GET'])
 def list_games():
-    """Available games (waiting rooms) ዝርዝር በ JSON መልክ መመለስ[cite: 8]"""
+    """Available games (waiting rooms) ዝርዝር በ JSON መልክ መመለስ[cite: 4]"""
     games_data = []
     for g_id, game in active_games.items():
         if game.status == "waiting":
@@ -85,18 +80,20 @@ def list_games():
 
 @app.route('/game/create', methods=['POST'])
 def create_game():
-    """አዲስ ሩም (Game Room) መፍጠር (እስከ 3 አክቲቭ ሩሞች ብቻ እንዲኖሩ መቆጣጠር)[cite: 8]"""
+    """አዲስ ሩም (Game Room) መፍጠር እና የጠቅላላ ባሌንስ በቂ መሆኑን ማረጋገጥ[cite: 4]"""
     try:
-        entry_price = int(request.json.get('entry_price', 10))
-        if not session.get('user_id'):
-            session['user_id'] = random.randint(100000, 999999)
-        user_id = int(session['user_id'])
+        data = request.json or {}
+        entry_price = int(data.get('entry_price', 10))
+        user_id = data.get('user_id') or session.get('user_id')
+        
+        if not user_id:
+            return jsonify({'error': 'Unauthorized user'}), 401
 
-        user = User.query.get(user_id)
-        if user and user.is_blocked:
-            return jsonify({'error': 'Your account is blocked.'}), 403
+        user = User.query.filter_by(telegram_id=int(user_id)).first()
+        if not user or user.is_blocked:
+            return jsonify({'error': 'User not found or blocked.'}), 403
 
-        # በአותו Entry Price ያሉ waiting/active ሩሞችን መቁጠር (ቢበዛ 3 መሆን አለበት)
+        # በአותו Entry Price ያሉ waiting/active ሩሞችን መቁጠር (ቢበዛ 3 መሆን አለበት)[cite: 4]
         same_price_games = [
             g for g in active_games.values() 
             if g.entry_price == entry_price and g.status in ['waiting', 'active']
@@ -109,9 +106,9 @@ def create_game():
             else:
                 return jsonify({'error': 'Maximum 3 active games running for this room. Please wait.'}), 400
 
-        user_balance = user.balance if user else 0.0
+        total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
 
-        if user_balance < entry_price:
+        if total_user_balance < entry_price:
             return jsonify({
                 'error': 'Insufficient balance! Please top up your wallet first.',
                 'low_balance': True
@@ -131,20 +128,23 @@ def create_game():
 
 @app.route('/game/<int:game_id>/select_cartela')
 def select_cartela(game_id):
-    """ዩዘሩ የተመረጠውን ሩም አግኝቶ ከ 1-200 ካርቴላ የሚመርጥበት ገጽ[cite: 8]"""
+    """ዩዘሩ የተመረጠውን ሩም አግኝቶ ከ 1-200 ካርቴላ የሚመርጥበት ገጽ[cite: 4]"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
     game = active_games[game_id]
-    if not session.get('user_id'):
-        session['user_id'] = random.randint(100000, 999999)
-    user_id = int(session['user_id'])
+    user_id = request.args.get('user_id') or session.get('user_id')
+    if not user_id:
+        return redirect(url_for('index'))
+        
+    user_id = int(user_id)
+    session['user_id'] = user_id
     
-    user = User.query.get(user_id)
-    if user and user.is_blocked:
-        return "Your account has been blocked.", 403
+    user = User.query.filter_by(telegram_id=user_id).first()
+    if not user or user.is_blocked:
+        return "Access denied.", 403
 
-    balance = user.balance if user else 50.0
+    total_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
 
     used_cartelas = set()
     for cards in game.players.values():
@@ -156,23 +156,23 @@ def select_cartela(game_id):
         game_id=game_id,
         entry_price=game.entry_price,
         used_cartelas=used_cartelas,
-        balance=balance
+        balance=total_balance
     )
 
 @app.route('/game/<int:game_id>/join', methods=['POST'])
 def join_game(game_id):
-    """ዩዘሩ ካርቴላ መርጦ ጨዋታውን የሚቀላቀልበት እና ገንዘብ የሚቀነስበት ሎጂክ[cite: 8]"""
+    """ጨዋታ መቀላቀል፡ ክፍያ ከቦነስ ቀድሞ በመቀነስ፣ ኮይን በመጨመር እና 10 ኮይን ሲሞላ ወደ ቦነስ በመቀየር[cite: 4]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
     game = active_games[game_id]
-    if not session.get('user_id'):
-        session['user_id'] = random.randint(100000, 999999)
-    user_id = int(session['user_id'])
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
     
-    user = User.query.get(user_id)
-    if user and user.is_blocked:
-        return jsonify({'error': 'Your account is blocked.'}), 403
+    user = User.query.filter_by(telegram_id=user_id).first()
+    if not user or user.is_blocked:
+        return jsonify({'error': 'Your account is blocked or not found.'}), 403
 
     data = request.json or {}
     cartela_number = data.get('cartela_number')
@@ -180,24 +180,41 @@ def join_game(game_id):
     if not cartela_number:
         return jsonify({'error': 'Please select a cartela number'}), 400
 
-    user_balance = user.balance if user else 50.0
-
-    if user_balance < game.entry_price:
+    total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
+    if total_user_balance < game.entry_price:
         return jsonify({
             'error': 'Insufficient balance! Please top up your wallet first.',
             'low_balance': True
         }), 400
 
-    if user:
-        user.balance -= game.entry_price
-        db.session.commit()
+    # 1. Split-balance deduction: Bonus balance first, then Main balance
+    remaining_cost = float(game.entry_price)
+    if user.bonus_balance >= remaining_cost:
+        user.bonus_balance -= remaining_cost
+        remaining_cost = 0.0
+    else:
+        remaining_cost -= user.bonus_balance
+        user.bonus_balance = 0.0
+        user.balance -= remaining_cost
 
-    username = user.username if user else "Player"
-    success, msg, board = game.add_player_card(user_id, username=username, cartela_number=int(cartela_number))
+    # 2. Add Coins based on stake (10 Birr = 1 coin, 20 Birr = 2 coins, etc.)
+    earned_coins = int(game.entry_price // 10)
+    user.coin = (user.coin or 0) + earned_coins
+
+    # 3. Auto-convert 10 coins into 10 Birr Bonus Balance
+    if user.coin >= 10:
+        conversion_count = user.coin // 10
+        user.bonus_balance += conversion_count * 10.0
+        user.coin %= 10
+
+    db.session.commit()
+
+    username = user.username or "Player"
+    success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=int(cartela_number))
     if not success:
-        if user:
-            user.balance += game.entry_price
-            db.session.commit()
+        # Refund if failed (simplified back to main/bonus)
+        user.balance += game.entry_price
+        db.session.commit()
         return jsonify({'error': msg}), 400
 
     session['active_game_id'] = game_id
@@ -209,23 +226,23 @@ def join_game(game_id):
 
 @app.route('/game/<int:game_id>')
 def play_game(game_id):
-    """የላይቭ ጨዋታ ማሳያ ገጽ[cite: 8]"""
+    """የላይቭ ጨዋታ ማሳያ ገጽ[cite: 4]"""
     if game_id not in active_games:
         return redirect(url_for('index'))
 
     game = active_games[game_id]
-    if not session.get('user_id'):
-        session['user_id'] = random.randint(100000, 999999)
-    user_id = int(session['user_id'])
-
-    user = User.query.get(user_id)
-    if user and user.is_blocked:
-        return "Your account has been blocked.", 403
-
-    if user_id not in game.players or not game.players[user_id]:
+    user_id = session.get('user_id')
+    if not user_id:
         return redirect(url_for('index'))
 
-    player_cards = game.players[user_id]
+    user = User.query.filter_by(telegram_id=user_id).first()
+    if not user or user.is_blocked:
+        return "Access denied.", 403
+
+    if user.telegram_id not in game.players or not game.players[user.telegram_id]:
+        return redirect(url_for('index'))
+
+    player_cards = game.players[user.telegram_id]
 
     if game.status == "waiting" and len(game.players) >= game.min_players:
         game.start_game()
@@ -251,17 +268,15 @@ def play_game(game_id):
 
 @app.route('/game/<int:game_id>/status', methods=['GET'])
 def game_status_api(game_id):
-    """የጨዋታውን ወቅታዊ መረጃዎች በእውነተኛ ሰዓት (Real-time) መመለስ[cite: 8]"""
+    """የጨዋታውን ወቅታዊ መረጃዎች በእውነተኛ ሰዓት (Real-time) መመለስ[cite: 4]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
     game = active_games[game_id]
     pool, bonus_text = game.update_pool_and_bonus()
     
-    # Format called numbers
     formatted_called = [game.format_number(n) for n in game.called_numbers]
     
-    # Winner info formatting for frontend modal
     formatted_winners = []
     for w in game.winners:
         formatted_winners.append({
@@ -289,7 +304,7 @@ def game_status_api(game_id):
 
 @app.route('/game/<int:game_id>/call', methods=['POST'])
 def call_number(game_id):
-    """ቁጥር መጥሪያ ራውት[cite: 8]"""
+    """ቁጥር መጥሪያ ራውት[cite: 4]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
@@ -307,20 +322,20 @@ def call_number(game_id):
 
 @app.route('/game/<int:game_id>/mark', methods=['POST'])
 def mark_number(game_id):
-    """ቢንጎ ማረጋገጫ እና ምልክት ማድረጊያ ራውት[cite: 8]"""
+    """ቢንጎ ማረጋገጫ (አሸናፊ ሲሆን ሽልማቱ በቀጥታ ወደ Main Balance ይገባል)[cite: 4]"""
     if game_id not in active_games:
         return jsonify({'error': 'Game not found'}), 404
 
     game = active_games[game_id]
-    if not session.get('user_id'):
-        session['user_id'] = random.randint(100000, 999999)
-    user_id = int(session['user_id'])
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
 
-    user = User.query.get(user_id)
-    if user and user.is_blocked:
-        return jsonify({'error': 'Your account is blocked.'}), 403
+    user = User.query.filter_by(telegram_id=user_id).first()
+    if not user or user.is_blocked:
+        return jsonify({'error': 'Your account is blocked or not found.'}), 403
 
-    if user_id not in game.players:
+    if user.telegram_id not in game.players:
         return jsonify({'error': 'Player not in game'}), 400
 
     data = request.json or {}
@@ -328,10 +343,12 @@ def mark_number(game_id):
     check_win = data.get('check_win', False)
 
     if check_win:
-        winner, message, prize_per_winner = game.claim_bingo(user_id, card_index)
+        winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
         if winner:
             if user:
+                # Winnings go strictly to MAIN BALANCE
                 user.balance += prize_per_winner
+                user.games_won += 1
                 db.session.commit()
         return jsonify({
             'winner': winner,
@@ -344,23 +361,42 @@ def mark_number(game_id):
     if not number:
         return jsonify({'error': 'Number required'}), 400
 
-    success = game.mark_number(user_id, card_index, int(number))
+    success = game.mark_number(user.telegram_id, card_index, int(number))
     if not success:
         return jsonify({'error': 'Could not mark number'}), 400
 
-    winner, message, prize_per_winner = game.claim_bingo(user_id, card_index)
+    winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
     if winner:
         if user:
             user.balance += prize_per_winner
+            user.games_won += 1
             db.session.commit()
 
     return jsonify({
-        'marked': game.players[user_id][card_index]['marked'],
+        'marked': game.players[user.telegram_id][card_index]['marked'],
         'winner': winner,
         'message': message,
         'prize': prize_per_winner if winner else 0.0,
         'winners': game.winners
     })
+
+@app.route('/game/<int:game_id>/leave', methods=['POST'])
+def leave_game(game_id):
+    """ተጫዋቹ ጨዋታውን መልቀቅ ሲፈልግ ከግሩም ማስወገድ"""
+    try:
+        if game_id not in active_games:
+            return jsonify({'success': True})
+        game = active_games[game_id]
+        user_id = session.get('user_id')
+        if user_id:
+            user = User.query.filter_by(telegram_id=user_id).first()
+            if user and user.telegram_id in game.players:
+                del game.players[user.telegram_id]
+                game.update_pool_and_bonus()
+        session.pop('active_game_id', None)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': 'Failed'}), 500
 
 
 # ==========================================
@@ -410,27 +446,23 @@ def admin_dashboard():
         transactions=all_txs
     )
 
-@app.route('/admin/user/<int:user_id>/add_balance', methods=['POST'])
+@app.route('/admin/user/<int:user_id>/update', methods=['POST'])
 @admin_required
-def admin_add_balance(user_id):
+def admin_update_user(user_id):
+    """አድሚኑ የዩዘርን Main Balance, Bonus Balance እና Coin ማስተካከል እንዲችል"""
     try:
-        amount = float(request.form.get('amount', 0))
-        if amount <= 0:
-            flash('Amount must be greater than zero', 'error')
-            return redirect(url_for('admin_dashboard'))
-            
         user = User.query.get(user_id)
         if user:
-            user.balance += amount
+            user.balance = float(request.form.get('balance', user.balance))
+            user.bonus_balance = float(request.form.get('bonus_balance', user.bonus_balance))
+            user.coin = int(request.form.get('coin', user.coin))
             db.session.commit()
-            flash(f'Successfully added {amount} to user!', 'success')
+            flash('User balances updated successfully!', 'success')
         else:
             flash('User not found', 'error')
-            
     except Exception as e:
-        logger.error(f"Error adding balance: {str(e)}")
-        flash('Error adding balance', 'error')
-        
+        logger.error(f"Error updating user balances: {str(e)}")
+        flash('Error updating user balances', 'error')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/withdrawal/<int:tx_id>/approve', methods=['POST'])
@@ -454,9 +486,9 @@ def admin_reject_withdrawal(tx_id):
         tx.status = 'rejected'
         user = User.query.get(tx.user_id)
         if user:
-            user.balance += abs(tx.amount)
+            user.balance += abs(tx.amount) # Refund to main balance
         db.session.commit()
-        flash('Withdrawal request rejected and refunded to user.', 'success')
+        flash('Withdrawal request rejected and refunded to user main balance.', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin_dashboard'))
@@ -510,3 +542,7 @@ def admin_logout():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+    
+@app.route('/ping')
+def ping():
+    return "Bot and Web are alive!", 200

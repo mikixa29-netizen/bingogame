@@ -61,6 +61,24 @@ def get_welcome_photo():
     photo_ref = config.get('welcome_image_file_id', DEFAULT_WELCOME_IMAGE)
     return URLInputFile(photo_ref) if photo_ref.startswith("http") else photo_ref
 
+def get_or_create_user(telegram_id, username, referrer_id=None):
+    user = User.query.filter_by(telegram_id=telegram_id).first()
+    if not user:
+        user = User(
+            id=telegram_id,
+            telegram_id=telegram_id,
+            username=username or f"Player_{telegram_id}",
+            balance=0.0,
+            bonus_balance=20.0, # 20 Birr registration bonus
+            coin=0,
+            is_blocked=False,
+            referrer_id=referrer_id
+        )
+        db.session.add(user)
+        db.session.commit()
+        logger.info(f"New user registered via Telegram bot: {telegram_id} ({username})")
+    return user
+
 # States
 class UserState(StatesGroup):
     waiting_for_deposit_method = State()
@@ -112,18 +130,13 @@ async def set_bot_commands(bot: Bot):
 async def cmd_start(message: Message):
     try:
         user_id = message.from_user.id
-        username = message.from_user.username
+        username = message.from_user.username or message.from_user.first_name
         
         args = message.text.split()[1:] if len(message.text.split()) > 1 else []
         referrer_id = int(args[0]) if args else None
 
         with app.app_context():
-            user = User.query.filter_by(telegram_id=user_id).first()
-            if not user:
-                user = User(telegram_id=user_id, username=username, referrer_id=referrer_id)
-                db.session.add(user)
-                db.session.commit()
-                logger.info(f"New user registered: {user_id} ({username})")
+            get_or_create_user(user_id, username, referrer_id)
 
         try:
             await message.answer_photo(
@@ -147,8 +160,9 @@ async def process_register_command_or_callback(event):
     message = event.message if isinstance(event, CallbackQuery) else event
     try:
         user_id = message.from_user.id
+        username = message.from_user.username or message.from_user.first_name
         with app.app_context():
-            user = User.query.filter_by(telegram_id=user_id).first()
+            user = get_or_create_user(user_id, username)
             if user and user.phone:
                 text = "You are already registered. Click /playbingo to start the game."
                 if isinstance(event, CallbackQuery):
@@ -182,10 +196,9 @@ async def process_phone_number(message: Message):
 
     try:
         with app.app_context():
-            user = User.query.filter_by(telegram_id=message.from_user.id).first()
-            if not user:
-                await message.answer("Please use /start first!")
-                return
+            user_id = message.from_user.id
+            username = message.from_user.username or message.from_user.first_name
+            user = get_or_create_user(user_id, username)
 
             user.phone = message.contact.phone_number
             db.session.commit()
@@ -219,30 +232,23 @@ async def process_phone_number(message: Message):
 async def process_balance_command_or_callback(event):
     message = event.message if isinstance(event, CallbackQuery) else event
     user_id = message.from_user.id
+    username = message.from_user.username or message.from_user.first_name
     with app.app_context():
-        user = User.query.filter_by(telegram_id=user_id).first()
-        if user:
-            name = user.username or message.from_user.first_name or "Unknown"
-            phone = user.phone or "Not provided"
-            
-            details_html = (
-                "Account details\n"
-                "<pre><code class=\"language-copy\">"
-                f"Name:              {name}\n"
-                f"Phone:             {phone}\n"
-                f"Balance:           {user.balance:.2f}\n"
-                f"Bonus balance:     1.00\n"
-                f"Tournament wallet: 0.00\n"
-                f"Coin:              1"
-                "</code></pre>"
-            )
-            await message.answer(details_html, parse_mode="HTML")
-        else:
-            text = "Please register first using /start or /register."
-            if isinstance(event, CallbackQuery):
-                await event.answer(text, show_alert=True)
-            else:
-                await message.answer(text)
+        user = get_or_create_user(user_id, username)
+        name = user.username or message.from_user.first_name or "Unknown"
+        phone = user.phone or "Not provided"
+        
+        details_html = (
+            "<b>Account Details</b>\n"
+            "<pre><code class=\"language-copy\">"
+            f"Name:           {name}\n"
+            f"Phone:          {phone}\n"
+            f"Main Balance:   {user.balance:.2f} Birr\n"
+            f"Bonus Balance:  {user.bonus_balance:.2f} Birr\n"
+            f"Coins:          {user.coin} Coins"
+            "</code></pre>"
+        )
+        await message.answer(details_html, parse_mode="HTML")
     if isinstance(event, CallbackQuery):
         await event.answer()
 
@@ -250,6 +256,12 @@ async def process_balance_command_or_callback(event):
 @router.callback_query(F.data == "menu_play_bingo")
 async def process_play_bingo_command_or_callback(event):
     message = event.message if isinstance(event, CallbackQuery) else event
+    user_id = message.from_user.id
+    username = message.from_user.username or message.from_user.first_name
+    
+    with app.app_context():
+        get_or_create_user(user_id, username)
+
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="🎮 10 Birr Room", callback_data="price_10"),
@@ -306,15 +318,9 @@ async def process_play_demo(callback_query: CallbackQuery):
 async def process_deposit_command_or_callback(event, state: FSMContext = None):
     message = event.message if isinstance(event, CallbackQuery) else event
     user_id = message.from_user.id
+    username = message.from_user.username or message.from_user.first_name
     with app.app_context():
-        user = User.query.filter_by(telegram_id=user_id).first()
-        if not user:
-            text = "Please register first using /start or /register"
-            if isinstance(event, CallbackQuery):
-                await event.answer(text, show_alert=True)
-            else:
-                await message.answer(text)
-            return
+        get_or_create_user(user_id, username)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -434,7 +440,7 @@ async def process_deposit_reference(message: Message, state: FSMContext):
                 f"✅ <b>Deposit Verified & Credited Successfully!</b>\n\n"
                 f"Method: {method}\n"
                 f"Amount: {amount:.2f} birr\n"
-                f"New Balance: {user.balance:.2f} birr\n\n"
+                f"Main Balance: {user.balance:.2f} birr\n\n"
                 "Your payment was automatically confirmed via merchant API.",
                 parse_mode="HTML"
             )
@@ -481,15 +487,10 @@ async def process_withdraw_command_or_callback(event, state: FSMContext = None):
     with app.app_context():
         user = User.query.filter_by(telegram_id=user_id).first()
         if not user:
-            text = "Please register first using /start or /register"
-            if isinstance(event, CallbackQuery):
-                await event.answer(text, show_alert=True)
-            else:
-                await message.answer(text)
-            return
+            user = get_or_create_user(user_id, message.from_user.username)
         
         if user.balance < 50:
-            text = f"⚠️ Insufficient balance for withdrawal. Your balance is {user.balance:.2f} birr. Minimum required is 50 birr."
+            text = f"⚠️ Insufficient Main Balance for withdrawal. Your Main Balance is {user.balance:.2f} birr. Minimum required is 50 birr."
             if isinstance(event, CallbackQuery):
                 await event.answer(text, show_alert=True)
             else:
@@ -506,7 +507,7 @@ async def process_withdraw_command_or_callback(event, state: FSMContext = None):
         ]
     ])
 
-    caption = "💳 <b>Withdraw Funds</b>\n\nSelect your payout payment method:"
+    caption = f"💳 <b>Withdraw Funds</b>\n\nYour Main Balance: <b>{user.balance:.2f} Birr</b>\nSelect your payout payment method:"
     if isinstance(event, CallbackQuery):
         try:
             await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
@@ -539,7 +540,7 @@ async def process_withdraw_method_selection(callback_query: CallbackQuery, state
     try:
         await callback_query.message.edit_caption(
             caption=f"Selected Payout Method: <b>{method}</b>\n\n"
-                    f"💰 Your Current Balance: <b>{max_bal:.2f} birr</b>\n"
+                    f"💰 Your Main Balance: <b>{max_bal:.2f} birr</b>\n"
                     "Enter the amount you want to withdraw:",
             reply_markup=keyboard,
             parse_mode="HTML"
@@ -558,15 +559,20 @@ async def process_withdraw_amount(message: Message, state: FSMContext):
                 await message.answer("⚠️ Minimum withdrawal amount is 50 birr. Please enter a valid amount:")
                 return
             if amount > user.balance:
-                await message.answer(f"⚠️ Insufficient balance. You only have {user.balance:.2f} birr. Enter a valid amount:")
+                await message.answer(f"⚠️ Insufficient Main Balance. You only have {user.balance:.2f} birr. Enter a valid amount:")
                 return
 
         await state.update_data(withdraw_amount=amount)
+        data = await state.get_data()
+        method = data.get("withdraw_method")
+        
         await state.set_state(UserState.waiting_for_withdraw_phone)
         
+        account_prompt = "📱 Please enter your <b>Telebirr phone number</b>:" if method == "Telebirr" else "🏦 Please enter your <b>CBE account number</b>:"
+        
         await message.answer(
-            f"✅ Amount: <b>{amount} birr</b> confirmed.\n\n"
-            "📞 Please enter the phone number or account number where you want to receive your payment:",
+            f"✅ Amount: <b>{amount} birr</b> via <b>{method}</b> confirmed.\n\n"
+            f"{account_prompt}",
             parse_mode="HTML"
         )
     except ValueError:
@@ -601,7 +607,7 @@ async def process_withdraw_phone(message: Message, state: FSMContext):
         tx_id = transaction.id
 
     await message.answer(
-        "Withdraw request successfully sent. Wait the admin to approve."
+        "✅ Withdraw request successfully sent. Please wait for the admin to approve."
     )
 
     admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -655,8 +661,8 @@ async def cmd_admin_report(message: Message):
             report_text += (
                 f"👤 <b>User:</b> {u.username or 'N/A'} (ID: <code>{u.telegram_id}</code>)\n"
                 f"📱 <b>Phone:</b> {u.phone or 'Not set'}\n"
-                f"💰 <b>Balance:</b> {u.balance:.2f} birr\n"
-                f"🎮 <b>Games Played:</b> {u.games_played} | 🏆 <b>Won:</b> {u.games_won}\n"
+                f"💰 <b>Main:</b> {u.balance:.2f} | <b>Bonus:</b> {u.bonus_balance:.2f} | <b>Coins:</b> {u.coin}\n"
+                f"🎮 <b>Played:</b> {u.games_played} | 🏆 <b>Won:</b> {u.games_won}\n"
                 "-----------------------------------\n"
             )
 
@@ -706,7 +712,7 @@ async def handle_admin_withdrawal_action(callback_query: CallbackQuery):
             try:
                 await callback_query.bot.send_message(
                     chat_id=user.telegram_id,
-                    text=f"❌ <b>Withdrawal Rejected</b>\n\nYour withdrawal request of {abs(tx.amount):.2f} birr was rejected and refunded to your balance.",
+                    text=f"❌ <b>Withdrawal Rejected</b>\n\nYour withdrawal request of {abs(tx.amount):.2f} birr was rejected and refunded to your Main Balance.",
                     parse_mode="HTML"
                 )
             except Exception:
@@ -725,20 +731,22 @@ async def process_price_selection(callback_query: CallbackQuery):
     try:
         price = int(callback_query.data.split('_')[1])
         user_id = callback_query.from_user.id
+        username = callback_query.from_user.username or callback_query.from_user.first_name
         
         with app.app_context():
-            user = User.query.filter_by(telegram_id=user_id).first()
-            if not user or user.balance < price:
-                await callback_query.answer("Insufficient balance. Please deposit first.", show_alert=True)
+            user = get_or_create_user(user_id, username)
+            total_bal = user.balance + user.bonus_balance
+            if total_bal < price:
+                await callback_query.answer(f"Insufficient total balance! You have {total_bal:.2f} Birr, but need {price} Birr.", show_alert=True)
                 return
 
             async with aiohttp.ClientSession() as session:
-                async with session.post(f"{WEBAPP_URL}/game/create", json={'entry_price': price, 'user_id': user.id}) as response:
+                async with session.post(f"{WEBAPP_URL}/game/create", json={'entry_price': price, 'user_id': user.telegram_id}) as response:
                     if response.status == 200:
                         data = await response.json()
                         game_id = data['game_id']
                         
-                        webapp_target_url = f"{WEBAPP_URL}/game/{game_id}/select_cartela?user_id={user.id}&balance={user.balance}&username={user.username or 'Player'}"
+                        webapp_target_url = f"{WEBAPP_URL}/game/{game_id}/select_cartela?user_id={user.telegram_id}"
                         
                         keyboard = InlineKeyboardMarkup(inline_keyboard=[[
                             InlineKeyboardButton(text="Select Your Cartela", web_app=WebAppInfo(url=webapp_target_url))
@@ -748,7 +756,7 @@ async def process_price_selection(callback_query: CallbackQuery):
                             await callback_query.message.edit_caption(
                                 caption=f"🎮 Room created for {price} Birr!\n"
                                         f"👤 Player: {user.username or 'Player'}\n"
-                                        f"💰 Active Wallet Balance: {user.balance:.2f} Birr\n\n"
+                                        f"💰 Main: {user.balance:.2f} | Bonus: {user.bonus_balance:.2f}\n\n"
                                         f"Click below to select your cartela:",
                                 reply_markup=keyboard
                             )
@@ -756,7 +764,7 @@ async def process_price_selection(callback_query: CallbackQuery):
                             await callback_query.message.answer(
                                 text=f"🎮 Room created for {price} Birr!\n"
                                      f"👤 Player: {user.username or 'Player'}\n"
-                                     f"💰 Active Wallet Balance: {user.balance:.2f} Birr\n\n"
+                                     f"💰 Main: {user.balance:.2f} | Bonus: {user.bonus_balance:.2f}\n\n"
                                      f"Click below to select your cartela:",
                                 reply_markup=keyboard
                             )

@@ -1,7 +1,7 @@
 import os
 import asyncio
 from app import app
-from bot import main as bot_main  # Imported 'main' instead of 'run_bot'
+from bot import main as bot_main
 from multiprocessing import Process
 import signal
 import sys
