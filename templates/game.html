@@ -166,9 +166,8 @@
             width: 48%;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             color: #333;
-            max-height: 380px;
-            overflow-y: auto;
         }
+        
         .bingo-header-row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -177,12 +176,22 @@
             font-size: 12px;
             margin-bottom: 4px;
         }
-        /* B-I-N-G-O Letter Colors */
-        .bingo-header-row div:nth-child(1) { color: #3498db; } /* B - Blue */
-        .bingo-header-row div:nth-child(2) { color: #e74c3c; } /* I - Red */
-        .bingo-header-row div:nth-child(3) { color: #2ecc71; } /* N - Green */
-        .bingo-header-row div:nth-child(4) { color: #e67e22; } /* G - Orange */
-        .bingo-header-row div:nth-child(5) { color: #9b59b6; } /* O - Purple */
+        .bingo-header-row div {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white !important;
+            margin: 0 auto;
+            font-size: 10px;
+        }
+        .bingo-header-row div:nth-child(1) { background-color: #3498db; }
+        .bingo-header-row div:nth-child(2) { background-color: #e74c3c; }
+        .bingo-header-row div:nth-child(3) { background-color: #2ecc71; }
+        .bingo-header-row div:nth-child(4) { background-color: #e67e22; }
+        .bingo-header-row div:nth-child(5) { background-color: #9b59b6; }
 
         .board-list {
             display: flex;
@@ -203,15 +212,15 @@
             border-radius: 3px;
             font-weight: bold;
         }
-        /* Current Call Green */
         .board-item.current-green {
-            background-color: #27ae60 !important;
+            background-color: #2ecc71 !important;
             color: #fff !important;
+            border-radius: 50% !important;
         }
-        /* Called Orange */
         .board-item.called-orange {
-            background-color: #f39c12 !important;
+            background-color: #e67e22 !important;
             color: #fff !important;
+            border-radius: 50% !important;
         }
 
         .call-area {
@@ -238,14 +247,18 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
         }
         .current-call-badge {
-            background: #27ae60 !important;
+            background: #e67e22 !important;
             color: white;
             font-size: 18px;
             font-weight: 900;
-            padding: 8px 16px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 3px;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4px auto;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
         }
 
         .recent-calls-box {
@@ -255,27 +268,25 @@
             text-align: center;
         }
         .recent-title { font-size: 10px; font-weight: bold; margin-bottom: 3px; }
-        .recent-list { display: flex; justify-content: center; gap: 4px; }
+        .recent-list { display: flex; justify-content: center; gap: 5px; }
+        
         .recent-ball {
-            background: #f39c12 !important;
-            color: #fff;
-            width: 22px;
-            height: 22px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 900;
             font-size: 10px;
+            color: #fff !important;
         }
+        .ball-b { background-color: #3498db !important; }
+        .ball-i { background-color: #e74c3c !important; }
+        .ball-n { background-color: #2ecc71 !important; }
+        .ball-g { background-color: #e67e22 !important; }
+        .ball-o { background-color: #9b59b6 !important; }
 
-        .user-cartelas-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
         .user-cartela {
             background: #ffffff;
             border-radius: 10px;
@@ -291,7 +302,7 @@
         .ucell {
             background: #f9f9f9;
             color: #333;
-            font-size: 11px;
+            font-size: 12px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
@@ -302,6 +313,7 @@
         .ucell.marked, .ucell.free-cell {
             background: #27ae60 !important;
             color: #fff !important;
+            border-radius: 50% !important;
         }
 
         .btn-bingo {
@@ -440,8 +452,13 @@
                     <div class="recent-list" id="recentList"></div>
                 </div>
 
-                <!-- Multiple User Cartelas Container -->
-                <div class="user-cartelas-container" id="userCartelasContainer"></div>
+                <div class="user-cartela">
+                    <div class="bingo-header-row" style="font-size:10px;">
+                        <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
+                    </div>
+                    <div class="user-cartela-grid" id="userCartelaGrid"></div>
+                    <div style="text-align:center; font-size:10px; margin-top:3px; color:#666;" id="boardNumberLbl">My Cartela</div>
+                </div>
             </div>
         </div>
 
@@ -453,11 +470,12 @@
         </div>
     </div>
 
+    <!-- Winner/Loser Modal -->
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
-            <div class="crown-icon">👑</div>
-            <div class="winner-title">BINGO!</div>
-            <div class="winner-name" id="wNameText">Winner Won!</div>
+            <div class="crown-icon" id="modalCrown">👑</div>
+            <div class="winner-title" id="modalTitle">BINGO!</div>
+            <div class="winner-name" id="wNameText">You Win!</div>
             <div class="winning-cartela-tag" id="wCartelaTag">Winning Cartela : --</div>
             <div class="winner-board-grid" id="wBoardGrid"></div>
             <div style="margin-top: 12px; font-size: 12px; font-weight: bold; color: #38bdf8;" id="wPrizeText">Prize: -- Birr</div>
@@ -468,22 +486,34 @@
     </div>
 
     <div id="game-server-data" 
-         data-cards='{{ player_cards | tojson | safe }}'
+         data-board='{{ (player_cards[0].board if player_cards else []) | tojson | safe }}'
+         data-marked='{{ (player_cards[0].marked if player_cards else []) | tojson | safe }}'
          data-status='{{ game_status | default("waiting") }}'
          data-game-id='{{ game_id | tojson | safe }}'
+         data-user-id='{{ session.get("user_id") | tojson | safe }}'
          style="display: none;"></div>
 
     <script>
         const serverData = document.getElementById('game-server-data');
         const gameId = JSON.parse(serverData.dataset.gameId || 'null');
+        const currentUserId = JSON.parse(serverData.dataset.userId || 'null');
         let selectedCartelaId = 1;
 
-        let playerCards = JSON.parse(serverData.dataset.cards || '[]');
+        let playerBoard = JSON.parse(serverData.dataset.board || '[]');
+        let markedNumbers = JSON.parse(serverData.dataset.marked || '[]');
         let gameStatus = serverData.dataset.status;
 
-        if (playerCards.length > 0 || gameStatus === 'active' || gameStatus === 'countdown' || gameStatus === 'finished') {
+        if (playerBoard.length > 0 || gameStatus === 'active' || gameStatus === 'countdown' || gameStatus === 'finished') {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
+        }
+
+        function getBallClass(num) {
+            if (num >= 1 && num <= 15) return 'ball-b';
+            if (num >= 16 && num <= 30) return 'ball-i';
+            if (num >= 31 && num <= 45) return 'ball-n';
+            if (num >= 46 && num <= 60) return 'ball-g';
+            return 'ball-o';
         }
 
         function generateCartelaNumbers(id) {
@@ -580,49 +610,20 @@
             }
         }
 
-        // Render multiple user cartelas dynamically
-        function renderUserCartelas() {
-            let container = document.getElementById('userCartelasContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            playerCards.forEach((card) => {
-                let cartelaDiv = document.createElement('div');
-                cartelaDiv.className = 'user-cartela';
-
-                let headerRow = document.createElement('div');
-                headerRow.className = 'bingo-header-row';
-                headerRow.style.fontSize = '10px';
-                headerRow.innerHTML = '<div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>';
-                cartelaDiv.appendChild(headerRow);
-
-                let gridDiv = document.createElement('div');
-                gridDiv.className = 'user-cartela-grid';
-
-                card.board.forEach((num, idx) => {
-                    let uCell = document.createElement('div');
-                    let isMarked = card.marked.includes(num) || idx === 12;
-                    uCell.className = 'ucell' + (isMarked ? ' marked' : '');
-                    uCell.innerText = idx === 12 ? '★' : num;
-                    gridDiv.appendChild(uCell);
-                });
-
-                cartelaDiv.appendChild(gridDiv);
-
-                let labelDiv = document.createElement('div');
-                labelDiv.style.textAlign = 'center';
-                labelDiv.style.fontSize = '10px';
-                labelDiv.style.marginTop = '3px';
-                labelDiv.style.color = '#666';
-                labelDiv.innerText = `Cartela #${card.cartela_number}`;
-                cartelaDiv.appendChild(labelDiv);
-
-                container.appendChild(cartelaDiv);
+        function renderUserCartela() {
+            let uGrid = document.getElementById('userCartelaGrid');
+            if (!uGrid) return;
+            uGrid.innerHTML = '';
+            playerBoard.forEach((num, idx) => {
+                let uCell = document.createElement('div');
+                let isMarked = markedNumbers.includes(num) || idx === 12;
+                uCell.className = 'ucell' + (isMarked ? ' marked' : '');
+                uCell.innerText = idx === 12 ? '★' : num;
+                uGrid.appendChild(uCell);
             });
         }
-
-        if (playerCards.length > 0) {
-            renderUserCartelas();
+        if (playerBoard.length > 0) {
+            renderUserCartela();
         }
 
         function claimBingo() {
@@ -655,10 +656,21 @@
             let winners = data.winners || [];
             let prizePerWinner = data.prize_per_winner || 0;
 
-            let namesText = winners.map(w => `🏆 ${w.username} (Cartela #${w.cartela_number})`).join('<br>');
-            document.getElementById('wNameText').innerHTML = namesText || "Winner Won!";
+            let isUserWinner = winners.some(w => w.user_id === currentUserId);
+
+            if (isUserWinner) {
+                document.getElementById('modalCrown').innerText = '👑';
+                document.getElementById('modalTitle').innerText = 'YOU WIN!';
+                document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 ${w.username} (Cartela #${w.cartela_number})`).join('<br>');
+                document.getElementById('wPrizeText').innerText = "Prize won: " + prizePerWinner + " Birr";
+            } else {
+                document.getElementById('modalCrown').innerText = '❌';
+                document.getElementById('modalTitle').innerText = 'GAME OVER';
+                document.getElementById('wNameText').innerHTML = 'You Lose!<br><span style="font-size:12px; color:#facc15;">Winner(s): ' + winners.map(w => w.username).join(', ') + '</span>';
+                document.getElementById('wPrizeText').innerText = "Better luck next time!";
+            }
+
             document.getElementById('wCartelaTag').innerText = "Total Winners: " + winners.length;
-            document.getElementById('wPrizeText').innerText = "Prize per winner: " + prizePerWinner + " Birr";
 
             if (winners.length > 0) {
                 let winner = winners[0];
@@ -686,6 +698,12 @@
                 document.getElementById('callCountVal').innerText = data.called_numbers.length;
                 document.getElementById('currentCallBadge').innerText = data.current_call;
 
+                if (data.current_call && data.current_call !== '---') {
+                    let numVal = parseInt(data.current_call.split('-')[1]);
+                    let badge = document.getElementById('currentCallBadge');
+                    badge.className = 'current-call-badge ' + getBallClass(numVal);
+                }
+
                 if (data.status === 'countdown') {
                     document.getElementById('countdownTimer').innerText = data.countdown_remaining + 's';
                 } else if (data.status === 'active') {
@@ -694,7 +712,6 @@
                     document.getElementById('countdownTimer').innerText = 'Finished';
                 }
 
-                // 1. Colors: Current Call = Green, Previous/Called = Orange
                 document.querySelectorAll('.board-item').forEach(el => {
                     el.classList.remove('current-green', 'called-orange');
                 });
@@ -711,34 +728,32 @@
                     let el = document.getElementById('bnum-' + num);
                     if (el) {
                         if (num === currentCallNum) {
-                            el.classList.add('current-green'); // Green for current call
+                            el.classList.add('current-green');
                         } else {
-                            el.classList.add('called-orange'); // Orange for previous calls
+                            el.classList.add('called-orange');
                         }
                     }
                 });
 
-                // 2. Automatic marking on all player cartelas
                 let autoMarked = false;
-                playerCards.forEach(card => {
-                    card.board.forEach((num, idx) => {
-                        if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
-                            card.marked.push(num);
-                            autoMarked = true;
-                        }
-                    });
+                playerBoard.forEach(num => {
+                    if (num !== '*' && calledRawNumbers.includes(num) && !markedNumbers.includes(num)) {
+                        markedNumbers.push(num);
+                        autoMarked = true;
+                    }
                 });
                 if (autoMarked) {
-                    renderUserCartelas();
+                    renderUserCartela();
                 }
 
                 let recentList = document.getElementById('recentList');
                 recentList.innerHTML = '';
                 let last5 = data.called_numbers.slice(-5).reverse();
                 last5.forEach(callStr => {
+                    let numVal = parseInt(callStr.split('-')[1]);
                     let ball = document.createElement('div');
-                    ball.className = 'recent-ball';
-                    ball.innerText = callStr.split('-')[1];
+                    ball.className = 'recent-ball ' + getBallClass(numVal);
+                    ball.innerText = callStr;
                     recentList.appendChild(ball);
                 });
 
