@@ -98,10 +98,10 @@
         }
         /* User's selected cartela is green */
         .num-cell.selected {
-            background: #008000 !important;
+            background: #27ae60 !important;
             color: #fff !important;
         }
-        /* Cartelas taken by other players are dark orange */
+        /* Cartelas taken by other players are bold orange */
         .num-cell.taken-by-other {
             background: #e67e22 !important;
             color: #fff !important;
@@ -141,7 +141,7 @@
             font-weight: bold;
         }
         .mini-cell.star {
-            background: #008000;
+            background: #27ae60;
             color: #fff;
         }
 
@@ -573,11 +573,6 @@
                 
                 cell.onclick = () => {
                     if (cell.classList.contains('taken-by-other')) return;
-                    document.querySelectorAll('.num-cell').forEach(c => {
-                        if (!c.classList.contains('taken-by-other') && !c.classList.contains('selected')) {
-                            // reset unselected
-                        }
-                    });
                     document.querySelectorAll('.num-cell').forEach(c => {
                         if (c.classList.contains('selected') && !c.classList.contains('taken-by-other')) {
                             c.classList.remove('selected');
