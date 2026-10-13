@@ -243,7 +243,7 @@ class BingoGame:
             return False
         self.status = "active"
         self.call_number() 
-        return `True`
+        return True
 
     def end_game(self):
         self.status = "finished"
