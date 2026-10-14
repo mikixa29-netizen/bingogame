@@ -12,110 +12,110 @@
         }
         body {
             margin: 0;
-            padding: 6px;
-            background-color: #8cc63f;
-            color: #111;
+            padding: 8px;
+            background-color: #a483cf; /* Default Selection Screen Purple */
+            color: #fff;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             overflow-x: hidden;
+            transition: background-color 0.3s ease;
         }
 
-        /* Top Header Stats Bar */
-        .top-stats {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 3px;
-            width: 100%;
-            max-width: 440px;
-            margin-bottom: 6px;
-        }
-        .stat-box {
-            background: #ffffff;
-            color: #2e4d00;
-            border-radius: 6px;
-            padding: 4px 2px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-            cursor: pointer;
-        }
-        .stat-box .label { font-size: 8px; text-transform: capitalize; font-weight: 800; color: #333; }
-        .stat-box .value { font-size: 10px; font-weight: 900; margin-top: 1px; color: #000; }
-
+        /* --- SELECTION SCREEN (Original Purple Theme) --- */
         #selection-screen {
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
+        .sel-top-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
+        .sel-stat-box {
+            background: #ffffff;
+            color: #333;
+            border-radius: 12px;
+            padding: 6px 4px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+        .sel-stat-box .label { font-size: 9px; color: #666; text-transform: uppercase; font-weight: 800; }
+        .sel-stat-box .value { font-size: 13px; font-weight: 900; color: #111; margin-top: 2px; }
 
         .select-subtitle {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 800;
-            margin: 4px 0 8px 0;
-            color: #1c3b00;
+            margin: 8px 0 10px 0;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
-
         .number-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            background: #a4db44;
+            background: rgba(255, 255, 255, 0.18);
             padding: 8px;
-            border-radius: 12px;
+            border-radius: 14px;
             width: 100%;
-            max-height: 260px;
+            max-height: 280px;
             overflow-y: auto;
-            margin-bottom: 8px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
         }
-        
         .num-cell {
-            background: #dcf3a1;
-            color: #222;
+            background: #e2d1f9;
+            color: #2d2d2d;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 11px;
             font-weight: 800;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-
         .num-cell.selected {
             background-color: #27ae60 !important;
             color: #ffffff !important;
             font-weight: 900;
         }
-
         .num-cell.taken-by-other {
-            background-color: #e74c3c !important;
+            background-color: #ff6600 !important;
             color: #ffffff !important;
             cursor: not-allowed;
             font-weight: 900;
         }
-
         .selected-info-box {
             background: #ffffff;
-            color: #1c3b00;
+            color: #222;
             width: 100%;
-            padding: 8px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 12px;
             text-align: center;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
         }
-
         .cartela-preview-container {
             background: #ffffff;
-            padding: 8px;
-            border-radius: 10px;
-            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -124,79 +124,87 @@
         .mini-cartela-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
-            width: 150px;
+            gap: 4px;
+            width: 160px;
         }
         .mini-cell {
-            background: #eef7d3;
-            color: #111;
-            font-size: 9px;
+            background: #f0f0f0;
+            color: #333;
+            font-size: 10px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 3px;
+            border-radius: 4px;
             font-weight: 800;
         }
         .mini-cell.star { background: #27ae60; color: #fff; }
-
-        /* Action Buttons */
-        .action-buttons-main {
+        .action-buttons {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
-            margin-top: 6px;
+            margin-bottom: 15px;
         }
-        .btn-green-action {
+        .btn-refresh, .btn-start {
             border: none;
-            padding: 10px 0;
+            padding: 14px 0;
             flex: 1;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 900;
-            cursor: pointer;
-            color: white;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-            text-align: center;
-            text-decoration: none;
-        }
-        .btn-bingo-main {
-            background: #d81b60;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 12px;
             border-radius: 25px;
-            font-size: 20px;
-            font-weight: 900;
+            font-size: 15px;
+            font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            margin-top: 6px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.18);
         }
-        .btn-blue { background: #1e88e5; }
-        .btn-orange { background: #f3511e; }
-        .btn-yellow { background: #fdd835; color: #111; }
+        .btn-refresh { background: #209cee; }
+        .btn-start { background: #ff6600; }
 
-        /* Game Screen Layout */
+        /* --- GAME SCREEN (Green Theme matching Image Style) --- */
         #game-screen {
             display: none;
             width: 100%;
             max-width: 440px;
             flex-direction: column;
             align-items: center;
+            color: #111;
         }
-        .game-main-area {
+        .game-top-stats {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .game-stat-box {
+            background: #ffffff;
+            color: #2e4d00;
+            border-radius: 6px;
+            padding: 4px 1px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            cursor: pointer;
+        }
+        .game-stat-box .label { font-size: 7.5px; text-transform: capitalize; font-weight: 800; color: #333; }
+        .game-stat-box .value { font-size: 9.5px; font-weight: 900; margin-top: 1px; color: #000; }
+
+        .game-main-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 8px;
+        }
+
+        .top-game-section {
             display: flex;
             width: 100%;
             gap: 6px;
-            margin-top: 4px;
         }
         .board-column {
             background: #a4db44;
             border-radius: 8px;
             padding: 4px;
-            width: 48%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            flex: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
         .bingo-header-row {
             display: grid;
@@ -229,39 +237,40 @@
             color: #333;
             font-size: 9px;
             text-align: center;
-            padding: 2px 0;
+            padding: 3px 0;
             border-radius: 2px;
             font-weight: 800;
         }
         .board-item.current-green { background-color: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
         .board-item.called-orange { background-color: #ff6600 !important; color: #fff !important; border-radius: 50% !important; }
 
-        .call-area { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-        
+        .call-side-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
         .status-box-img {
             background: #dcf3a1;
             border-radius: 8px;
-            padding: 6px 12px;
+            padding: 6px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             color: #1c3b00;
         }
         .current-call-box-img {
             background: #1b5e20;
             color: white;
             border-radius: 8px;
-            padding: 6px 12px;
+            padding: 6px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: 900;
-            position: relative;
         }
-        
-        /* B-I-N-G-O Specific Colors for Badges */
         .badge-b { background-color: #fbc02d !important; color: #111 !important; }
         .badge-i { background-color: #e91e63 !important; color: #fff !important; }
         .badge-n { background-color: #03a9f4 !important; color: #fff !important; }
@@ -270,8 +279,8 @@
 
         .current-call-badge-img {
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -279,30 +288,98 @@
             font-weight: 900;
             box-shadow: 0 2px 4px rgba(0,0,0,0.25);
         }
-
         .recent-calls-box-img {
             background: #dcf3a1;
             padding: 6px;
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             justify-content: center;
-            gap: 6px;
+            gap: 4px;
         }
         .recent-ball {
-            width: 24px; height: 24px; border-radius: 50%;
+            width: 22px; height: 22px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-weight: 900; font-size: 8px;
         }
 
-        .user-cartelas-container { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
-        .user-cartela { background: #dcf3a1; border-radius: 8px; padding: 4px; color: #111; }
-        .user-cartela-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+        .user-cartelas-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+            width: 100%;
+            background: rgba(164, 219, 68, 0.3);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .user-cartela {
+            background: #dcf3a1;
+            border-radius: 8px;
+            padding: 6px;
+            color: #111;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .user-cartela-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            margin-top: 4px;
+        }
         .ucell {
-            background: #ffffff; color: #111; font-size: 10px; aspect-ratio: 1;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 3px; font-weight: 900;
+            background: #ffffff;
+            color: #111;
+            font-size: 10px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: 900;
         }
         .ucell.marked { background: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
+
+        .bottom-action-area {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+            margin-top: 4px;
+            margin-bottom: 15px;
+        }
+        .btn-bingo-main {
+            background: #d81b60;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+        }
+        .action-buttons-game {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+        }
+        .btn-game-action {
+            border: none;
+            padding: 10px 0;
+            flex: 1;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            text-align: center;
+            text-decoration: none;
+        }
+        .btn-blue { background: #1e88e5; }
+        .btn-orange { background: #f3511e; }
+        .btn-yellow { background: #fdd835; color: #111; }
 
         /* WINNER MODAL */
         .winner-modal-overlay {
@@ -311,7 +388,7 @@
             justify-content: center; align-items: center; z-index: 9999;
         }
         .winner-modal-card {
-            background: #1b5e20; border-radius: 16px; padding: 18px;
+            background: #1b5e20; border-radius: 16px; padding: 20px;
             width: 90%; max-width: 320px; text-align: center; color: #fff;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             border: 2px solid #fdd835;
@@ -320,40 +397,15 @@
 </head>
 <body>
 
-    <!-- TOP HEADER STATS -->
-    <div class="top-stats">
-        <div class="stat-box">
-            <div class="label">Game</div>
-            <div class="value" id="gameIdLbl">P{{ game_id }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Derash</div>
-            <div class="value" id="derashVal">{{ pool | default('--') }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Bonus</div>
-            <div class="value" id="bonusVal">{{ bonus | default('On') }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Players</div>
-            <div class="value" id="playersVal">{{ active_players | default('--') }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Stake</div>
-            <div class="value" id="stakeVal">{{ entry_price | default('--') }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Call</div>
-            <div class="value" id="callCountVal">--</div>
-        </div>
-        <div class="stat-box" onclick="toggleSound()">
-            <div class="label">Sound</div>
-            <div class="value" id="soundBtnLbl">ON</div>
-        </div>
-    </div>
-
     <!-- SELECTION SCREEN -->
     <div id="selection-screen">
+        <div class="sel-top-stats" style="width: 100%; max-width: 420px;">
+            <div class="sel-stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
+            <div class="sel-stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
+            <div class="sel-stat-box"><div class="label">Stake/Card</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
+            <div class="sel-stat-box"><div class="label">Selected</div><div class="value" id="selectedCountLbl">0/4</div></div>
+        </div>
+
         <div class="select-subtitle">Select Up to 4 Cartelas (1-200)</div>
         <div class="number-grid" id="numberGrid"></div>
 
@@ -362,49 +414,62 @@
         </div>
 
         <div class="cartela-preview-container" id="previewContainer" style="display:none;">
-            <div style="font-size: 10px; color:#1c3b00; text-align:center; font-weight:800; margin-bottom:4px;" id="previewTitleLbl">Cartela Preview</div>
+            <div style="font-size: 11px; color:#444; text-align:center; font-weight:800; margin-bottom:6px;" id="previewTitleLbl">Cartela Preview</div>
             <div class="mini-cartela-grid" id="miniCartela"></div>
         </div>
 
-        <div class="action-buttons-main">
-            <button class="btn-green-action btn-blue" onclick="location.reload()">Refresh</button>
-            <button class="btn-green-action btn-orange" onclick="joinAndStartGame()">Play Bingo</button>
+        <div class="action-buttons">
+            <button class="btn-refresh" onclick="location.reload()">Refresh</button>
+            <button class="btn-start" onclick="joinAndStartGame()">Play Bingo</button>
         </div>
     </div>
 
     <!-- GAME SCREEN -->
     <div id="game-screen">
-        <div class="game-main-area">
-            <div class="board-column">
-                <div class="bingo-header-row">
-                    <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
-                </div>
-                <div class="board-list" id="mainBoardList"></div>
-            </div>
-
-            <div class="call-area">
-                <div class="status-box-img">
-                    <span>Count Down</span>
-                    <span id="countdownTimer">--</span>
-                </div>
-
-                <div class="current-call-box-img">
-                    <span>Current Call</span>
-                    <div class="current-call-badge-img badge-b" id="currentCallBadge">--</div>
-                </div>
-
-                <div class="recent-calls-box-img" id="recentList"></div>
-
-                <div class="user-cartelas-container" id="userCartelasContainer"></div>
-            </div>
+        <div class="game-top-stats">
+            <div class="game-stat-box"><div class="label">Game</div><div class="value" id="gameIdLbl">P{{ game_id }}</div></div>
+            <div class="game-stat-box"><div class="label">Derash</div><div class="value" id="derashVal">{{ pool | default('--') }}</div></div>
+            <div class="game-stat-box"><div class="label">Bonus</div><div class="value" id="bonusVal">{{ bonus | default('On') }}</div></div>
+            <div class="game-stat-box"><div class="label">Players</div><div class="value" id="playersVal">{{ active_players | default('--') }}</div></div>
+            <div class="game-stat-box"><div class="label">Stake</div><div class="value" id="stakeVal">{{ entry_price | default('--') }}</div></div>
+            <div class="game-stat-box"><div class="label">Call</div><div class="value" id="callCountVal">--</div></div>
+            <div class="game-stat-box" onclick="toggleSound()"><div class="label">Sound</div><div class="value" id="soundBtnLbl">ON</div></div>
         </div>
 
-        <button class="btn-bingo-main" onclick="claimBingo()">BINGO!</button>
+        <div class="game-main-container">
+            <div class="top-game-section">
+                <div class="board-column">
+                    <div class="bingo-header-row">
+                        <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
+                    </div>
+                    <div class="board-list" id="mainBoardList"></div>
+                </div>
 
-        <div class="action-buttons-main">
-            <button class="btn-green-action btn-blue" onclick="location.reload()">Refresh</button>
-            <button class="btn-green-action btn-orange" onclick="leaveGame()">Leave</button>
-            <button class="btn-green-action btn-yellow" onclick="goToAddCartela()">Add Board</button>
+                <div class="call-side-area">
+                    <div class="status-box-img">
+                        <span>Count Down</span>
+                        <span id="countdownTimer">--</span>
+                    </div>
+
+                    <div class="current-call-box-img">
+                        <span>Current Call</span>
+                        <div class="current-call-badge-img badge-b" id="currentCallBadge">--</div>
+                    </div>
+
+                    <div class="recent-calls-box-img" id="recentList"></div>
+                </div>
+            </div>
+
+            <div class="user-cartelas-container" id="userCartelasContainer"></div>
+        </div>
+
+        <div class="bottom-action-area">
+            <button class="btn-bingo-main" onclick="claimBingo()">BINGO!</button>
+            <div class="action-buttons-game">
+                <button class="btn-game-action btn-blue" onclick="location.reload()">Refresh</button>
+                <button class="btn-game-action btn-orange" onclick="leaveGame()">Leave</button>
+                <button class="btn-game-action btn-yellow" onclick="goToAddCartela()">Add Board</button>
+            </div>
         </div>
     </div>
 
@@ -412,7 +477,7 @@
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
             <div style="font-size:36px;" id="modalCrown">👑</div>
-            <div style="font-size:20px; font-weight:900; color:#fdd835;" id="modalTitle">BINGO WINNER!</div>
+            <div style="font-size:20px; font-weight:900; color:#fdd835;" id="modalTitle">GAME IS OVER!</div>
             <div style="font-size:13px; font-weight:bold; margin: 8px 0;" id="wNameText">--</div>
             <div style="background:#2e7d32; padding:6px; border-radius:8px; font-size:12px; font-weight:bold;" id="wCartelaTag">Cartela: --</div>
             <div style="font-size:11px; margin-top:10px; color:#dcf3a1;" id="redirectTimerLbl">Returning to selection screen in 5s...</div>
@@ -445,9 +510,11 @@
         if (playerCards.length > 0) {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
+            document.body.style.backgroundColor = '#8cc63f';
         } else {
             document.getElementById('selection-screen').style.display = 'flex';
             document.getElementById('game-screen').style.display = 'none';
+            document.body.style.backgroundColor = '#a483cf';
         }
 
         function getLetterBadgeClass(letter) {
@@ -464,10 +531,9 @@
             let letter = parts[0];
             let num = parts[1];
 
-            let amhLetter = letter === 'B' ? 'ቢ' : letter === 'I' ? 'አይ' : letter === 'N' ? 'ኤን' : letter === 'G' ? 'ጂ' : 'ኦ';
-            let utteranceAmh = new SpeechSynthesisUtterance(`${amhLetter} ${num}`);
-            utteranceAmh.lang = 'am-ET';
-            window.speechSynthesis.speak(utteranceAmh);
+            let utterance = new SpeechSynthesisUtterance(`${letter} ${num}`);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
         }
 
         function generateCartelaNumbers(id) {
@@ -521,6 +587,7 @@
         }
 
         function updateSelectionUI(lastClickedId) {
+            document.getElementById('selectedCountLbl').innerText = `${selectedCartelas.length}/4`;
             if (selectedCartelas.length === 0) {
                 document.getElementById('selectedCartelasListLbl').innerText = "Selected Cartelas: None";
                 document.getElementById('previewContainer').style.display = 'none';
@@ -558,6 +625,7 @@
         function goToAddCartela() {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('selection-screen').style.display = 'flex';
+            document.body.style.backgroundColor = '#a483cf';
         }
 
         const mainBoardList = document.getElementById('mainBoardList');
@@ -601,7 +669,7 @@
                 cartelaDiv.appendChild(gridDiv);
                 
                 let lbl = document.createElement('div');
-                lbl.style.textAlign = 'center'; lbl.style.fontSize = '9px'; lbl.style.marginTop = '2px'; lbl.innerText = `Board Number ${card.cartela_number}`;
+                lbl.style.textAlign = 'center'; lbl.style.fontSize = '10px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '3px'; lbl.innerText = `Board Number ${card.cartela_number}`;
                 cartelaDiv.appendChild(lbl);
                 container.appendChild(cartelaDiv);
             });
@@ -628,7 +696,7 @@
             let prize = data.prize_per_winner || 0;
             let isUserWinner = winners.some(w => w.user_id === currentUserId);
 
-            document.getElementById('modalTitle').innerText = isUserWinner ? 'YOU WIN!' : 'GAME OVER!';
+            document.getElementById('modalTitle').innerText = isUserWinner ? 'YOU WIN!' : 'GAME IS OVER!';
             document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
             document.getElementById('wCartelaTag').innerText = "Prize: " + prize + " Birr";
             document.getElementById('winnerModal').style.display = 'flex';
@@ -639,7 +707,9 @@
                 document.getElementById('redirectTimerLbl').innerText = `Returning to selection screen in ${count}s...`;
                 if (count <= 0) {
                     clearInterval(timer);
-                    location.reload();
+                    // Clear local cards and redirect to selection view cleanly
+                    fetch(`/game/${gameId}/leave`, {method: 'POST'}).catch(e => {});
+                    window.location.reload();
                 }
             }, 1000);
         }
