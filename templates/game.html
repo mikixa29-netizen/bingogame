@@ -12,7 +12,7 @@
         }
         body {
             margin: 0;
-            padding: 8px;
+            padding: 6px;
             background-color: #a483cf; /* Default Selection Screen Purple */
             color: #fff;
             display: flex;
@@ -187,23 +187,18 @@
         .game-stat-box .label { font-size: 7.5px; text-transform: capitalize; font-weight: 800; color: #333; }
         .game-stat-box .value { font-size: 9.5px; font-weight: 900; margin-top: 1px; color: #000; }
 
-        .game-main-container {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            gap: 8px;
-        }
-
-        .top-game-section {
+        /* Side-by-Side Main Layout: Board on Left, Call & User Cartelas on Right */
+        .game-main-area {
             display: flex;
             width: 100%;
             gap: 6px;
+            margin-top: 4px;
         }
         .board-column {
             background: #a4db44;
             border-radius: 8px;
             padding: 4px;
-            flex: 1;
+            width: 48%;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
         .bingo-header-row {
@@ -245,7 +240,7 @@
         .board-item.called-orange { background-color: #ff6600 !important; color: #fff !important; border-radius: 50% !important; }
 
         .call-side-area {
-            flex: 1;
+            width: 48%;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -253,19 +248,19 @@
         .status-box-img {
             background: #dcf3a1;
             border-radius: 8px;
-            padding: 6px 8px;
+            padding: 5px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
             color: #1c3b00;
         }
         .current-call-box-img {
             background: #1b5e20;
             color: white;
             border-radius: 8px;
-            padding: 6px 8px;
+            padding: 5px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -279,29 +274,30 @@
 
         .current-call-badge-img {
             border-radius: 50%;
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 900;
             box-shadow: 0 2px 4px rgba(0,0,0,0.25);
         }
         .recent-calls-box-img {
             background: #dcf3a1;
-            padding: 6px;
-            border-radius: 10px;
+            padding: 5px;
+            border-radius: 8px;
             display: flex;
             justify-content: center;
             gap: 4px;
         }
         .recent-ball {
-            width: 22px; height: 22px; border-radius: 50%;
+            width: 20px; height: 20px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 8px;
+            font-weight: 900; font-size: 7.5px;
         }
 
+        /* User Cartelas on the Right Side Column */
         .user-cartelas-container {
             display: flex;
             flex-direction: column;
@@ -309,32 +305,29 @@
             max-height: 220px;
             overflow-y: auto;
             width: 100%;
-            background: rgba(164, 219, 68, 0.3);
-            padding: 4px;
-            border-radius: 8px;
         }
         .user-cartela {
             background: #dcf3a1;
             border-radius: 8px;
-            padding: 6px;
+            padding: 4px;
             color: #111;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .user-cartela-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
-            margin-top: 4px;
+            gap: 2px;
+            margin-top: 2px;
         }
         .ucell {
             background: #ffffff;
             color: #111;
-            font-size: 10px;
+            font-size: 9px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
+            border-radius: 3px;
             font-weight: 900;
         }
         .ucell.marked { background: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
@@ -344,7 +337,7 @@
             flex-direction: column;
             gap: 6px;
             width: 100%;
-            margin-top: 4px;
+            margin-top: 8px;
             margin-bottom: 15px;
         }
         .btn-bingo-main {
@@ -436,31 +429,32 @@
             <div class="game-stat-box" onclick="toggleSound()"><div class="label">Sound</div><div class="value" id="soundBtnLbl">ON</div></div>
         </div>
 
-        <div class="game-main-container">
-            <div class="top-game-section">
-                <div class="board-column">
-                    <div class="bingo-header-row">
-                        <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
-                    </div>
-                    <div class="board-list" id="mainBoardList"></div>
+        <!-- Side-by-Side Main Layout -->
+        <div class="game-main-area">
+            <!-- Left Column: 1-75 Board -->
+            <div class="board-column">
+                <div class="bingo-header-row">
+                    <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
                 </div>
-
-                <div class="call-side-area">
-                    <div class="status-box-img">
-                        <span>Count Down</span>
-                        <span id="countdownTimer">--</span>
-                    </div>
-
-                    <div class="current-call-box-img">
-                        <span>Current Call</span>
-                        <div class="current-call-badge-img badge-b" id="currentCallBadge">--</div>
-                    </div>
-
-                    <div class="recent-calls-box-img" id="recentList"></div>
-                </div>
+                <div class="board-list" id="mainBoardList"></div>
             </div>
 
-            <div class="user-cartelas-container" id="userCartelasContainer"></div>
+            <!-- Right Column: Call Info & User Cartelas Side-by-Side -->
+            <div class="call-side-area">
+                <div class="status-box-img">
+                    <span>Count Down</span>
+                    <span id="countdownTimer">--</span>
+                </div>
+
+                <div class="current-call-box-img">
+                    <span>Current Call</span>
+                    <div class="current-call-badge-img badge-b" id="currentCallBadge">--</div>
+                </div>
+
+                <div class="recent-calls-box-img" id="recentList"></div>
+
+                <div class="user-cartelas-container" id="userCartelasContainer"></div>
+            </div>
         </div>
 
         <div class="bottom-action-area">
@@ -669,7 +663,7 @@
                 cartelaDiv.appendChild(gridDiv);
                 
                 let lbl = document.createElement('div');
-                lbl.style.textAlign = 'center'; lbl.style.fontSize = '10px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '3px'; lbl.innerText = `Board Number ${card.cartela_number}`;
+                lbl.style.textAlign = 'center'; lbl.style.fontSize = '9px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '2px'; lbl.innerText = `Board #${card.cartela_number}`;
                 cartelaDiv.appendChild(lbl);
                 container.appendChild(cartelaDiv);
             });
@@ -707,7 +701,6 @@
                 document.getElementById('redirectTimerLbl').innerText = `Returning to selection screen in ${count}s...`;
                 if (count <= 0) {
                     clearInterval(timer);
-                    // Clear local cards and redirect to selection view cleanly
                     fetch(`/game/${gameId}/leave`, {method: 'POST'}).catch(e => {});
                     window.location.reload();
                 }
