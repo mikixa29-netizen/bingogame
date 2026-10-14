@@ -13,36 +13,13 @@
         body {
             margin: 0;
             padding: 8px;
-            background-color: #8cc63f; /* Dynamic Green Theme from Screenshot */
+            background-color: #8cc63f; /* Clean Green Theme matching screenshot */
             color: #111;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             overflow-x: hidden;
-        }
-
-        /* Top Controls: Voice/Language Toggle */
-        .top-language-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 440px;
-            margin-bottom: 6px;
-            background: rgba(255, 255, 255, 0.4);
-            padding: 4px 10px;
-            border-radius: 12px;
-        }
-        .lang-btn {
-            background: #111;
-            color: #fff;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
         }
 
         /* Top Stats Bar */
@@ -59,7 +36,7 @@
             background: #d8ee9c;
             color: #2e4d00;
             border-radius: 8px;
-            padding: 4px;
+            padding: 6px 4px;
             text-align: center;
             flex: 1;
             box-shadow: 0 1px 3px rgba(0,0,0,0.15);
@@ -164,7 +141,7 @@
         }
         .mini-cell.star { background: #27ae60; color: #fff; }
 
-        /* Action Buttons Styled Exactly as Image */
+        /* Action Buttons */
         .action-buttons-main {
             display: flex;
             gap: 8px;
@@ -201,7 +178,7 @@
         .btn-orange { background: #f3511e; }
         .btn-yellow { background: #fdd835; color: #111; }
 
-        /* Game Screen Layout Matching Image */
+        /* Game Screen Vertical Layout */
         #game-screen {
             display: none;
             width: 100%;
@@ -309,6 +286,11 @@
             display: flex; align-items: center; justify-content: center;
             font-weight: 900; font-size: 8px; color: #fff !important;
         }
+        .ball-b { background-color: #fbc02d !important; }
+        .ball-i { background-color: #e91e63 !important; }
+        .ball-n { background-color: #03a9f4 !important; }
+        .ball-g { background-color: #ff5722 !important; }
+        .ball-o { background-color: #4caf50 !important; }
 
         .user-cartelas-container { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
         .user-cartela { background: #dcf3a1; border-radius: 8px; padding: 4px; color: #111; }
@@ -335,14 +317,6 @@
     </style>
 </head>
 <body>
-
-    <div class="top-language-bar">
-        <span style="font-size: 11px; font-weight: 900; color: #1c3b00;">🔊 Voice Language</span>
-        <div>
-            <button class="lang-btn" id="btnLangAm" onclick="setLanguage('am')">AMHARIC</button>
-            <button class="lang-btn" id="btnLangEn" onclick="setLanguage('en')">ENGLISH</button>
-        </div>
-    </div>
 
     <!-- SELECTION SCREEN -->
     <div id="selection-screen">
@@ -421,7 +395,7 @@
             <div style="font-size:20px; font-weight:900; color:#fdd835;" id="modalTitle">BINGO WINNER!</div>
             <div style="font-size:13px; font-weight:bold; margin: 8px 0;" id="wNameText">--</div>
             <div style="background:#2e7d32; padding:6px; border-radius:8px; font-size:12px; font-weight:bold;" id="wCartelaTag">Cartela: --</div>
-            <div style="font-size:11px; margin-top:10px; color:#dcf3a1;" id="redirectTimerLbl">Refreshing to selection screen in 5s...</div>
+            <div style="font-size:11px; margin-top:10px; color:#dcf3a1;" id="redirectTimerLbl">Returning to selection screen in 5s...</div>
         </div>
     </div>
 
@@ -441,14 +415,7 @@
         let playerCards = JSON.parse(serverData.dataset.cards || '[]');
         let gameStatus = serverData.dataset.status;
         let lastSpokenCall = '';
-        let currentLang = 'am';
-
-        function setLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('btnLangAm').style.background = lang === 'am' ? '#27ae60' : '#111';
-            document.getElementById('btnLangEn').style.background = lang === 'en' ? '#27ae60' : '#111';
-        }
-        setLanguage('am');
+        let isGameOver = false;
 
         if (playerCards.length > 0) {
             document.getElementById('selection-screen').style.display = 'none';
@@ -466,22 +433,23 @@
             return 'ball-o';
         }
 
+        // Automatic Dual Voice Announcement (Amharic & English)
         function speakNumber(callStr) {
             if (!window.speechSynthesis) return;
             let parts = callStr.split('-');
             let letter = parts[0];
             let num = parts[1];
 
-            if (currentLang === 'en') {
-                let utteranceEng = new SpeechSynthesisUtterance(`${letter} ${num}`);
-                utteranceEng.lang = 'en-US';
-                window.speechSynthesis.speak(utteranceEng);
-            } else {
-                let amhLetter = letter === 'B' ? 'ቢ' : letter === 'I' ? 'አይ' : letter === 'N' ? 'ኤን' : letter === 'G' ? 'ጂ' : 'ኦ';
-                let utteranceAmh = new SpeechSynthesisUtterance(`${amhLetter} ${num}`);
-                utteranceAmh.lang = 'am-ET';
-                window.speechSynthesis.speak(utteranceAmh);
-            }
+            // English Speech
+            let utteranceEng = new SpeechSynthesisUtterance(`${letter} ${num}`);
+            utteranceEng.lang = 'en-US';
+            window.speechSynthesis.speak(utteranceEng);
+
+            // Amharic Speech
+            let amhLetter = letter === 'B' ? 'ቢ' : letter === 'I' ? 'አይ' : letter === 'N' ? 'ኤን' : letter === 'G' ? 'ጂ' : 'ኦ';
+            let utteranceAmh = new SpeechSynthesisUtterance(`${amhLetter} ${num}`);
+            utteranceAmh.lang = 'am-ET';
+            window.speechSynthesis.speak(utteranceAmh);
         }
 
         function generateCartelaNumbers(id) {
@@ -616,7 +584,7 @@
                 cartelaDiv.appendChild(gridDiv);
                 
                 let lbl = document.createElement('div');
-                lbl.style.textAlign = 'center'; lbl.style.fontSize = '9px'; lbl.innerText = `Board Number ${card.cartela_number}`;
+                lbl.style.textAlign = 'center'; lbl.style.fontSize = '9px'; lbl.style.marginTop = '2px'; lbl.innerText = `Board Number ${card.cartela_number}`;
                 cartelaDiv.appendChild(lbl);
                 container.appendChild(cartelaDiv);
             });
@@ -636,27 +604,32 @@
         function leaveGame() { window.location.href = '/'; }
 
         function showWinnerModal(data) {
+            if (isGameOver) return;
+            isGameOver = true;
+
             let winners = data.winners || [];
             let prize = data.prize_per_winner || 0;
             let isUserWinner = winners.some(w => w.user_id === currentUserId);
 
             document.getElementById('modalTitle').innerText = isUserWinner ? 'YOU WIN!' : 'GAME OVER!';
-            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Player: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
+            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
             document.getElementById('wCartelaTag').innerText = "Prize: " + prize + " Birr";
             document.getElementById('winnerModal').style.display = 'flex';
 
             let count = 5;
             let timer = setInterval(() => {
                 count--;
-                document.getElementById('redirectTimerLbl').innerText = `Refreshing to selection screen in ${count}s...`;
+                document.getElementById('redirectTimerLbl').innerText = `Returning to selection screen in ${count}s...`;
                 if (count <= 0) {
                     clearInterval(timer);
-                    location.reload(); // Refresh back to room selection
+                    location.reload(); // Refreshes and returns cleanly to cartela selection screen for this room
                 }
             }, 1000);
         }
 
         setInterval(() => {
+            if (isGameOver) return;
+
             fetch(`/game/${gameId}/status`)
             .then(res => res.json())
             .then(data => {
@@ -682,8 +655,10 @@
                 document.querySelectorAll('.board-item').forEach(el => el.classList.remove('current-green', 'called-orange'));
                 let currentCallNum = data.current_call ? parseInt(data.current_call.split('-')[1]) : null;
 
+                let calledRawNumbers = [];
                 data.called_numbers.forEach(callStr => {
                     let num = parseInt(callStr.split('-')[1]);
+                    calledRawNumbers.push(num);
                     let el = document.getElementById('bnum-' + num);
                     if (el) {
                         if (num === currentCallNum) el.classList.add('current-green');
@@ -691,8 +666,35 @@
                     }
                 });
 
-                if (data.winners && data.winners.length > 0) showWinnerModal(data);
-            });
+                let autoMarked = false;
+                playerCards.forEach(card => {
+                    card.board.forEach((num) => {
+                        if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
+                            card.marked.push(num);
+                            autoMarked = true;
+                        }
+                    });
+                });
+                if (autoMarked) {
+                    renderUserCartelas();
+                }
+
+                let recentList = document.getElementById('recentList');
+                recentList.innerHTML = '';
+                let last4 = data.called_numbers.slice(-4).reverse();
+                last4.forEach(callStr => {
+                    let numVal = parseInt(callStr.split('-')[1]);
+                    let ball = document.createElement('div');
+                    ball.className = 'recent-ball ' + getBallClass(numVal);
+                    ball.innerText = callStr;
+                    recentList.appendChild(ball);
+                });
+
+                if (data.winners && data.winners.length > 0) {
+                    showWinnerModal(data);
+                }
+            })
+            .catch(err => console.log(err));
         }, 2000);
     </script>
 </body>
