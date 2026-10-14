@@ -12,8 +12,8 @@
         }
         body {
             margin: 0;
-            padding: 8px;
-            background-color: #8cc63f; /* Clean Green Theme matching screenshot */
+            padding: 6px;
+            background-color: #8cc63f;
             color: #111;
             display: flex;
             flex-direction: column;
@@ -22,27 +22,26 @@
             overflow-x: hidden;
         }
 
-        /* Top Stats Bar */
+        /* Top Header Stats Bar */
         .top-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 4px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
             width: 100%;
             max-width: 440px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .stat-box {
-            background: #d8ee9c;
+            background: #ffffff;
             color: #2e4d00;
-            border-radius: 8px;
-            padding: 6px 4px;
+            border-radius: 6px;
+            padding: 4px 2px;
             text-align: center;
-            flex: 1;
             box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            cursor: pointer;
         }
-        .stat-box .label { font-size: 8px; text-transform: uppercase; font-weight: 800; }
-        .stat-box .value { font-size: 12px; font-weight: 900; margin-top: 1px; }
+        .stat-box .label { font-size: 8px; text-transform: capitalize; font-weight: 800; color: #333; }
+        .stat-box .value { font-size: 10px; font-weight: 900; margin-top: 1px; color: #000; }
 
         #selection-screen {
             width: 100%;
@@ -101,7 +100,7 @@
         }
 
         .selected-info-box {
-            background: #d8ee9c;
+            background: #ffffff;
             color: #1c3b00;
             width: 100%;
             padding: 8px;
@@ -178,7 +177,7 @@
         .btn-orange { background: #f3511e; }
         .btn-yellow { background: #fdd835; color: #111; }
 
-        /* Game Screen Vertical Layout */
+        /* Game Screen Layout */
         #game-screen {
             display: none;
             width: 100%;
@@ -242,7 +241,7 @@
         .status-box-img {
             background: #dcf3a1;
             border-radius: 8px;
-            padding: 6px;
+            padding: 6px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -254,43 +253,46 @@
             background: #1b5e20;
             color: white;
             border-radius: 8px;
-            padding: 6px;
+            padding: 6px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: 900;
+            position: relative;
         }
+        
+        /* B-I-N-G-O Specific Colors for Badges */
+        .badge-b { background-color: #fbc02d !important; color: #111 !important; }
+        .badge-i { background-color: #e91e63 !important; color: #fff !important; }
+        .badge-n { background-color: #03a9f4 !important; color: #fff !important; }
+        .badge-g { background-color: #ff5722 !important; color: #fff !important; }
+        .badge-o { background-color: #4caf50 !important; color: #fff !important; }
+
         .current-call-badge-img {
-            background: #fdd835;
-            color: #111;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 11px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-weight: 900;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
         }
 
         .recent-calls-box-img {
             background: #dcf3a1;
-            padding: 4px;
+            padding: 6px;
             border-radius: 12px;
             display: flex;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
         }
         .recent-ball {
-            width: 22px; height: 22px; border-radius: 50%;
+            width: 24px; height: 24px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 8px; color: #fff !important;
+            font-weight: 900; font-size: 8px;
         }
-        .ball-b { background-color: #fbc02d !important; }
-        .ball-i { background-color: #e91e63 !important; }
-        .ball-n { background-color: #03a9f4 !important; }
-        .ball-g { background-color: #ff5722 !important; }
-        .ball-o { background-color: #4caf50 !important; }
 
         .user-cartelas-container { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
         .user-cartela { background: #dcf3a1; border-radius: 8px; padding: 4px; color: #111; }
@@ -318,15 +320,40 @@
 </head>
 <body>
 
+    <!-- TOP HEADER STATS -->
+    <div class="top-stats">
+        <div class="stat-box">
+            <div class="label">Game</div>
+            <div class="value" id="gameIdLbl">P{{ game_id }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Derash</div>
+            <div class="value" id="derashVal">{{ pool | default('--') }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Bonus</div>
+            <div class="value" id="bonusVal">{{ bonus | default('On') }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Players</div>
+            <div class="value" id="playersVal">{{ active_players | default('--') }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Stake</div>
+            <div class="value" id="stakeVal">{{ entry_price | default('--') }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Call</div>
+            <div class="value" id="callCountVal">--</div>
+        </div>
+        <div class="stat-box" onclick="toggleSound()">
+            <div class="label">Sound</div>
+            <div class="value" id="soundBtnLbl">ON</div>
+        </div>
+    </div>
+
     <!-- SELECTION SCREEN -->
     <div id="selection-screen">
-        <div class="top-stats">
-            <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
-            <div class="stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
-            <div class="stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
-            <div class="stat-box"><div class="label">Selected</div><div class="value" id="selectedCountLbl">0/4</div></div>
-        </div>
-
         <div class="select-subtitle">Select Up to 4 Cartelas (1-200)</div>
         <div class="number-grid" id="numberGrid"></div>
 
@@ -347,13 +374,6 @@
 
     <!-- GAME SCREEN -->
     <div id="game-screen">
-        <div class="top-stats">
-            <div class="stat-box"><div class="label">Game</div><div class="value">#{{ game_id }}</div></div>
-            <div class="stat-box"><div class="label">Pool</div><div class="value" id="poolVal">{{ pool }}</div></div>
-            <div class="stat-box"><div class="label">Bonus</div><div class="value" id="bonusVal">{{ bonus }}</div></div>
-            <div class="stat-box"><div class="label">Players</div><div class="value" id="playersVal">{{ active_players }}</div></div>
-        </div>
-
         <div class="game-main-area">
             <div class="board-column">
                 <div class="bingo-header-row">
@@ -370,7 +390,7 @@
 
                 <div class="current-call-box-img">
                     <span>Current Call</span>
-                    <div class="current-call-badge-img" id="currentCallBadge">--</div>
+                    <div class="current-call-badge-img badge-b" id="currentCallBadge">--</div>
                 </div>
 
                 <div class="recent-calls-box-img" id="recentList"></div>
@@ -413,9 +433,14 @@
         
         let selectedCartelas = [];
         let playerCards = JSON.parse(serverData.dataset.cards || '[]');
-        let gameStatus = serverData.dataset.status;
         let lastSpokenCall = '';
         let isGameOver = false;
+        let isSoundOn = true;
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            document.getElementById('soundBtnLbl').innerText = isSoundOn ? 'ON' : 'OFF';
+        }
 
         if (playerCards.length > 0) {
             document.getElementById('selection-screen').style.display = 'none';
@@ -425,27 +450,20 @@
             document.getElementById('game-screen').style.display = 'none';
         }
 
-        function getBallClass(num) {
-            if (num >= 1 && num <= 15) return 'ball-b';
-            if (num >= 16 && num <= 30) return 'ball-i';
-            if (num >= 31 && num <= 45) return 'ball-n';
-            if (num >= 46 && num <= 60) return 'ball-g';
-            return 'ball-o';
+        function getLetterBadgeClass(letter) {
+            if (letter === 'B') return 'badge-b';
+            if (letter === 'I') return 'badge-i';
+            if (letter === 'N') return 'badge-n';
+            if (letter === 'G') return 'badge-g';
+            return 'badge-o';
         }
 
-        // Automatic Dual Voice Announcement (Amharic & English)
         function speakNumber(callStr) {
-            if (!window.speechSynthesis) return;
+            if (!isSoundOn || !window.speechSynthesis) return;
             let parts = callStr.split('-');
             let letter = parts[0];
             let num = parts[1];
 
-            // English Speech
-            let utteranceEng = new SpeechSynthesisUtterance(`${letter} ${num}`);
-            utteranceEng.lang = 'en-US';
-            window.speechSynthesis.speak(utteranceEng);
-
-            // Amharic Speech
             let amhLetter = letter === 'B' ? 'ቢ' : letter === 'I' ? 'አይ' : letter === 'N' ? 'ኤን' : letter === 'G' ? 'ጂ' : 'ኦ';
             let utteranceAmh = new SpeechSynthesisUtterance(`${amhLetter} ${num}`);
             utteranceAmh.lang = 'am-ET';
@@ -503,7 +521,6 @@
         }
 
         function updateSelectionUI(lastClickedId) {
-            document.getElementById('selectedCountLbl').innerText = `${selectedCartelas.length}/4`;
             if (selectedCartelas.length === 0) {
                 document.getElementById('selectedCartelasListLbl').innerText = "Selected Cartelas: None";
                 document.getElementById('previewContainer').style.display = 'none';
@@ -622,7 +639,7 @@
                 document.getElementById('redirectTimerLbl').innerText = `Returning to selection screen in ${count}s...`;
                 if (count <= 0) {
                     clearInterval(timer);
-                    location.reload(); // Refreshes and returns cleanly to cartela selection screen for this room
+                    location.reload();
                 }
             }, 1000);
         }
@@ -633,14 +650,22 @@
             fetch(`/game/${gameId}/status`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById('poolVal').innerText = data.pool;
-                document.getElementById('bonusVal').innerText = data.bonus;
-                document.getElementById('playersVal').innerText = data.active_players;
-                document.getElementById('currentCallBadge').innerText = data.current_call || '--';
+                document.getElementById('derashVal').innerText = data.pool || '--';
+                document.getElementById('bonusVal').innerText = data.bonus || 'On';
+                document.getElementById('playersVal').innerText = data.active_players || '--';
+                document.getElementById('callCountVal').innerText = data.called_numbers ? data.called_numbers.length : '--';
 
-                if (data.current_call && data.current_call !== '---' && data.current_call !== lastSpokenCall) {
-                    lastSpokenCall = data.current_call;
-                    speakNumber(data.current_call);
+                if (data.current_call && data.current_call !== '---') {
+                    let parts = data.current_call.split('-');
+                    let letter = parts[0];
+                    let badge = document.getElementById('currentCallBadge');
+                    badge.innerText = data.current_call;
+                    badge.className = 'current-call-badge-img ' + getLetterBadgeClass(letter);
+
+                    if (data.current_call !== lastSpokenCall) {
+                        lastSpokenCall = data.current_call;
+                        speakNumber(data.current_call);
+                    }
                 }
 
                 document.getElementById('countdownTimer').innerText = data.countdown_remaining ? data.countdown_remaining + 's' : '--';
@@ -655,10 +680,8 @@
                 document.querySelectorAll('.board-item').forEach(el => el.classList.remove('current-green', 'called-orange'));
                 let currentCallNum = data.current_call ? parseInt(data.current_call.split('-')[1]) : null;
 
-                let calledRawNumbers = [];
                 data.called_numbers.forEach(callStr => {
                     let num = parseInt(callStr.split('-')[1]);
-                    calledRawNumbers.push(num);
                     let el = document.getElementById('bnum-' + num);
                     if (el) {
                         if (num === currentCallNum) el.classList.add('current-green');
@@ -666,26 +689,14 @@
                     }
                 });
 
-                let autoMarked = false;
-                playerCards.forEach(card => {
-                    card.board.forEach((num) => {
-                        if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
-                            card.marked.push(num);
-                            autoMarked = true;
-                        }
-                    });
-                });
-                if (autoMarked) {
-                    renderUserCartelas();
-                }
-
                 let recentList = document.getElementById('recentList');
                 recentList.innerHTML = '';
                 let last4 = data.called_numbers.slice(-4).reverse();
                 last4.forEach(callStr => {
-                    let numVal = parseInt(callStr.split('-')[1]);
+                    let parts = callStr.split('-');
+                    let letter = parts[0];
                     let ball = document.createElement('div');
-                    ball.className = 'recent-ball ' + getBallClass(numVal);
+                    ball.className = 'recent-ball ' + getLetterBadgeClass(letter);
                     ball.innerText = callStr;
                     recentList.appendChild(ball);
                 });
