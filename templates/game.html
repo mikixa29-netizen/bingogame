@@ -12,9 +12,9 @@
         }
         body {
             margin: 0;
-            padding: 10px;
-            background-color: #a483cf;
-            color: #fff;
+            padding: 8px;
+            background-color: #8cc63f; /* Dynamic Green Theme from Screenshot */
+            color: #111;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -22,133 +22,124 @@
             overflow-x: hidden;
         }
 
+        /* Top Controls: Voice/Language Toggle */
+        .top-language-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 440px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .lang-btn {
+            background: #111;
+            color: #fff;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         /* Top Stats Bar */
         .top-stats {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             width: 100%;
-            max-width: 420px;
-            margin-top: 4px;
+            max-width: 440px;
             margin-bottom: 8px;
         }
         .stat-box {
-            background: #ffffff;
-            color: #333;
-            border-radius: 12px;
-            padding: 6px 4px;
+            background: #d8ee9c;
+            color: #2e4d00;
+            border-radius: 8px;
+            padding: 4px;
             text-align: center;
             flex: 1;
-            min-width: 0;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
-        .stat-box .label {
-            font-size: 9px;
-            color: #666;
-            text-transform: uppercase;
-            font-weight: 800;
-            letter-spacing: 0.3px;
-        }
-        .stat-box .value {
-            font-size: 13px;
-            font-weight: 900;
-            color: #111;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-top: 2px;
-        }
+        .stat-box .label { font-size: 8px; text-transform: uppercase; font-weight: 800; }
+        .stat-box .value { font-size: 12px; font-weight: 900; margin-top: 1px; }
 
         #selection-screen {
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
         .select-subtitle {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
-            margin: 8px 0 10px 0;
-            text-align: center;
-            color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            margin: 4px 0 8px 0;
+            color: #1c3b00;
         }
 
-        /* Responsive 10-Column Grid */
         .number-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            background: rgba(255, 255, 255, 0.18);
+            background: #a4db44;
             padding: 8px;
-            border-radius: 14px;
+            border-radius: 12px;
             width: 100%;
-            max-height: 280px;
+            max-height: 260px;
             overflow-y: auto;
-            margin-bottom: 12px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            margin-bottom: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .num-cell {
-            background: #e2d1f9;
-            color: #2d2d2d;
+            background: #dcf3a1;
+            color: #222;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 11px;
             font-weight: 800;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: transform 0.1s, background-color 0.2s;
-            user-select: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .num-cell:active {
-            transform: scale(0.92);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        /* 1. ተጠቃሚው የመረጣቸው ካርቴላዎች - ደማቅ አረንጓዴ (Green) */
         .num-cell.selected {
             background-color: #27ae60 !important;
             color: #ffffff !important;
             font-weight: 900;
-            box-shadow: 0 2px 5px rgba(39, 174, 96, 0.4);
         }
 
-        /* 2. ሌሎች ተጫዋቾች የያዟቸው - ደማቅ ብርቱካናማ (Bold Orange) */
         .num-cell.taken-by-other {
-            background-color: #ff6600 !important;
+            background-color: #e74c3c !important;
             color: #ffffff !important;
             cursor: not-allowed;
             font-weight: 900;
-            opacity: 0.9;
         }
 
         .selected-info-box {
-            background: #ffffff;
-            color: #222;
+            background: #d8ee9c;
+            color: #1c3b00;
             width: 100%;
-            padding: 10px;
-            border-radius: 12px;
+            padding: 8px;
+            border-radius: 8px;
             text-align: center;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 800;
-            margin-bottom: 12px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+            margin-bottom: 8px;
         }
 
-        /* Mini Cartela Preview */
         .cartela-preview-container {
             background: #ffffff;
-            padding: 10px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            padding: 8px;
+            border-radius: 10px;
+            margin-bottom: 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -157,70 +148,79 @@
         .mini-cartela-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
-            width: 160px;
+            gap: 3px;
+            width: 150px;
         }
         .mini-cell {
-            background: #f0f0f0;
-            color: #333;
-            font-size: 10px;
+            background: #eef7d3;
+            color: #111;
+            font-size: 9px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
+            border-radius: 3px;
             font-weight: 800;
         }
-        .mini-cell.star {
-            background: #27ae60;
-            color: #fff;
-        }
+        .mini-cell.star { background: #27ae60; color: #fff; }
 
-        .action-buttons {
+        /* Action Buttons Styled Exactly as Image */
+        .action-buttons-main {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
-            margin-bottom: 15px;
+            margin-top: 6px;
         }
-        .btn-refresh, .btn-start {
+        .btn-green-action {
             border: none;
-            padding: 14px 0;
+            padding: 10px 0;
             flex: 1;
-            border-radius: 25px;
-            font-size: 15px;
-            font-weight: 800;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 900;
             cursor: pointer;
             color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.18);
-            transition: opacity 0.2s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            text-align: center;
+            text-decoration: none;
         }
-        .btn-refresh:active, .btn-start:active {
-            opacity: 0.85;
+        .btn-bingo-main {
+            background: #d81b60;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-top: 6px;
         }
-        .btn-refresh { background: #209cee; }
-        .btn-start { background: #ff6600; }
+        .btn-blue { background: #1e88e5; }
+        .btn-orange { background: #f3511e; }
+        .btn-yellow { background: #fdd835; color: #111; }
 
-        /* Game Screen Area */
+        /* Game Screen Layout Matching Image */
         #game-screen {
             display: none;
             width: 100%;
-            max-width: 480px;
+            max-width: 440px;
             flex-direction: column;
             align-items: center;
         }
         .game-main-area {
             display: flex;
             width: 100%;
-            gap: 8px;
-            margin-top: 5px;
+            gap: 6px;
+            margin-top: 4px;
         }
         .board-column {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 6px;
+            background: #a4db44;
+            border-radius: 8px;
+            padding: 4px;
             width: 48%;
-            color: #333;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
         .bingo-header-row {
             display: grid;
@@ -231,8 +231,8 @@
             margin-bottom: 4px;
         }
         .bingo-header-row div {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -240,93 +240,116 @@
             color: white !important;
             margin: 0 auto;
         }
-        .bingo-header-row div:nth-child(1) { background-color: #3498db; }
-        .bingo-header-row div:nth-child(2) { background-color: #e74c3c; }
-        .bingo-header-row div:nth-child(3) { background-color: #2ecc71; }
-        .bingo-header-row div:nth-child(4) { background-color: #e67e22; }
-        .bingo-header-row div:nth-child(5) { background-color: #9b59b6; }
+        .bingo-header-row div:nth-child(1) { background-color: #fbc02d; }
+        .bingo-header-row div:nth-child(2) { background-color: #e91e63; }
+        .bingo-header-row div:nth-child(3) { background-color: #03a9f4; }
+        .bingo-header-row div:nth-child(4) { background-color: #ff5722; }
+        .bingo-header-row div:nth-child(5) { background-color: #4caf50; }
 
         .board-list { display: flex; flex-direction: column; gap: 2px; }
         .board-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
         .board-item {
-            background: #f0f0f0;
-            color: #444;
-            font-size: 10px;
+            background: #dcf3a1;
+            color: #333;
+            font-size: 9px;
             text-align: center;
-            padding: 3px 0;
-            border-radius: 3px;
+            padding: 2px 0;
+            border-radius: 2px;
             font-weight: 800;
         }
         .board-item.current-green { background-color: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
         .board-item.called-orange { background-color: #ff6600 !important; color: #fff !important; border-radius: 50% !important; }
 
         .call-area { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-        .status-box { background: #e0d5f5; border-radius: 8px; padding: 6px; text-align: center; color: #4a154b; }
-        .status-box .title { font-size: 9px; font-weight: bold; }
-        .status-box .val { font-size: 13px; font-weight: 900; }
-
-        .current-call-box { background: #5b2c6f; border-radius: 10px; padding: 6px; text-align: center; }
-        .current-call-badge {
-            background: #ff6600 !important;
+        
+        .status-box-img {
+            background: #dcf3a1;
+            border-radius: 8px;
+            padding: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: #1c3b00;
+        }
+        .current-call-box-img {
+            background: #1b5e20;
             color: white;
-            font-size: 16px;
+            border-radius: 8px;
+            padding: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-weight: 900;
-            width: 50px; height: 50px;
+        }
+        .current-call-badge-img {
+            background: #fdd835;
+            color: #111;
             border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 4px auto;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .recent-calls-box { background: rgba(255, 255, 255, 0.2); padding: 5px; border-radius: 8px; text-align: center; }
-        .recent-list { display: flex; justify-content: center; gap: 4px; }
+        .recent-calls-box-img {
+            background: #dcf3a1;
+            padding: 4px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+        }
         .recent-ball {
-            width: 24px; height: 24px; border-radius: 50%;
+            width: 22px; height: 22px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 10px; color: #fff !important;
+            font-weight: 900; font-size: 8px; color: #fff !important;
         }
-        .ball-b { background-color: #3498db !important; }
-        .ball-i { background-color: #e74c3c !important; }
-        .ball-n { background-color: #2ecc71 !important; }
-        .ball-g { background-color: #e67e22 !important; }
-        .ball-o { background-color: #9b59b6 !important; }
 
-        .user-cartelas-container { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
-        .user-cartela { background: #ffffff; border-radius: 8px; padding: 5px; color: #333; }
+        .user-cartelas-container { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+        .user-cartela { background: #dcf3a1; border-radius: 8px; padding: 4px; color: #111; }
         .user-cartela-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
         .ucell {
-            background: #f9f9f9; color: #333; font-size: 10px; aspect-ratio: 1;
+            background: #ffffff; color: #111; font-size: 10px; aspect-ratio: 1;
             display: flex; align-items: center; justify-content: center;
             border-radius: 3px; font-weight: 900;
         }
         .ucell.marked { background: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
 
-        .btn-bingo {
-            background: #ff6600; color: white; border: none; width: 100%;
-            padding: 12px; border-radius: 20px; font-size: 16px; font-weight: 900;
-            cursor: pointer; margin-top: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
+        /* WINNER MODAL */
         .winner-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85); display: none;
             justify-content: center; align-items: center; z-index: 9999;
         }
         .winner-modal-card {
-            background: #1e293b; border-radius: 16px; padding: 18px;
+            background: #1b5e20; border-radius: 16px; padding: 18px;
             width: 90%; max-width: 320px; text-align: center; color: #fff;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 2px solid #fdd835;
         }
     </style>
 </head>
 <body>
+
+    <div class="top-language-bar">
+        <span style="font-size: 11px; font-weight: 900; color: #1c3b00;">🔊 Voice Language</span>
+        <div>
+            <button class="lang-btn" id="btnLangAm" onclick="setLanguage('am')">AMHARIC</button>
+            <button class="lang-btn" id="btnLangEn" onclick="setLanguage('en')">ENGLISH</button>
+        </div>
+    </div>
 
     <!-- SELECTION SCREEN -->
     <div id="selection-screen">
         <div class="top-stats">
             <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
             <div class="stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
-            <div class="stat-box"><div class="label">Stake/Card</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
+            <div class="stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
             <div class="stat-box"><div class="label">Selected</div><div class="value" id="selectedCountLbl">0/4</div></div>
         </div>
 
@@ -337,15 +360,14 @@
             Selected Cartelas: None
         </div>
 
-        <!-- Live Mini Preview -->
         <div class="cartela-preview-container" id="previewContainer" style="display:none;">
-            <div style="font-size: 11px; color:#444; text-align:center; font-weight:800; margin-bottom:6px;" id="previewTitleLbl">Cartela Preview</div>
+            <div style="font-size: 10px; color:#1c3b00; text-align:center; font-weight:800; margin-bottom:4px;" id="previewTitleLbl">Cartela Preview</div>
             <div class="mini-cartela-grid" id="miniCartela"></div>
         </div>
 
-        <div class="action-buttons">
-            <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-            <button class="btn-start" onclick="joinAndStartGame()">Start Game</button>
+        <div class="action-buttons-main">
+            <button class="btn-green-action btn-blue" onclick="location.reload()">Refresh</button>
+            <button class="btn-green-action btn-orange" onclick="joinAndStartGame()">Play Bingo</button>
         </div>
     </div>
 
@@ -356,8 +378,6 @@
             <div class="stat-box"><div class="label">Pool</div><div class="value" id="poolVal">{{ pool }}</div></div>
             <div class="stat-box"><div class="label">Bonus</div><div class="value" id="bonusVal">{{ bonus }}</div></div>
             <div class="stat-box"><div class="label">Players</div><div class="value" id="playersVal">{{ active_players }}</div></div>
-            <div class="stat-box"><div class="label">Bet</div><div class="value">{{ entry_price }}</div></div>
-            <div class="stat-box"><div class="label">Call</div><div class="value" id="callCountVal">{{ called_numbers|length }}</div></div>
         </div>
 
         <div class="game-main-area">
@@ -369,32 +389,28 @@
             </div>
 
             <div class="call-area">
-                <div class="status-box">
-                    <div class="title">Status</div>
-                    <div class="val" id="countdownTimer">
-                        {% if active_players < 2 %}Waiting (>=2)...{% else %}Started{% endif %}
-                    </div>
+                <div class="status-box-img">
+                    <span>Count Down</span>
+                    <span id="countdownTimer">--</span>
                 </div>
 
-                <div class="current-call-box">
-                    <div style="font-size:9px; color:#ddd; font-weight: bold;">Current Call</div>
-                    <div class="current-call-badge" id="currentCallBadge">{{ current_number or '---' }}</div>
+                <div class="current-call-box-img">
+                    <span>Current Call</span>
+                    <div class="current-call-badge-img" id="currentCallBadge">--</div>
                 </div>
 
-                <div class="recent-calls-box">
-                    <div style="font-size:9px; font-weight:bold; margin-bottom:3px;">Last 4 Calls</div>
-                    <div class="recent-list" id="recentList"></div>
-                </div>
+                <div class="recent-calls-box-img" id="recentList"></div>
 
                 <div class="user-cartelas-container" id="userCartelasContainer"></div>
             </div>
         </div>
 
-        <button class="btn-bingo" onclick="claimBingo()">BINGO!</button>
+        <button class="btn-bingo-main" onclick="claimBingo()">BINGO!</button>
 
-        <div style="display:flex; gap:8px; width:100%; margin-top:8px;">
-            <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-            <button class="btn-start" style="background:#e74c3c;" onclick="leaveGame()">Leave</button>
+        <div class="action-buttons-main">
+            <button class="btn-green-action btn-blue" onclick="location.reload()">Refresh</button>
+            <button class="btn-green-action btn-orange" onclick="leaveGame()">Leave</button>
+            <button class="btn-green-action btn-yellow" onclick="goToAddCartela()">Add Board</button>
         </div>
     </div>
 
@@ -402,12 +418,10 @@
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
             <div style="font-size:36px;" id="modalCrown">👑</div>
-            <div style="font-size:22px; font-weight:900; color:#facc15;" id="modalTitle">BINGO!</div>
-            <div style="font-size:14px; font-weight:bold; margin: 8px 0;" id="wNameText">You Win!</div>
-            <div style="background:#334155; padding:4px 8px; border-radius:8px; font-size:12px; font-weight:bold;" id="wCartelaTag">Winning Cartela: --</div>
-            <div style="margin-top:10px;">
-                <button onclick="window.location.href='/'" style="background:#209cee; color:white; border:none; padding:8px 16px; border-radius:12px; font-weight:bold;">Back to Lobby</button>
-            </div>
+            <div style="font-size:20px; font-weight:900; color:#fdd835;" id="modalTitle">BINGO WINNER!</div>
+            <div style="font-size:13px; font-weight:bold; margin: 8px 0;" id="wNameText">--</div>
+            <div style="background:#2e7d32; padding:6px; border-radius:8px; font-size:12px; font-weight:bold;" id="wCartelaTag">Cartela: --</div>
+            <div style="font-size:11px; margin-top:10px; color:#dcf3a1;" id="redirectTimerLbl">Refreshing to selection screen in 5s...</div>
         </div>
     </div>
 
@@ -426,10 +440,22 @@
         let selectedCartelas = [];
         let playerCards = JSON.parse(serverData.dataset.cards || '[]');
         let gameStatus = serverData.dataset.status;
+        let lastSpokenCall = '';
+        let currentLang = 'am';
 
-        if (playerCards.length > 0 || gameStatus === 'active' || gameStatus === 'countdown' || gameStatus === 'finished') {
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('btnLangAm').style.background = lang === 'am' ? '#27ae60' : '#111';
+            document.getElementById('btnLangEn').style.background = lang === 'en' ? '#27ae60' : '#111';
+        }
+        setLanguage('am');
+
+        if (playerCards.length > 0) {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
+        } else {
+            document.getElementById('selection-screen').style.display = 'flex';
+            document.getElementById('game-screen').style.display = 'none';
         }
 
         function getBallClass(num) {
@@ -438,6 +464,24 @@
             if (num >= 31 && num <= 45) return 'ball-n';
             if (num >= 46 && num <= 60) return 'ball-g';
             return 'ball-o';
+        }
+
+        function speakNumber(callStr) {
+            if (!window.speechSynthesis) return;
+            let parts = callStr.split('-');
+            let letter = parts[0];
+            let num = parts[1];
+
+            if (currentLang === 'en') {
+                let utteranceEng = new SpeechSynthesisUtterance(`${letter} ${num}`);
+                utteranceEng.lang = 'en-US';
+                window.speechSynthesis.speak(utteranceEng);
+            } else {
+                let amhLetter = letter === 'B' ? 'ቢ' : letter === 'I' ? 'አይ' : letter === 'N' ? 'ኤን' : letter === 'G' ? 'ጂ' : 'ኦ';
+                let utteranceAmh = new SpeechSynthesisUtterance(`${amhLetter} ${num}`);
+                utteranceAmh.lang = 'am-ET';
+                window.speechSynthesis.speak(utteranceAmh);
+            }
         }
 
         function generateCartelaNumbers(id) {
@@ -450,11 +494,7 @@
             let oCol = getUniqueRandoms(61, 75, 5, id + 40);
 
             for (let r = 0; r < 5; r++) {
-                numbers.push(bCol[r]);
-                numbers.push(iCol[r]);
-                numbers.push(nCol[r]);
-                numbers.push(gCol[r]);
-                numbers.push(oCol[r]);
+                numbers.push(bCol[r]); numbers.push(iCol[r]); numbers.push(nCol[r]); numbers.push(gCol[r]); numbers.push(oCol[r]);
             }
             return numbers;
         }
@@ -469,7 +509,6 @@
             return arr.slice(0, count);
         }
 
-        // Generate Grid (1-200)
         const gridContainer = document.getElementById('numberGrid');
         if (gridContainer) {
             for (let i = 1; i <= 200; i++) {
@@ -485,14 +524,10 @@
                         selectedCartelas = selectedCartelas.filter(id => id !== i);
                         cell.classList.remove('selected');
                     } else {
-                        if (selectedCartelas.length >= 4) {
-                            alert("Maximum 4 cartelas allowed!");
-                            return;
-                        }
+                        if (selectedCartelas.length >= 4) { alert("Maximum 4 cartelas allowed!"); return; }
                         selectedCartelas.push(i);
-                        cell.classList.add('selected'); // Turns green
+                        cell.classList.add('selected');
                     }
-
                     updateSelectionUI(i);
                 };
                 gridContainer.appendChild(cell);
@@ -501,16 +536,12 @@
 
         function updateSelectionUI(lastClickedId) {
             document.getElementById('selectedCountLbl').innerText = `${selectedCartelas.length}/4`;
-            
             if (selectedCartelas.length === 0) {
                 document.getElementById('selectedCartelasListLbl').innerText = "Selected Cartelas: None";
                 document.getElementById('previewContainer').style.display = 'none';
             } else {
-                let formattedList = selectedCartelas.map(id => `#${id}`).join(', ');
-                document.getElementById('selectedCartelasListLbl').innerText = "Selected Cartelas: " + formattedList;
-                
+                document.getElementById('selectedCartelasListLbl').innerText = "Selected Cartelas: " + selectedCartelas.map(id => `#${id}`).join(', ');
                 document.getElementById('previewContainer').style.display = 'flex';
-                document.getElementById('previewTitleLbl').innerText = `Preview Cartela #${lastClickedId}`;
                 renderMiniPreview(lastClickedId);
             }
         }
@@ -529,25 +560,19 @@
         }
 
         function joinAndStartGame() {
-            if (selectedCartelas.length === 0) {
-                alert("Please select at least 1 cartela!");
-                return;
-            }
-
+            if (selectedCartelas.length === 0) { alert("Please select at least 1 cartela!"); return; }
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ cartela_number: selectedCartelas[0], cartelas: selectedCartelas })
             })
             .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || 'Failed to join game');
-                }
-            })
-            .catch(err => console.error(err));
+            .then(data => { if (data.success) location.reload(); else alert(data.error || 'Failed to join game'); });
+        }
+
+        function goToAddCartela() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('selection-screen').style.display = 'flex';
         }
 
         const mainBoardList = document.getElementById('mainBoardList');
@@ -571,20 +596,16 @@
             let container = document.getElementById('userCartelasContainer');
             if (!container) return;
             container.innerHTML = '';
-
             playerCards.forEach((card) => {
                 let cartelaDiv = document.createElement('div');
                 cartelaDiv.className = 'user-cartela';
-
                 let headerRow = document.createElement('div');
                 headerRow.className = 'bingo-header-row';
-                headerRow.style.fontSize = '9px';
                 headerRow.innerHTML = '<div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>';
                 cartelaDiv.appendChild(headerRow);
 
                 let gridDiv = document.createElement('div');
                 gridDiv.className = 'user-cartela-grid';
-
                 card.board.forEach((num, idx) => {
                     let uCell = document.createElement('div');
                     let isMarked = card.marked.includes(num) || idx === 12;
@@ -592,24 +613,15 @@
                     uCell.innerText = idx === 12 ? '★' : num;
                     gridDiv.appendChild(uCell);
                 });
-
                 cartelaDiv.appendChild(gridDiv);
-
-                let labelDiv = document.createElement('div');
-                labelDiv.style.textAlign = 'center';
-                labelDiv.style.fontSize = '9px';
-                labelDiv.style.marginTop = '2px';
-                labelDiv.style.color = '#666';
-                labelDiv.innerText = `Cartela #${card.cartela_number}`;
-                cartelaDiv.appendChild(labelDiv);
-
+                
+                let lbl = document.createElement('div');
+                lbl.style.textAlign = 'center'; lbl.style.fontSize = '9px'; lbl.innerText = `Board Number ${card.cartela_number}`;
+                cartelaDiv.appendChild(lbl);
                 container.appendChild(cartelaDiv);
             });
         }
-
-        if (playerCards.length > 0) {
-            renderUserCartelas();
-        }
+        if (playerCards.length > 0) renderUserCartelas();
 
         function claimBingo() {
             fetch(`/game/${gameId}/mark`, {
@@ -618,43 +630,30 @@
                 body: JSON.stringify({ check_win: true, card_index: 0 })
             })
             .then(res => res.json())
-            .then(data => {
-                if (data.winner) {
-                    showWinnerModal(data);
-                } else {
-                    alert(data.message || 'Not a winning bingo yet!');
-                }
-            })
-            .catch(err => console.error(err));
+            .then(data => { if (data.winner) showWinnerModal(data); else alert(data.message || 'Not a winning bingo yet!'); });
         }
 
-        function leaveGame() {
-            fetch(`/game/${gameId}/leave`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'}
-            })
-            .then(() => { window.location.href = '/'; })
-            .catch(() => { window.location.href = '/'; });
-        }
+        function leaveGame() { window.location.href = '/'; }
 
         function showWinnerModal(data) {
             let winners = data.winners || [];
-            let prizePerWinner = data.prize_per_winner || 0;
-
+            let prize = data.prize_per_winner || 0;
             let isUserWinner = winners.some(w => w.user_id === currentUserId);
 
-            if (isUserWinner) {
-                document.getElementById('modalCrown').innerText = '👑';
-                document.getElementById('modalTitle').innerText = 'YOU WIN!';
-                document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 ${w.username} (Cartela #${w.cartela_number})`).join('<br>');
-            } else {
-                document.getElementById('modalCrown').innerText = '❌';
-                document.getElementById('modalTitle').innerText = 'GAME OVER';
-                document.getElementById('wNameText').innerHTML = 'You Lose!<br><span style="font-size:12px; color:#facc15;">Winner(s): ' + winners.map(w => w.username).join(', ') + '</span>';
-            }
-
-            document.getElementById('wCartelaTag').innerText = "Prize: " + prizePerWinner + " Birr";
+            document.getElementById('modalTitle').innerText = isUserWinner ? 'YOU WIN!' : 'GAME OVER!';
+            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Player: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
+            document.getElementById('wCartelaTag').innerText = "Prize: " + prize + " Birr";
             document.getElementById('winnerModal').style.display = 'flex';
+
+            let count = 5;
+            let timer = setInterval(() => {
+                count--;
+                document.getElementById('redirectTimerLbl').innerText = `Refreshing to selection screen in ${count}s...`;
+                if (count <= 0) {
+                    clearInterval(timer);
+                    location.reload(); // Refresh back to room selection
+                }
+            }, 1000);
         }
 
         setInterval(() => {
@@ -664,85 +663,36 @@
                 document.getElementById('poolVal').innerText = data.pool;
                 document.getElementById('bonusVal').innerText = data.bonus;
                 document.getElementById('playersVal').innerText = data.active_players;
-                document.getElementById('callCountVal').innerText = data.called_numbers.length;
-                document.getElementById('currentCallBadge').innerText = data.current_call;
+                document.getElementById('currentCallBadge').innerText = data.current_call || '--';
 
-                if (data.current_call && data.current_call !== '---') {
-                    let numVal = parseInt(data.current_call.split('-')[1]);
-                    let badge = document.getElementById('currentCallBadge');
-                    badge.className = 'current-call-badge ' + getBallClass(numVal);
+                if (data.current_call && data.current_call !== '---' && data.current_call !== lastSpokenCall) {
+                    lastSpokenCall = data.current_call;
+                    speakNumber(data.current_call);
                 }
 
-                if (data.status === 'countdown') {
-                    document.getElementById('countdownTimer').innerText = data.countdown_remaining + 's';
-                } else if (data.status === 'active') {
-                    document.getElementById('countdownTimer').innerText = 'Started';
-                } else if (data.status === 'finished') {
-                    document.getElementById('countdownTimer').innerText = 'Finished';
-                }
+                document.getElementById('countdownTimer').innerText = data.countdown_remaining ? data.countdown_remaining + 's' : '--';
 
-                // ሌሎች ሰዎች የያዟቸውን በደማቅ ብርቱካናማ (Bold Orange) ማሳየት
                 if (data.taken_cartelas) {
                     data.taken_cartelas.forEach(cNum => {
                         let cEl = document.getElementById('cartela-grid-' + cNum);
-                        if (cEl && !selectedCartelas.includes(cNum)) {
-                            cEl.classList.add('taken-by-other');
-                        }
+                        if (cEl && !selectedCartelas.includes(cNum)) cEl.classList.add('taken-by-other');
                     });
                 }
 
-                document.querySelectorAll('.board-item').forEach(el => {
-                    el.classList.remove('current-green', 'called-orange');
-                });
+                document.querySelectorAll('.board-item').forEach(el => el.classList.remove('current-green', 'called-orange'));
+                let currentCallNum = data.current_call ? parseInt(data.current_call.split('-')[1]) : null;
 
-                let currentCallNum = null;
-                if (data.current_call && data.current_call !== '---') {
-                    currentCallNum = parseInt(data.current_call.split('-')[1]);
-                }
-
-                let calledRawNumbers = [];
                 data.called_numbers.forEach(callStr => {
                     let num = parseInt(callStr.split('-')[1]);
-                    calledRawNumbers.push(num);
                     let el = document.getElementById('bnum-' + num);
                     if (el) {
-                        if (num === currentCallNum) {
-                            el.classList.add('current-green');
-                        } else {
-                            el.classList.add('called-orange');
-                        }
+                        if (num === currentCallNum) el.classList.add('current-green');
+                        else el.classList.add('called-orange');
                     }
                 });
 
-                let autoMarked = false;
-                playerCards.forEach(card => {
-                    card.board.forEach((num) => {
-                        if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
-                            card.marked.push(num);
-                            autoMarked = true;
-                        }
-                    });
-                });
-                if (autoMarked) {
-                    renderUserCartelas();
-                }
-
-                let recentList = document.getElementById('recentList');
-                recentList.innerHTML = '';
-                let last4 = data.called_numbers.slice(-4).reverse();
-                last4.forEach(callStr => {
-                    let numVal = parseInt(callStr.split('-')[1]);
-                    let ball = document.createElement('div');
-                    ball.className = 'recent-ball ' + getBallClass(numVal);
-                    ball.innerText = callStr;
-                    recentList.appendChild(ball);
-                });
-
-                if (data.winners && data.winners.length > 0) {
-                    showWinnerModal(data);
-                }
-            })
-            .catch(err => console.log(err));
+                if (data.winners && data.winners.length > 0) showWinnerModal(data);
+            });
         }, 2000);
     </script>
 </body>
