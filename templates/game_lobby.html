@@ -100,7 +100,7 @@
     </div>
 
     <!-- BINGO GAMES SECTION HEADER -->
-    <div class="section-header">🎯 BINGO GAMES</div>
+    <div class="section-header">🎮 BINGO GAMES</div>
     <div class="table-headers">
         <div>Bet</div>
         <div>Win / Player</div>
@@ -126,7 +126,7 @@
 
     <!-- Bottom Navigation Bar -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item active"><span>🎮</span> Game</a>
+        <a href="/" class="nav-item active"><span>🏠</span> Game</a>
         <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
         <a href="/history" class="nav-item"><span>📋</span> History</a>
         <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
@@ -161,7 +161,6 @@
                 };
 
                 const activePlayers = gData.players || 0;
-                // Derashu (Total Pool / Prize) calculation based on players and stake
                 const winAmount = activePlayers > 0 ? activePlayers * stake * 0.85 : 0;
                 const status = gData.status || 'waiting';
                 const countdown = gData.countdown_remaining || 0;
@@ -216,13 +215,14 @@
             fetch('/game/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ entry_price: entryPrice })
+                body: JSON.stringify({ entry_price: entryPrice, game_id: gameId })
             })
             .then(res => res.json())
             .then(data => {
-                if (data.success || data.game_id) {
+                if (data.success) {
                     const targetGameId = data.game_id;
-                    if (status === 'active') {
+                    // ተጫዋቹ አስቀድሞ ካርቴላ ካለው ወይም ጨዋታው ጀምሮ ከሆነ ቀጥታ ወደ ጨዋታው ሜዳ ይሂድ
+                    if (data.has_cartela || status === 'active' || status === 'playing') {
                         window.location.href = `/game/${targetGameId}`;
                     } else {
                         window.location.href = `/game/${targetGameId}/select_cartela`;
@@ -232,19 +232,32 @@
                 }
             })
             .catch(err => {
-                if (status === 'active') {
-                    window.location.href = `/game/${gameId}`;
-                } else {
-                    window.location.href = `/game/${gameId}/select_cartela`;
-                }
+                window.location.href = `/game/${gameId}/select_cartela`;
             });
         }
 
-        // Free Practice (Demo) Mode handler: Default 4 cartelas, max 5 cartelas, playing against AI
+        // Free Practice (Demo Mode) - Entry price 0 ETB, ID 999
         function startDemoMode() {
-            // Setting default 4 cartelas and max 5 cartelas for demo mode against AI
-            const demoCartelasCount = 4; 
-            window.location.href = `/game/demo/select_cartela?cards=${demoCartelasCount}&max=5&mode=ai`;
+            fetch('/game/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ entry_price: 0, game_id: 999 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.has_cartela) {
+                        window.location.href = `/game/999`;
+                    } else {
+                        window.location.href = `/game/999/select_cartela`;
+                    }
+                } else {
+                    window.location.href = `/game/demo/select_cartela`;
+                }
+            })
+            .catch(err => {
+                window.location.href = `/game/demo/select_cartela`;
+            });
         }
 
         setInterval(fetchGamesLobbyData, 1000);
