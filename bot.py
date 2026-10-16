@@ -268,49 +268,37 @@ async def process_play_bingo_command_or_callback(event, state: FSMContext = None
     message = event.message if isinstance(event, CallbackQuery) else event
     
     with app.app_context():
-        get_or_create_user(user_id, username)
+        user = get_or_create_user(user_id, username)
+
+    # Directly open the WebApp game lobby (game_lobby.html)
+    webapp_lobby_url = f"{WEBAPP_URL}/?user_id={user_id}"
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🎮 10 Birr Room", callback_data="price_10"),
-            InlineKeyboardButton(text="🎮 20 Birr Room", callback_data="price_20")
-        ],
-        [
-            InlineKeyboardButton(text="🎮 50 Birr Room", callback_data="price_50"),
-            InlineKeyboardButton(text="🎮 100 Birr Room", callback_data="price_100")
-        ],
-        [
-            InlineKeyboardButton(text="🎮 Play Demo", callback_data="play_demo")
+            InlineKeyboardButton(text="🎮 Open Edil Bingo Lobby", web_app=WebAppInfo(url=webapp_lobby_url))
         ],
         [
             InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")
         ]
     ])
     
+    caption = "🍀 Click below to open the Edil Bingo Lobby and choose your game room! 🎮"
+
     if isinstance(event, CallbackQuery):
         try:
-            await message.edit_caption(
-                caption="🍀 Select your room to start playing Bingo! 🎮",
-                reply_markup=keyboard
-            )
+            await message.edit_caption(caption=caption, reply_markup=keyboard)
         except Exception:
-            await message.answer(
-                "🍀 Select your room to start playing Bingo! 🎮",
-                reply_markup=keyboard
-            )
+            await message.answer(caption, reply_markup=keyboard)
         await event.answer()
     else:
         try:
             await message.answer_photo(
                 photo=get_welcome_photo(),
-                caption="🍀 Select your room to start playing Bingo! 🎮",
+                caption=caption,
                 reply_markup=keyboard
             )
         except Exception:
-            await message.answer(
-                "🍀 Select your room to start playing Bingo! 🎮",
-                reply_markup=keyboard
-            )
+            await message.answer(caption, reply_markup=keyboard)
 
 @router.callback_query(F.data == "play_demo")
 async def process_play_demo(callback_query: CallbackQuery, state: FSMContext):
@@ -768,59 +756,6 @@ async def handle_admin_withdrawal_action(callback_query: CallbackQuery):
             await callback_query.message.edit_text(f"❌ Withdrawal Rejected & Refunded for user ID {user.telegram_id}.")
     await callback_query.answer()
 
-
-# ==========================================
-#         PRICE SELECTION & WEBAPP LINK
-# ==========================================
-
-@router.callback_query(lambda c: c.data.startswith('price_'))
-async def process_price_selection(callback_query: CallbackQuery, state: FSMContext):
-    await state.clear()
-    try:
-        price = int(callback_query.data.split('_')[1])
-        user_id = callback_query.from_user.id
-        username = callback_query.from_user.username or callback_query.from_user.first_name
-        
-        with app.app_context():
-            user = get_or_create_user(user_id, username)
-            total_bal = user.balance + user.bonus_balance
-            if total_bal < price:
-                await callback_query.answer(f"Insufficient total balance! You have {total_bal:.2f} Birr, but need {price} Birr.", show_alert=True)
-                return
-
-            async with aiohttp.ClientSession() as session:
-                async with session.post(f"{WEBAPP_URL}/game/create", json={'entry_price': price, 'user_id': user.telegram_id}) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        game_id = data['game_id']
-                        
-                        webapp_target_url = f"{WEBAPP_URL}/game/{game_id}/select_cartela?user_id={user.telegram_id}"
-                        
-                        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-                            InlineKeyboardButton(text="Select Your Cartela", web_app=WebAppInfo(url=webapp_target_url))
-                        ], [InlineKeyboardButton(text="🔙 Back to Main Menu", callback_data="menu_main")]])
-                        
-                        try:
-                            await callback_query.message.edit_caption(
-                                caption=f"🎮 Room created for {price} Birr!\n"
-                                        f"👤 Player: {user.username or 'Player'}\n"
-                                        f"💰 Main: {user.balance:.2f} | Bonus: {user.bonus_balance:.2f}\n\n"
-                                        f"Click below to select your cartela:",
-                                reply_markup=keyboard
-                            )
-                        except Exception:
-                            await callback_query.message.answer(
-                                text=f"🎮 Room created for {price} Birr!\n"
-                                     f"👤 Player: {user.username or 'Player'}\n"
-                                     f"💰 Main: {user.balance:.2f} | Bonus: {user.bonus_balance:.2f}\n\n"
-                                     f"Click below to select your cartela:",
-                                reply_markup=keyboard
-                            )
-                    else:
-                        res_data = await response.json()
-                        await callback_query.answer(res_data.get('error', 'Failed to create game room.'), show_alert=True)
-    except Exception as e:
-        logger.error(f"Error processing price: {e}")
 
 @router.callback_query(F.data == "menu_main")
 async def process_back_to_main(callback_query: CallbackQuery, state: FSMContext):
