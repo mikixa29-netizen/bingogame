@@ -6,224 +6,92 @@
     <title>Edil Bingo - Select Cartela</title>
     <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Inria Serif', serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0;
-            padding: 8px;
-            background-color: #89C149; /* Green Theme background */
+            margin: 0; padding: 8px;
+            background-color: #89C149; /* Green Theme Restored */
             color: #FFFEFE;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding-bottom: 75px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; padding-bottom: 75px;
         }
         
         .top-stats {
-            display: flex;
-            gap: 6px;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            width: 100%;
-            max-width: 420px;
+            display: flex; gap: 6px; justify-content: space-between; margin-bottom: 8px; width: 100%; max-width: 420px;
         }
         .stat-box {
-            background: rgba(255, 255, 255, 0.25);
-            color: #FFFEFE;
-            border-radius: 12px;
-            padding: 6px 4px;
-            text-align: center;
-            flex: 1;
+            background: rgba(255, 255, 255, 0.25); color: #FFFEFE; border-radius: 12px; padding: 6px 4px; text-align: center; flex: 1;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .stat-box .label {
-            font-size: 9px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .stat-box .value {
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 2px;
-        }
+        .stat-box .label { font-size: 9px; text-transform: uppercase; font-weight: bold; }
+        .stat-box .value { font-size: 13px; font-weight: bold; margin-top: 2px; }
 
         .jackpot-banner {
-            width: 100%;
-            max-width: 420px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 4px 10px;
-            margin-bottom: 10px;
-            font-size: 11px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
+            width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.2); border-radius: 8px;
+            padding: 4px 10px; margin-bottom: 8px; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;
         }
 
-        .select-subtitle {
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            text-align: center;
-        }
+        .select-subtitle { font-size: 13px; font-weight: bold; margin-bottom: 6px; text-align: center; }
 
         .cartela-container {
-            width: 100%;
-            max-width: 420px;
-            background: rgba(255, 255, 255, 0.18);
-            padding: 8px;
-            border-radius: 14px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.18); padding: 8px;
+            border-radius: 14px; margin-bottom: 8px; border: 1px solid rgba(255, 255, 255, 0.25);
         }
         .cartela-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 4px;
-            max-height: 230px;
-            overflow-y: auto;
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-height: 230px; overflow-y: auto;
         }
         
-        /* Master Board Cells */
         .cartela-number {
-            background: #ffffff;
-            color: #000000;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            user-select: none;
+            background: #ffffff; color: #000000; aspect-ratio: 1; display: flex; align-items: center;
+            justify-content: center; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); user-select: none;
         }
+        .cartela-number.selected { background: #27ae60 !important; color: #ffffff !important; }
+        .cartela-number.unavailable { background: #ff6600 !important; color: #ffffff !important; cursor: not-allowed; opacity: 0.9; }
 
-        /* User selection: Orange or Green */
-        .cartela-number.selected {
-            background: #27ae60 !important;
-            color: #ffffff !important;
-        }
-        .cartela-number.unavailable {
-            background: #ff6600 !important;
-            color: #ffffff !important;
-            cursor: not-allowed;
-            opacity: 0.9;
-        }
+        .bottom-preview-area { width: 100%; max-width: 420px; display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; }
 
-        .bottom-preview-area {
-            width: 100%;
-            max-width: 420px;
-            display: flex;
-            gap: 8px;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        /* Preview Card Box */
         .mini-card-preview {
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 10px;
-            padding: 6px;
-            width: 120px;
+            background: rgba(255, 255, 255, 0.25); border-radius: 10px; padding: 6px; width: 120px;
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .mini-card-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 2px;
-        }
+        .mini-card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
         .mini-cell {
-            background: #ffffff;
-            color: #000000;
-            font-size: 9px;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 2px;
-            font-weight: bold;
+            background: #ffffff; color: #000000; font-size: 9px; aspect-ratio: 1; display: flex;
+            align-items: center; justify-content: center; border-radius: 2px; font-weight: bold;
         }
         .mini-cell.star { background: #27ae60; color: #fff; }
 
-        /* Actions & Hash Fairness Box */
-        .right-action-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .btn-row {
-            display: flex;
-            gap: 6px;
-        }
+        .right-action-wrapper { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .btn-row { display: flex; gap: 6px; }
         .btn-refresh, .btn-start {
-            border: none;
-            padding: 10px 0;
-            flex: 1;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            border: none; padding: 10px 0; flex: 1; border-radius: 20px; font-size: 13px; font-weight: bold;
+            cursor: pointer; color: white; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
         .btn-refresh { background: #1e88e5; }
-        .btn-start { background: #f3511e; }
+        .btn-start { background: #ff6600; }
 
-        /* Game Hash Box */
         .fairness-box {
-            background: #ffffff;
-            color: #222222;
-            padding: 6px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 8px;
-            word-break: break-all;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            background: #ffffff; color: #222222; padding: 6px; border-radius: 8px; text-align: center;
+            font-size: 8px; word-break: break-all; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
         .fairness-title { font-weight: bold; margin-bottom: 2px; text-transform: uppercase; font-size: 9px; }
         .fairness-id { background: #e0e0e0; display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 2px; }
 
-        /* Bottom Navigation Bar */
+        /* Bottom Nav */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #ffffff;
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
-            z-index: 1000;
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
+            display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1000;
         }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: #666;
-            font-size: 11px;
-            font-weight: bold;
-        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #666; font-size: 11px; font-weight: bold; }
         .nav-item.active { color: #1e88e5; }
 
-        /* Modal Overlay */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75); display: none;
-            align-items: center; justify-content: center; z-index: 9999;
+            background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 9999;
         }
         .modal-box {
             background: #1b5e20; color: white; width: 85%; max-width: 320px;
-            padding: 20px; border-radius: 16px; text-align: center;
-            border: 2px solid #fdd835;
+            padding: 20px; border-radius: 16px; text-align: center; border: 2px solid #fdd835;
         }
     </style>
 </head>
@@ -266,11 +134,11 @@
                 <button class="btn-start" onclick="confirmJoin()">Start Game</button>
             </div>
 
-            <!-- Fairness Hash Block -->
+            <!-- Fairness Hash Block with Dynamic Game ID and Unique Hash -->
             <div class="fairness-box">
                 <div class="fairness-title">Game Hash (Fairness)</div>
-                <div class="fairness-id">ID: {{ game_id_hash | default('Qz4931') }}</div>
-                <div id="hashValue">9dd2a51b40132e3868ac99c836a0936ff118bee58277ef5827300dbaf23d0f2</div>
+                <div class="fairness-id">ID: #{{ game_id }}</div>
+                <div id="hashValue">{{ game_hash }}</div>
             </div>
         </div>
     </div>
@@ -308,14 +176,12 @@
             });
         });
 
-        // Dynamic Status Polling
         setInterval(checkGameStatus, 2000);
 
         function checkGameStatus() {
             fetch(`/game/${gameId}/status`)
             .then(res => res.json())
             .then(data => {
-                // Check if game has already started or finished
                 if (data.status === 'active' || data.status === 'finished') {
                     document.getElementById('modal-error-text').innerText = "Game already started or finished!";
                     document.getElementById('topupModal').style.display = 'flex';
@@ -323,7 +189,6 @@
                     return;
                 }
 
-                // Update cartelas locked by other players
                 if (data.taken_cartelas) {
                     data.taken_cartelas.forEach(cNum => {
                         let cEl = document.getElementById('cartela-' + cNum);

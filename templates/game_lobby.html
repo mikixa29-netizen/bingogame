@@ -100,7 +100,7 @@
     </div>
 
     <!-- BINGO GAMES SECTION HEADER -->
-    <div class="section-header">🎯 BINGO GAMES</div>
+    <div class="section-header">🎮 BINGO GAMES</div>
     <div class="table-headers">
         <div>Bet</div>
         <div>Win / Player</div>
@@ -120,7 +120,7 @@
         </div>
         <div class="demo-buttons">
             <button class="btn-open" onclick="alert('Demo Mode Rules: Practice bingo without risking real balance!')">OPEN</button>
-            <button class="btn-try" onclick="joinRoom(1, 0)">TRY</button>
+            <button class="btn-try" onclick="joinRoom(0, 0)">TRY</button>
         </div>
     </div>
 
@@ -135,11 +135,13 @@
 
     <script>
         const roomStakes = [10, 20, 50, 100];
+        let latestGamesData = [];
 
         function fetchGamesLobbyData() {
             fetch('/game/list')
             .then(res => res.json())
             .then(data => {
+                latestGamesData = data;
                 renderRooms(data);
             })
             .catch(err => console.log('Error fetching game status:', err));
@@ -151,7 +153,6 @@
 
             roomStakes.forEach((stake, index) => {
                 const gameId = index + 1;
-                // Find game data from backend if active
                 const gData = gamesData.find(g => g.entry_price === stake) || {
                     id: gameId,
                     players: 0,
@@ -166,7 +167,6 @@
                 const status = gData.status || 'waiting';
                 const countdown = gData.countdown_remaining || 0;
 
-                // Jackpot Calculation (e.g., dynamic pool growth)
                 const jackpotCurrent = (winAmount * 0.15).toFixed(1);
                 const jackpotMax = stake * 50; 
                 const jackpotPct = Math.min(100, (jackpotCurrent / jackpotMax) * 100).toFixed(1);
@@ -178,7 +178,7 @@
                         <div class="status-badge active-count">ACTIVE ${activePlayers}</div>
                         <div class="starts-timer-box">STARTS 0:${secs}</div>
                     `;
-                } else if (status === 'active') {
+                } else if (status === 'active' || status === 'playing') {
                     statusBadgeHtml = `
                         <div class="status-badge active-count" style="background:#e67e22;">PLAYING</div>
                     `;
@@ -201,7 +201,7 @@
                             <div class="status-badge-container">
                                 ${statusBadgeHtml}
                             </div>
-                            <button class="btn-join" onclick="joinRoom(${gData.id}, ${stake})">JOIN</button>
+                            <button class="btn-join" onclick="joinRoom(${gData.id || gameId}, ${stake})">JOIN</button>
                         </div>
                     </div>
                     <div class="jackpot-bar-container">
@@ -214,6 +214,26 @@
         }
 
         function joinRoom(gameId, entryPrice) {
+            // Free Practice Mode logic (entryPrice === 0)
+            if (entryPrice === 0) {
+                let demoCount = parseInt(localStorage.getItem('demo_game_count') || '0');
+                if (demoCount >= 5) {
+                    alert('Otuuse ku mugero gw\'emizannyo gy\'okugezesa 5 egyakirizibwa!');
+                    return;
+                }
+                localStorage.setItem('demo_game_count', demoCount + 1);
+                // Free practice mode: 4 cartela by default, AI plays randomly
+                window.location.href = `/game/practice/select_cartela?cards=4&ai=random`;
+                return;
+            }
+
+            // Check if the specific room is currently playing
+            const gData = latestGamesData.find(g => g.id === gameId || g.entry_price === entryPrice);
+            if (gData && (gData.status === 'playing' || gData.status === 'active')) {
+                window.location.href = `/game/${gData.id || gameId}/play`;
+                return;
+            }
+
             fetch('/game/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -221,7 +241,9 @@
             })
             .then(res => res.json())
             .then(data => {
-                if (data.success || data.game_id) {
+                if (data.status === 'playing' || data.playing) {
+                    window.location.href = `/game/${data.game_id || gameId}/play`;
+                } else if (data.success || data.game_id) {
                     window.location.href = `/game/${data.game_id}/select_cartela`;
                 } else if (data.error) {
                     alert(data.error);
@@ -232,7 +254,6 @@
             });
         }
 
-        // Poll every second to keep timers, players & jackpot strictly synced
         setInterval(fetchGamesLobbyData, 1000);
         fetchGamesLobbyData();
     </script>
