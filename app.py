@@ -60,7 +60,8 @@ def index():
         return "Your account has been blocked by the administrator.", 403
 
     total_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
-    return render_template('index.html', balance=total_balance, main_balance=user.balance, bonus_balance=user.bonus_balance, coin=user.coin)
+    # Changed index.html to game_lobby.html as requested
+    return render_template('game_lobby.html', balance=total_balance, main_balance=user.balance, bonus_balance=user.bonus_balance, coin=user.coin)
 
 @app.route('/scores')
 def scores():
