@@ -100,7 +100,7 @@
     </div>
 
     <!-- BINGO GAMES SECTION HEADER -->
-    <div class="section-header">🎮 BINGO GAMES</div>
+    <div class="section-header">🎯 BINGO GAMES</div>
     <div class="table-headers">
         <div>Bet</div>
         <div>Win / Player</div>
@@ -116,11 +116,11 @@
     <div class="demo-card">
         <div class="demo-info">
             <div>FREE <span>Practice Mode</span></div>
-            <div>No real money</div>
+            <div>No real money (Max 5 Cartelas)</div>
         </div>
         <div class="demo-buttons">
-            <button class="btn-open" onclick="alert('Demo Mode Rules: Practice bingo without risking real balance!')">OPEN</button>
-            <button class="btn-try" onclick="joinRoom(0, 0)">TRY</button>
+            <button class="btn-open" onclick="alert('Demo Mode Rules: Practice bingo with default 4 cartelas against AI (Max 5 cartelas allowed)!')">OPEN</button>
+            <button class="btn-try" onclick="startDemoMode()">TRY</button>
         </div>
     </div>
 
@@ -135,13 +135,11 @@
 
     <script>
         const roomStakes = [10, 20, 50, 100];
-        let latestGamesData = [];
 
         function fetchGamesLobbyData() {
             fetch('/game/list')
             .then(res => res.json())
             .then(data => {
-                latestGamesData = data;
                 renderRooms(data);
             })
             .catch(err => console.log('Error fetching game status:', err));
@@ -163,7 +161,8 @@
                 };
 
                 const activePlayers = gData.players || 0;
-                const winAmount = activePlayers * stake;
+                // Derashu (Total Pool / Prize) calculation based on players and stake
+                const winAmount = activePlayers > 0 ? activePlayers * stake * 0.85 : 0;
                 const status = gData.status || 'waiting';
                 const countdown = gData.countdown_remaining || 0;
 
@@ -178,7 +177,7 @@
                         <div class="status-badge active-count">ACTIVE ${activePlayers}</div>
                         <div class="starts-timer-box">STARTS 0:${secs}</div>
                     `;
-                } else if (status === 'active' || status === 'playing') {
+                } else if (status === 'active') {
                     statusBadgeHtml = `
                         <div class="status-badge active-count" style="background:#e67e22;">PLAYING</div>
                     `;
@@ -194,14 +193,14 @@
                     <div class="room-row-content">
                         <div class="room-bet">${stake} <span>ETB</span></div>
                         <div class="room-win-info">
-                            <div class="win-amount">🏆 ${winAmount}</div>
+                            <div class="win-amount">🏆 ${winAmount.toFixed(0)}</div>
                             <div class="win-players">${activePlayers} players</div>
                         </div>
                         <div class="room-action-area">
                             <div class="status-badge-container">
                                 ${statusBadgeHtml}
                             </div>
-                            <button class="btn-join" onclick="joinRoom(${gData.id || gameId}, ${stake})">JOIN</button>
+                            <button class="btn-join" onclick="joinRoom(${gData.id}, ${stake}, '${status}')">JOIN</button>
                         </div>
                     </div>
                     <div class="jackpot-bar-container">
@@ -213,27 +212,7 @@
             });
         }
 
-        function joinRoom(gameId, entryPrice) {
-            // Free Practice Mode logic (entryPrice === 0)
-            if (entryPrice === 0) {
-                let demoCount = parseInt(localStorage.getItem('demo_game_count') || '0');
-                if (demoCount >= 5) {
-                    alert('Otuuse ku mugero gw\'emizannyo gy\'okugezesa 5 egyakirizibwa!');
-                    return;
-                }
-                localStorage.setItem('demo_game_count', demoCount + 1);
-                // Free practice mode: 4 cartela by default, AI plays randomly
-                window.location.href = `/game/practice/select_cartela?cards=4&ai=random`;
-                return;
-            }
-
-            // Check if the specific room is currently playing
-            const gData = latestGamesData.find(g => g.id === gameId || g.entry_price === entryPrice);
-            if (gData && (gData.status === 'playing' || gData.status === 'active')) {
-                window.location.href = `/game/${gData.id || gameId}/play`;
-                return;
-            }
-
+        function joinRoom(gameId, entryPrice, status) {
             fetch('/game/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -241,17 +220,31 @@
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'playing' || data.playing) {
-                    window.location.href = `/game/${data.game_id || gameId}/play`;
-                } else if (data.success || data.game_id) {
-                    window.location.href = `/game/${data.game_id}/select_cartela`;
+                if (data.success || data.game_id) {
+                    const targetGameId = data.game_id;
+                    if (status === 'active') {
+                        window.location.href = `/game/${targetGameId}`;
+                    } else {
+                        window.location.href = `/game/${targetGameId}/select_cartela`;
+                    }
                 } else if (data.error) {
                     alert(data.error);
                 }
             })
             .catch(err => {
-                window.location.href = `/game/${gameId}/select_cartela`;
+                if (status === 'active') {
+                    window.location.href = `/game/${gameId}`;
+                } else {
+                    window.location.href = `/game/${gameId}/select_cartela`;
+                }
             });
+        }
+
+        // Free Practice (Demo) Mode handler: Default 4 cartelas, max 5 cartelas, playing against AI
+        function startDemoMode() {
+            // Setting default 4 cartelas and max 5 cartelas for demo mode against AI
+            const demoCartelasCount = 4; 
+            window.location.href = `/game/demo/select_cartela?cards=${demoCartelasCount}&max=5&mode=ai`;
         }
 
         setInterval(fetchGamesLobbyData, 1000);
