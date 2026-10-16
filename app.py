@@ -32,7 +32,7 @@ from models import User, Game, GameParticipant, Transaction
 # Global active games rooms storage
 active_games = {}
 
-# Initial default rooms for all stakes (10, 20, 50, 100 ETB) and Demo Mode
+# Initial default rooms for all stakes (10, 20, 50, 100 ETB) and Demo Mode (999)
 def init_default_games():
     if not active_games:
         active_games[1] = BingoGame(1, entry_price=10, max_cards_per_player=4)
@@ -119,6 +119,7 @@ def create_game():
     try:
         data = request.json or {}
         entry_price = int(data.get('entry_price', 10))
+        requested_game_id = data.get('game_id')
         user_id = data.get('user_id') or session.get('user_id')
         
         if not user_id:
@@ -128,22 +129,32 @@ def create_game():
         if not user or user.is_blocked:
             return jsonify({'error': 'User not found or blocked.'}), 403
 
-        if entry_price == 0:
+        # Demo Mode (0 ETB) Check
+        if entry_price == 0 or requested_game_id == 999:
+            game = active_games.get(999)
+            if not game:
+                game = BingoGame(999, entry_price=0, max_cards_per_player=5)
+                active_games[999] = game
+            
+            has_cartela = user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0
             return jsonify({
                 'success': True,
                 'game_id': 999,
-                'entry_price': 0
+                'entry_price': 0,
+                'has_cartela': has_cartela
             })
 
         if not user.phone:
             return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
 
-        waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status == 'waiting'), None)
+        waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status in ['waiting', 'countdown', 'active']), None)
         if waiting_game:
+            has_cartela = user.telegram_id in waiting_game.players and len(waiting_game.players[user.telegram_id]) > 0
             return jsonify({
                 'success': True,
                 'game_id': waiting_game.game_id,
-                'entry_price': entry_price
+                'entry_price': entry_price,
+                'has_cartela': has_cartela
             })
 
         total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
@@ -162,7 +173,8 @@ def create_game():
         return jsonify({
             'success': True,
             'game_id': new_game_id,
-            'entry_price': entry_price
+            'entry_price': entry_price,
+            'has_cartela': False
         })
     except Exception as e:
         logger.exception(f"Error creating game: {str(e)}")
@@ -234,41 +246,59 @@ def join_game(game_id):
     if not user or user.is_blocked:
         return jsonify({'error': 'Your account is blocked or not found.'}), 403
 
-    if game.entry_price > 0 and not user.phone:
-        return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
-
     data = request.json or {}
     cartela_number = data.get('cartela_number')
 
     if not cartela_number:
         return jsonify({'error': 'Please select a cartela number'}), 400
 
-    if game.entry_price > 0:
-        total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
-        if total_user_balance < game.entry_price:
-            return jsonify({
-                'error': 'Insufficient balance! Please top up your wallet first.',
-                'low_balance': True
-            }), 400
+    # Demo Mode Auto-AI Integration
+    if game.entry_price == 0 or game_id == 999:
+        username = user.username or "Player"
+        success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=int(cartela_number))
+        if not success:
+            return jsonify({'error': msg}), 400
 
-        remaining_cost = float(game.entry_price)
-        if user.bonus_balance >= remaining_cost:
-            user.bonus_balance -= remaining_cost
-            remaining_cost = 0.0
-        else:
-            remaining_cost -= user.bonus_balance
-            user.bonus_balance = 0.0
-            user.balance -= remaining_cost
+        # Automatically assign random boards for AI Bot Players in Demo Mode
+        ai_names = ["AI_Bot_Alpha", "AI_Bot_Beta", "AI_Bot_Gamma"]
+        for ai_name in ai_names:
+            ai_id = abs(hash(ai_name)) % 1000000 + 800000
+            random_card = random.randint(1, 100)
+            game.add_player_card(ai_id, username=ai_name, cartela_number=random_card)
 
-        earned_coins = int(game.entry_price // 10)
-        user.coin = (user.coin or 0) + earned_coins
+        # Force start demo game immediately
+        game.status = "active"
+        session['active_game_id'] = game_id
+        return jsonify({'success': True, 'game_id': game_id})
 
-        if user.coin >= 10:
-            conversion_count = user.coin // 10
-            user.bonus_balance += conversion_count * 10.0
-            user.coin %= 10
+    if game.entry_price > 0 and not user.phone:
+        return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
 
-        db.session.commit()
+    total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
+    if total_user_balance < game.entry_price:
+        return jsonify({
+            'error': 'Insufficient balance! Please top up your wallet first.',
+            'low_balance': True
+        }), 400
+
+    remaining_cost = float(game.entry_price)
+    if user.bonus_balance >= remaining_cost:
+        user.bonus_balance -= remaining_cost
+        remaining_cost = 0.0
+    else:
+        remaining_cost -= user.bonus_balance
+        user.bonus_balance = 0.0
+        user.balance -= remaining_cost
+
+    earned_coins = int(game.entry_price // 10)
+    user.coin = (user.coin or 0) + earned_coins
+
+    if user.coin >= 10:
+        conversion_count = user.coin // 10
+        user.bonus_balance += conversion_count * 10.0
+        user.coin %= 10
+
+    db.session.commit()
 
     username = user.username or "Player"
     success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=int(cartela_number))
