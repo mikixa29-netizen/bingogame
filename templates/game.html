@@ -532,15 +532,25 @@
             return 'badge-o';
         }
 
+        // እውነተኛ የአማርኛ ድምፅ በ Google Translate TTS በኩል ማጫወት
         function speakNumber(callStr) {
-            if (!isSoundOn || !window.speechSynthesis) return;
+            if (!isSoundOn) return;
             let parts = callStr.split('-');
             let letter = parts[0];
             let num = parts[1];
 
-            let utterance = new SpeechSynthesisUtterance(`${letter} ${num}`);
-            utterance.lang = 'en-US';
-            window.speechSynthesis.speak(utterance);
+            let amharicLetter = letter;
+            if (letter === 'B') amharicLetter = 'ቢ';
+            else if (letter === 'I') amharicLetter = 'አይ';
+            else if (letter === 'N') amharicLetter = 'ኤን';
+            else if (letter === 'G') amharicLetter = 'ጂ';
+            else if (letter === 'O') amharicLetter = 'ኦ';
+
+            let textToSpeak = `${amharicLetter} ${num}`;
+            let audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(textToSpeak)}&tl=am&client=tw-ob`;
+            
+            let audio = new Audio(audioUrl);
+            audio.play().catch(err => console.log("Audio play error:", err));
         }
 
         function generateCartelaNumbers(id) {
