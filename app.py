@@ -32,13 +32,14 @@ from models import User, Game, GameParticipant, Transaction
 # Global active games rooms storage
 active_games = {}
 
-# Initial default rooms for all stakes (10, 20, 50, 100 ETB)
+# Initial default rooms for all stakes (10, 20, 50, 100 ETB) and Demo Mode
 def init_default_games():
     if not active_games:
         active_games[1] = BingoGame(1, entry_price=10, max_cards_per_player=4)
         active_games[2] = BingoGame(2, entry_price=20, max_cards_per_player=4)
         active_games[3] = BingoGame(3, entry_price=50, max_cards_per_player=4)
         active_games[4] = BingoGame(4, entry_price=100, max_cards_per_player=4)
+        active_games[999] = BingoGame(999, entry_price=0, max_cards_per_player=5)
 
 init_default_games()
 
@@ -102,7 +103,7 @@ def profile():
 def list_games():
     games_data = []
     for g_id, game in active_games.items():
-        if game.status in ["waiting", "countdown", "active"]:
+        if game.entry_price > 0 and game.status in ["waiting", "countdown", "active"]:
             games_data.append({
                 'id': g_id,
                 'players': len(game.players),
@@ -127,6 +128,13 @@ def create_game():
         if not user or user.is_blocked:
             return jsonify({'error': 'User not found or blocked.'}), 403
 
+        if entry_price == 0:
+            return jsonify({
+                'success': True,
+                'game_id': 999,
+                'entry_price': 0
+            })
+
         if not user.phone:
             return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
 
@@ -147,6 +155,8 @@ def create_game():
             }), 400
 
         new_game_id = max(active_games.keys(), default=0) + 1
+        if new_game_id == 999:
+            new_game_id = 1000
         active_games[new_game_id] = BingoGame(new_game_id, entry_price, max_cards_per_player=4)
 
         return jsonify({
@@ -158,12 +168,18 @@ def create_game():
         logger.exception(f"Error creating game: {str(e)}")
         return jsonify({'error': 'Failed to create game'}), 500
 
-@app.route('/game/<int:game_id>/select_cartela')
+@app.route('/game/<game_id>/select_cartela')
 def select_cartela(game_id):
-    if game_id not in active_games:
-        return redirect(url_for('index'))
+    try:
+        g_id = int(game_id)
+    except ValueError:
+        g_id = 999
 
-    game = active_games[game_id]
+    if g_id not in active_games:
+        entry = 0 if g_id == 999 else 10
+        active_games[g_id] = BingoGame(g_id, entry_price=entry, max_cards_per_player=5 if entry == 0 else 4)
+
+    game = active_games[g_id]
     user_id = request.args.get('user_id') or session.get('user_id')
     if not user_id:
         return redirect(url_for('index'))
@@ -175,7 +191,7 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
-    if not user.phone:
+    if game.entry_price > 0 and not user.phone:
         return "እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).", 400
 
     total_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
@@ -185,24 +201,29 @@ def select_cartela(game_id):
         for card in cards:
             used_cartelas.add(card.get('cartela_number', 0))
 
-    # Generate unique hash for this game session
-    raw_str = f"edil_bingo_{game_id}_{game.entry_price}_{datetime.utcnow().timestamp()}"
+    raw_str = f"edil_bingo_{g_id}_{game.entry_price}_{datetime.utcnow().timestamp()}"
     game_hash = hashlib.sha256(raw_str.encode()).hexdigest()
 
     return render_template(
         'cartela_selection.html',
-        game_id=game_id,
+        game_id=g_id,
         entry_price=game.entry_price,
         used_cartelas=used_cartelas,
-        balance=total_balance,
-        bonus=user.bonus_balance,
-        game_hash=game_hash
+        balance=total_balance if game.entry_price > 0 else 1000.0,
+        bonus=user.bonus_balance if game.entry_price > 0 else 0.0,
+        game_hash=game_hash,
+        is_demo=(game.entry_price == 0)
     )
+
+@app.route('/game/demo/select_cartela')
+def demo_select_cartela():
+    return select_cartela('999')
 
 @app.route('/game/<int:game_id>/join', methods=['POST'])
 def join_game(game_id):
     if game_id not in active_games:
-        return jsonify({'error': 'Game not found'}), 404
+        entry = 0 if game_id == 999 else 10
+        active_games[game_id] = BingoGame(game_id, entry_price=entry, max_cards_per_player=5 if entry == 0 else 4)
 
     game = active_games[game_id]
     user_id = session.get('user_id')
@@ -213,7 +234,7 @@ def join_game(game_id):
     if not user or user.is_blocked:
         return jsonify({'error': 'Your account is blocked or not found.'}), 403
 
-    if not user.phone:
+    if game.entry_price > 0 and not user.phone:
         return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
 
     data = request.json or {}
@@ -222,37 +243,39 @@ def join_game(game_id):
     if not cartela_number:
         return jsonify({'error': 'Please select a cartela number'}), 400
 
-    total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
-    if total_user_balance < game.entry_price:
-        return jsonify({
-            'error': 'Insufficient balance! Please top up your wallet first.',
-            'low_balance': True
-        }), 400
+    if game.entry_price > 0:
+        total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
+        if total_user_balance < game.entry_price:
+            return jsonify({
+                'error': 'Insufficient balance! Please top up your wallet first.',
+                'low_balance': True
+            }), 400
 
-    remaining_cost = float(game.entry_price)
-    if user.bonus_balance >= remaining_cost:
-        user.bonus_balance -= remaining_cost
-        remaining_cost = 0.0
-    else:
-        remaining_cost -= user.bonus_balance
-        user.bonus_balance = 0.0
-        user.balance -= remaining_cost
+        remaining_cost = float(game.entry_price)
+        if user.bonus_balance >= remaining_cost:
+            user.bonus_balance -= remaining_cost
+            remaining_cost = 0.0
+        else:
+            remaining_cost -= user.bonus_balance
+            user.bonus_balance = 0.0
+            user.balance -= remaining_cost
 
-    earned_coins = int(game.entry_price // 10)
-    user.coin = (user.coin or 0) + earned_coins
+        earned_coins = int(game.entry_price // 10)
+        user.coin = (user.coin or 0) + earned_coins
 
-    if user.coin >= 10:
-        conversion_count = user.coin // 10
-        user.bonus_balance += conversion_count * 10.0
-        user.coin %= 10
+        if user.coin >= 10:
+            conversion_count = user.coin // 10
+            user.bonus_balance += conversion_count * 10.0
+            user.coin %= 10
 
-    db.session.commit()
+        db.session.commit()
 
     username = user.username or "Player"
     success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=int(cartela_number))
     if not success:
-        user.balance += game.entry_price
-        db.session.commit()
+        if game.entry_price > 0:
+            user.balance += game.entry_price
+            db.session.commit()
         return jsonify({'error': msg}), 400
 
     session['active_game_id'] = game_id
@@ -276,7 +299,7 @@ def play_game(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
-    if not user.phone:
+    if game.entry_price > 0 and not user.phone:
         return "እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).", 400
 
     player_cards = game.players.get(user.telegram_id, [])
@@ -376,7 +399,7 @@ def mark_number(game_id):
 
     if check_win:
         winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
-        if winner:
+        if winner and game.entry_price > 0:
             if user:
                 user.balance += prize_per_winner
                 user.games_won += 1
@@ -397,7 +420,7 @@ def mark_number(game_id):
         return jsonify({'error': 'Could not mark number'}), 400
 
     winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
-    if winner:
+    if winner and game.entry_price > 0:
         if user:
             user.balance += prize_per_winner
             user.games_won += 1
@@ -418,7 +441,7 @@ def leave_game(game_id):
             return jsonify({'success': True})
         game = active_games[game_id]
         user_id = session.get('user_id')
-        if user_id:
+        if user_id and game.entry_price > 0:
             user = User.query.filter_by(telegram_id=user_id).first()
             if user and user.telegram_id in game.players:
                 success, msg, balance_deducted = game.player_leave(user.telegram_id)
