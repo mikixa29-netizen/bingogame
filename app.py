@@ -2,6 +2,7 @@ import os
 import random
 import json
 import logging
+import hashlib
 from functools import wraps
 from flask import Flask, jsonify, request, session, render_template, redirect, url_for, flash
 from datetime import datetime
@@ -31,11 +32,13 @@ from models import User, Game, GameParticipant, Transaction
 # Global active games rooms storage
 active_games = {}
 
-# Initial default rooms
+# Initial default rooms for all stakes (10, 20, 50, 100 ETB)
 def init_default_games():
     if not active_games:
         active_games[1] = BingoGame(1, entry_price=10, max_cards_per_player=4)
         active_games[2] = BingoGame(2, entry_price=20, max_cards_per_player=4)
+        active_games[3] = BingoGame(3, entry_price=50, max_cards_per_player=4)
+        active_games[4] = BingoGame(4, entry_price=100, max_cards_per_player=4)
 
 init_default_games()
 
@@ -60,7 +63,6 @@ def index():
         return "Your account has been blocked by the administrator.", 403
 
     total_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
-    # Changed index.html to game_lobby.html as requested
     return render_template('game_lobby.html', balance=total_balance, main_balance=user.balance, bonus_balance=user.bonus_balance, coin=user.coin)
 
 @app.route('/scores')
@@ -183,12 +185,18 @@ def select_cartela(game_id):
         for card in cards:
             used_cartelas.add(card.get('cartela_number', 0))
 
+    # Generate unique hash for this game session
+    raw_str = f"edil_bingo_{game_id}_{game.entry_price}_{datetime.utcnow().timestamp()}"
+    game_hash = hashlib.sha256(raw_str.encode()).hexdigest()
+
     return render_template(
         'cartela_selection.html',
         game_id=game_id,
         entry_price=game.entry_price,
         used_cartelas=used_cartelas,
-        balance=total_balance
+        balance=total_balance,
+        bonus=user.bonus_balance,
+        game_hash=game_hash
     )
 
 @app.route('/game/<int:game_id>/join', methods=['POST'])
