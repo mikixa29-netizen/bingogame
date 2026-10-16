@@ -247,17 +247,29 @@ def join_game(game_id):
         return jsonify({'error': 'Your account is blocked or not found.'}), 403
 
     data = request.json or {}
-    cartela_number = data.get('cartela_number')
+    cartela_numbers = data.get('cartela_numbers')
+    if not cartela_numbers:
+        single_c = data.get('cartela_number')
+        cartela_numbers = [single_c] if single_c else []
 
-    if not cartela_number:
-        return jsonify({'error': 'Please select a cartela number'}), 400
+    cartela_numbers = [int(c) for c in cartela_numbers if c is not None]
+
+    if not cartela_numbers:
+        return jsonify({'error': 'Please select at least one cartela number'}), 400
+
+    existing_cards_count = len(game.players.get(user.telegram_id, []))
+    if existing_cards_count + len(cartela_numbers) > game.max_cards_per_player:
+        return jsonify({'error': f'Maximum allowed cartelas is {game.max_cards_per_player}!'}), 400
+
+    total_cost = game.entry_price * len(cartela_numbers)
 
     # Demo Mode Auto-AI Integration
     if game.entry_price == 0 or game_id == 999:
         username = user.username or "Player"
-        success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=int(cartela_number))
-        if not success:
-            return jsonify({'error': msg}), 400
+        for c_num in cartela_numbers:
+            success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=c_num)
+            if not success:
+                return jsonify({'error': msg}), 400
 
         # Automatically assign random boards for AI Bot Players in Demo Mode
         ai_names = ["AI_Bot_Alpha", "AI_Bot_Beta", "AI_Bot_Gamma"]
@@ -275,13 +287,13 @@ def join_game(game_id):
         return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት በቦቱ በኩል ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
 
     total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
-    if total_user_balance < game.entry_price:
+    if total_user_balance < total_cost:
         return jsonify({
-            'error': 'Insufficient balance! Please top up your wallet first.',
+            'error': 'Insufficient balance for all selected cartelas!',
             'low_balance': True
         }), 400
 
-    remaining_cost = float(game.entry_price)
+    remaining_cost = float(total_cost)
     if user.bonus_balance >= remaining_cost:
         user.bonus_balance -= remaining_cost
         remaining_cost = 0.0
@@ -290,7 +302,7 @@ def join_game(game_id):
         user.bonus_balance = 0.0
         user.balance -= remaining_cost
 
-    earned_coins = int(game.entry_price // 10)
+    earned_coins = int(total_cost // 10)
     user.coin = (user.coin or 0) + earned_coins
 
     if user.coin >= 10:
@@ -301,12 +313,13 @@ def join_game(game_id):
     db.session.commit()
 
     username = user.username or "Player"
-    success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=int(cartela_number))
-    if not success:
-        if game.entry_price > 0:
-            user.balance += game.entry_price
-            db.session.commit()
-        return jsonify({'error': msg}), 400
+    for c_num in cartela_numbers:
+        success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=c_num)
+        if not success:
+            if game.entry_price > 0:
+                user.balance += total_cost
+                db.session.commit()
+            return jsonify({'error': msg}), 400
 
     session['active_game_id'] = game_id
 

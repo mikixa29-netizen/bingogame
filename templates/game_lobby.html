@@ -221,7 +221,6 @@
             .then(data => {
                 if (data.success) {
                     const targetGameId = data.game_id;
-                    // ተጫዋቹ አስቀድሞ ካርቴላ ካለው ወይም ጨዋታው ጀምሮ ከሆነ ቀጥታ ወደ ጨዋታው ሜዳ ይሂድ
                     if (data.has_cartela || status === 'active' || status === 'playing') {
                         window.location.href = `/game/${targetGameId}`;
                     } else {

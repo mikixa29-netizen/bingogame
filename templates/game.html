@@ -4,29 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inria Serif', serif;
             -webkit-tap-highlight-color: transparent;
         }
         body {
             margin: 0;
-            padding: 6px;
-            background-color: #a483cf; /* Default Selection Screen Purple */
-            color: #fff;
+            padding: 8px;
+            background-color: #89C149; /* Requested Background Color */
+            color: #FFFEFE;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             overflow-x: hidden;
-            transition: background-color 0.3s ease;
         }
 
-        /* --- SELECTION SCREEN (Original Purple Theme) --- */
+        /* --- SELECTION SCREEN --- */
         #selection-screen {
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -44,59 +44,58 @@
             background: #ffffff;
             color: #333;
             border-radius: 12px;
-            padding: 6px 4px;
+            padding: 8px 4px;
             text-align: center;
             flex: 1;
             box-shadow: 0 3px 6px rgba(0,0,0,0.12);
         }
-        .sel-stat-box .label { font-size: 9px; color: #666; text-transform: uppercase; font-weight: 800; }
-        .sel-stat-box .value { font-size: 13px; font-weight: 900; color: #111; margin-top: 2px; }
+        .sel-stat-box .label { font-size: 10px; color: #666; text-transform: uppercase; font-weight: bold; }
+        .sel-stat-box .value { font-size: 14px; font-weight: bold; color: #111; margin-top: 2px; }
 
         .select-subtitle {
-            font-size: 14px;
-            font-weight: 800;
+            font-size: 16px;
+            font-weight: bold;
             margin: 8px 0 10px 0;
             text-align: center;
-            color: #ffffff;
+            color: #FFFEFE;
             text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
         .number-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
-            gap: 4px;
-            background: rgba(255, 255, 255, 0.18);
-            padding: 8px;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
             border-radius: 14px;
             width: 100%;
-            max-height: 280px;
+            max-height: 300px;
             overflow-y: auto;
             margin-bottom: 12px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .num-cell {
-            background: #e2d1f9;
-            color: #2d2d2d;
+            background: #ffffff;
+            color: #000000;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
+            font-size: 13px;
+            font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .num-cell.selected {
             background-color: #27ae60 !important;
-            color: #ffffff !important;
-            font-weight: 900;
+            color: #FFFEFE !important;
+            font-weight: bold;
         }
         .num-cell.taken-by-other {
-            background-color: #ff6600 !important;
-            color: #ffffff !important;
+            background-color: #e67e22 !important;
+            color: #FFFEFE !important;
             cursor: not-allowed;
-            font-weight: 900;
+            font-weight: bold;
         }
         .selected-info-box {
             background: #ffffff;
@@ -105,14 +104,14 @@
             padding: 10px;
             border-radius: 12px;
             text-align: center;
-            font-size: 13px;
-            font-weight: 800;
+            font-size: 14px;
+            font-weight: bold;
             margin-bottom: 12px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.12);
         }
         .cartela-preview-container {
             background: #ffffff;
-            padding: 10px;
+            padding: 12px;
             border-radius: 12px;
             margin-bottom: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
@@ -124,19 +123,19 @@
         .mini-cartela-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
-            width: 160px;
+            gap: 5px;
+            width: 180px;
         }
         .mini-cell {
             background: #f0f0f0;
-            color: #333;
-            font-size: 10px;
+            color: #000;
+            font-size: 12px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 4px;
-            font-weight: 800;
+            font-weight: bold;
         }
         .mini-cell.star { background: #27ae60; color: #fff; }
         .action-buttons {
@@ -150,68 +149,69 @@
             padding: 14px 0;
             flex: 1;
             border-radius: 25px;
-            font-size: 15px;
-            font-weight: 800;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
             color: white;
             box-shadow: 0 4px 10px rgba(0,0,0,0.18);
         }
-        .btn-refresh { background: #209cee; }
-        .btn-start { background: #ff6600; }
+        .btn-refresh { background: #2980b9; }
+        .btn-start { background: #e74c3c; }
 
-        /* --- GAME SCREEN (Green Theme & Professional Layout) --- */
+        /* --- GAME SCREEN --- */
         #game-screen {
             display: none;
             width: 100%;
             max-width: 440px;
             flex-direction: column;
             align-items: center;
-            color: #111;
+            color: #FFFEFE;
         }
         .game-top-stats {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
+            gap: 3px;
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .game-stat-box {
-            background: #ffffff;
-            color: #2e4d00;
-            border-radius: 6px;
-            padding: 5px 1px;
+            background: rgba(255, 255, 255, 0.25);
+            color: #FFFEFE;
+            border-radius: 8px;
+            padding: 6px 2px;
             text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.15);
             cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .game-stat-box .label { font-size: 7.5px; text-transform: capitalize; font-weight: 800; color: #333; }
-        .game-stat-box .value { font-size: 9.5px; font-weight: 900; margin-top: 1px; color: #000; }
+        .game-stat-box .label { font-size: 8px; text-transform: uppercase; font-weight: bold; color: #FFFEFE; }
+        .game-stat-box .value { font-size: 11px; font-weight: bold; margin-top: 2px; color: #FFFEFE; }
 
-        /* Side-by-Side Main Layout */
         .game-main-area {
             display: flex;
             width: 100%;
-            gap: 6px;
+            gap: 8px;
             margin-top: 4px;
         }
         .board-column {
-            background: #a4db44;
-            border-radius: 10px;
-            padding: 5px;
-            width: 47%;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 8px;
+            width: 42%;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .bingo-header-row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             text-align: center;
-            font-weight: 900;
-            font-size: 11px;
-            margin-bottom: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 6px;
         }
         .bingo-header-row div {
-            width: 18px;
-            height: 18px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -225,46 +225,51 @@
         .bingo-header-row div:nth-child(4) { background-color: #ff5722; }
         .bingo-header-row div:nth-child(5) { background-color: #4caf50; }
 
-        .board-list { display: flex; flex-direction: column; gap: 2px; }
-        .board-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+        .board-list { display: flex; flex-direction: column; gap: 3px; }
+        .board-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+        
+        /* Master Board: Inria Serif, bold, 16px, #FFFEFE */
         .board-item {
-            background: #dcf3a1;
-            color: #333;
-            font-size: 9.5px;
+            background: rgba(255, 255, 255, 0.15);
+            font-family: 'Inria Serif', serif;
+            font-weight: bold;
+            font-size: 16px;
+            color: #FFFEFE;
             text-align: center;
-            padding: 3px 0;
-            border-radius: 2px;
-            font-weight: 800;
+            padding: 4px 0;
+            border-radius: 4px;
         }
-        .board-item.current-green { background-color: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
-        .board-item.called-orange { background-color: #ff6600 !important; color: #fff !important; border-radius: 50% !important; }
+        .board-item.current-green { background-color: #27ae60 !important; color: #FFFEFE !important; border-radius: 50% !important; }
+        .board-item.called-orange { background-color: #e67e22 !important; color: #FFFEFE !important; border-radius: 50% !important; }
 
         .call-side-area {
-            width: 53%;
+            width: 58%;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
         .status-box-img {
-            background: #dcf3a1;
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 8px;
-            padding: 5px 8px;
+            padding: 8px 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
-            font-size: 10px;
-            color: #1c3b00;
+            font-size: 12px;
+            color: #FFFEFE;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .current-call-box-img {
             background: #1b5e20;
             color: white;
             border-radius: 8px;
-            padding: 5px 8px;
+            padding: 8px 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: 900;
+            font-weight: bold;
+            font-size: 13px;
         }
         .badge-b { background-color: #fbc02d !important; color: #111 !important; }
         .badge-i { background-color: #e91e63 !important; color: #fff !important; }
@@ -274,109 +279,113 @@
 
         .current-call-badge-img {
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 38px;
+            height: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            font-weight: 900;
+            font-size: 13px;
+            font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.25);
         }
         .recent-calls-box-img {
-            background: #dcf3a1;
-            padding: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px;
             border-radius: 8px;
             display: flex;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
         }
         .recent-ball {
-            width: 20px; height: 20px; border-radius: 50%;
+            width: 24px; height: 24px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 7.5px;
+            font-weight: bold; font-size: 9px;
         }
 
-        /* Large & Clear User Cartelas on the Right Side */
+        /* Spacious User Cartelas (At least 2 fully visible) */
         .user-cartelas-container {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            max-height: 240px;
+            gap: 12px;
+            max-height: 420px;
             overflow-y: auto;
             width: 100%;
+            padding-right: 2px;
         }
         .user-cartela {
-            background: #dcf3a1;
-            border-radius: 8px;
-            padding: 6px;
-            color: #111;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-            border: 1px solid #bce158;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 10px;
+            color: #000000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
         }
         .user-cartela-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
-            margin-top: 3px;
+            gap: 5px;
+            margin-top: 6px;
         }
+        
+        /* Cartela Numbers: Inria Serif, bold, 24px, #000000 */
         .ucell {
-            background: #ffffff;
-            color: #111;
-            font-size: 11px;
+            background: #f4f6f8;
+            color: #000000;
+            font-family: 'Inria Serif', serif;
+            font-weight: bold;
+            font-size: 24px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            font-weight: 900;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .ucell.marked { background: #27ae60 !important; color: #fff !important; border-radius: 50% !important; }
+        .ucell.marked { background: #27ae60 !important; color: #FFFEFE !important; border-radius: 50% !important; }
 
-        /* Clean & Neatly Positioned Bottom Buttons */
+        /* Bottom Action Buttons */
         .bottom-action-area {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
             width: 100%;
-            margin-top: 8px;
-            margin-bottom: 15px;
+            margin-top: 12px;
+            margin-bottom: 20px;
         }
         .btn-bingo-main {
             background: #d81b60;
             color: white;
             border: none;
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border-radius: 25px;
-            font-size: 18px;
-            font-weight: 900;
+            font-size: 20px;
+            font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.25);
             letter-spacing: 0.5px;
         }
         .action-buttons-game {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             width: 100%;
         }
         .btn-game-action {
             border: none;
-            padding: 10px 0;
+            padding: 12px 0;
             flex: 1;
             border-radius: 20px;
-            font-size: 13px;
-            font-weight: 900;
+            font-size: 14px;
+            font-weight: bold;
             cursor: pointer;
             color: white;
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
             text-align: center;
             text-decoration: none;
         }
-        .btn-blue { background: #1e88e5; }
-        .btn-orange { background: #f3511e; }
-        .btn-yellow { background: #fdd835; color: #111; }
+        .btn-blue { background: #2980b9; }
+        .btn-orange { background: #d35400; }
+        .btn-yellow { background: #f1c40f; color: #111; }
 
         /* WINNER MODAL */
         .winner-modal-overlay {
@@ -396,7 +405,7 @@
 
     <!-- SELECTION SCREEN -->
     <div id="selection-screen">
-        <div class="sel-top-stats" style="width: 100%; max-width: 420px;">
+        <div class="sel-top-stats" style="width: 100%; max-width: 440px;">
             <div class="sel-stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
             <div class="sel-stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
             <div class="sel-stat-box"><div class="label">Stake/Card</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
@@ -411,7 +420,7 @@
         </div>
 
         <div class="cartela-preview-container" id="previewContainer" style="display:none;">
-            <div style="font-size: 11px; color:#444; text-align:center; font-weight:800; margin-bottom:6px;" id="previewTitleLbl">Cartela Preview</div>
+            <div style="font-size: 12px; color:#444; text-align:center; font-weight:bold; margin-bottom:6px;" id="previewTitleLbl">Cartela Preview</div>
             <div class="mini-cartela-grid" id="miniCartela"></div>
         </div>
 
@@ -443,7 +452,7 @@
                 <div class="board-list" id="mainBoardList"></div>
             </div>
 
-            <!-- Right Column: Call Info & Large User Cartelas Side-by-Side/Stacked -->
+            <!-- Right Column: Call Info & Spacious User Cartelas -->
             <div class="call-side-area">
                 <div class="status-box-img">
                     <span>Count Down</span>
@@ -475,7 +484,7 @@
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
             <div style="font-size:36px;" id="modalCrown">👑</div>
-            <div style="font-size:20px; font-weight:900; color:#fdd835;" id="modalTitle">BINGO WINNER!</div>
+            <div style="font-size:20px; font-weight:bold; color:#fdd835;" id="modalTitle">BINGO WINNER!</div>
             <div style="font-size:13px; font-weight:bold; margin: 8px 0;" id="wNameText">--</div>
             <div style="background:#2e7d32; padding:6px; border-radius:8px; font-size:12px; font-weight:bold;" id="wCartelaTag">Cartela: --</div>
             <div style="font-size:11px; margin-top:10px; color:#dcf3a1;" id="redirectTimerLbl">Returning to selection screen in 5s...</div>
@@ -508,11 +517,11 @@
         if (playerCards.length > 0) {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
-            document.body.style.backgroundColor = '#8cc63f';
+            document.body.style.backgroundColor = '#89C149';
         } else {
             document.getElementById('selection-screen').style.display = 'flex';
             document.getElementById('game-screen').style.display = 'none';
-            document.body.style.backgroundColor = '#a483cf';
+            document.body.style.backgroundColor = '#89C149';
         }
 
         function getLetterBadgeClass(letter) {
@@ -614,16 +623,14 @@
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cartela_number: selectedCartelas[0], cartelas: selectedCartelas })
+                body: JSON.stringify({ cartela_number: selectedCartelas[0], cartela_numbers: selectedCartelas })
             })
             .then(res => res.json())
             .then(data => { if (data.success) location.reload(); else alert(data.error || 'Failed to join game'); });
         }
 
         function goToAddCartela() {
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('selection-screen').style.display = 'flex';
-            document.body.style.backgroundColor = '#a483cf';
+            window.location.href = `/game/${gameId}/select_cartela`;
         }
 
         const mainBoardList = document.getElementById('mainBoardList');
@@ -652,7 +659,7 @@
                 cartelaDiv.className = 'user-cartela';
                 let headerRow = document.createElement('div');
                 headerRow.className = 'bingo-header-row';
-                headerRow.innerHTML = '<div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>';
+                headerRow.innerHTML = '<div style="background:#fbc02d; color:#111;">B</div><div style="background:#e91e63; color:#fff;">I</div><div style="background:#03a9f4; color:#fff;">N</div><div style="background:#ff5722; color:#fff;">G</div><div style="background:#4caf50; color:#fff;">O</div>';
                 cartelaDiv.appendChild(headerRow);
 
                 let gridDiv = document.createElement('div');
@@ -667,7 +674,7 @@
                 cartelaDiv.appendChild(gridDiv);
                 
                 let lbl = document.createElement('div');
-                lbl.style.textAlign = 'center'; lbl.style.fontSize = '10px'; lbl.style.fontWeight = '800'; lbl.style.marginTop = '3px'; lbl.innerText = `Board #${card.cartela_number}`;
+                lbl.style.textAlign = 'center'; lbl.style.fontSize = '12px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '6px'; lbl.style.color = '#000'; lbl.innerText = `Board #${card.cartela_number}`;
                 cartelaDiv.appendChild(lbl);
                 container.appendChild(cartelaDiv);
             });
@@ -706,7 +713,7 @@
                 if (count <= 0) {
                     clearInterval(timer);
                     fetch(`/game/${gameId}/leave`, {method: 'POST'}).catch(e => {});
-                    window.location.reload();
+                    window.location.href = `/game/${gameId}/select_cartela`;
                 }
             }, 1000);
         }
@@ -758,7 +765,6 @@
                     }
                 });
 
-                // Auto-mark player cards across all devices/PC
                 let autoMarked = false;
                 playerCards.forEach(card => {
                     card.board.forEach((num) => {
@@ -784,7 +790,7 @@
                     recentList.appendChild(ball);
                 });
 
-                if (data.winners && data.winners.length > 0) {
+                if (data.status === 'finished' || data.status === 'completed' || (data.winners && data.winners.length > 0)) {
                     showWinnerModal(data);
                 }
             })
