@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edil Bingo - Wallet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; }
+        body {
+            margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
+        }
+        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; }
+        .wallet-card {
+            background: rgba(255, 255, 255, 0.25); width: 100%; max-width: 420px;
+            border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .wallet-card .balance { font-size: 28px; font-weight: bold; margin-top: 10px; color: #fdd835; }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
+            display: flex; justify-content: space-around; padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1000;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #666; font-size: 11px; font-weight: bold; }
+        .nav-item.active { color: #1e88e5; }
+    </style>
+</head>
+<body>
+    <div class="header-title">💰 My Wallet</div>
+
+    <div class="wallet-card">
+        <div>Total Balance</div>
+        <div class="balance">{{ balance | default('0.00') }} ETB</div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="/" class="nav-item"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item active"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
+    </div>
+</body>
+</html>

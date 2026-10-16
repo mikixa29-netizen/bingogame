@@ -2,173 +2,136 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - Select Cartela</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inria Serif', serif;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
             margin: 0;
-            padding: 10px;
-            background-color: #a483cf;
-            color: #fff;
+            padding: 8px;
+            background-color: #89C149; /* Green Theme background */
+            color: #FFFEFE;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            padding-bottom: 75px;
         }
-        .header-title {
-            font-size: 26px;
-            font-weight: 900;
-            margin: 8px 0 12px 0;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            text-align: center;
-        }
+        
         .top-stats {
             display: flex;
             gap: 6px;
-            justify-content: center;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 10px;
             width: 100%;
             max-width: 420px;
-            padding: 0 4px;
         }
         .stat-box {
-            background: #ffffff;
-            color: #333;
+            background: rgba(255, 255, 255, 0.25);
+            color: #FFFEFE;
             border-radius: 12px;
-            padding: 6px 10px;
+            padding: 6px 4px;
             text-align: center;
             flex: 1;
-            min-width: 70px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .stat-box .label {
             font-size: 9px;
-            color: #666;
             text-transform: uppercase;
-            font-weight: 800;
+            font-weight: bold;
         }
         .stat-box .value {
-            font-size: 14px;
-            font-weight: 900;
-            color: #111;
-        }
-        .timer-banner {
-            background: #ff6600;
-            color: white;
-            padding: 6px 15px;
-            border-radius: 20px;
             font-size: 13px;
-            font-weight: 800;
-            margin-bottom: 10px;
-            display: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-weight: bold;
+            margin-top: 2px;
         }
-        .select-subtitle {
-            font-size: 14px;
-            font-weight: 800;
+
+        .jackpot-banner {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 4px 10px;
             margin-bottom: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .select-subtitle {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
             text-align: center;
         }
+
         .cartela-container {
             width: 100%;
             max-width: 420px;
             background: rgba(255, 255, 255, 0.18);
-            padding: 10px;
+            padding: 8px;
             border-radius: 14px;
-            margin-bottom: 12px;
-            backdrop-filter: blur(5px);
+            margin-bottom: 10px;
             border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .cartela-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            max-height: 240px;
+            max-height: 230px;
             overflow-y: auto;
         }
+        
+        /* Master Board Cells */
         .cartela-number {
-            background: #e2d1f9;
-            color: #333;
+            background: #ffffff;
+            color: #000000;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 11px;
-            font-weight: 800;
+            font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            transition: transform 0.1s;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             user-select: none;
         }
-        .cartela-number:active {
-            transform: scale(0.92);
-        }
-        
-        /* Cartela seleccionada por el usuario: Verde */
+
+        /* User selection: Orange or Green */
         .cartela-number.selected {
             background: #27ae60 !important;
-            color: #fff !important;
-            font-weight: 900 !important;
-            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4);
+            color: #ffffff !important;
         }
-
-        /* Cartela ocupada por otros jugadores: Naranja intenso */
-        .cartela-number.other-selected,
         .cartela-number.unavailable {
             background: #ff6600 !important;
-            color: #fff !important;
-            font-weight: 900 !important;
+            color: #ffffff !important;
             cursor: not-allowed;
             opacity: 0.9;
         }
 
-        /* Vista previa (Preview Box) */
-        .previews-wrapper {
+        .bottom-preview-area {
             width: 100%;
             max-width: 420px;
             display: flex;
-            flex-direction: column;
             gap: 8px;
-            margin-bottom: 12px;
+            align-items: flex-start;
+            margin-bottom: 10px;
         }
-        .preview-box {
-            background: #ffffff;
-            color: #222;
-            padding: 10px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 800;
-            font-size: 13px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-        }
-        .mini-cartelas-row {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+
+        /* Preview Card Box */
         .mini-card-preview {
-            background: #f3eafa;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
             padding: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            text-align: center;
-            width: 90px;
-        }
-        .mini-card-title {
-            font-size: 9px;
-            font-weight: 900;
-            color: #4a154b;
-            margin-bottom: 4px;
+            width: 120px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .mini-card-grid {
             display: grid;
@@ -176,136 +139,156 @@
             gap: 2px;
         }
         .mini-cell {
-            background: #fff;
-            color: #333;
-            font-size: 8px;
+            background: #ffffff;
+            color: #000000;
+            font-size: 9px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 2px;
-            font-weight: 800;
+            font-weight: bold;
         }
-        .mini-cell.star {
-            background: #27ae60;
-            color: #fff;
-        }
+        .mini-cell.star { background: #27ae60; color: #fff; }
 
-        .action-buttons {
+        /* Actions & Hash Fairness Box */
+        .right-action-wrapper {
+            flex: 1;
             display: flex;
-            gap: 10px;
-            width: 100%;
-            max-width: 420px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 6px;
         }
-        .btn-refresh {
-            background: #209cee;
-            color: white;
+        .btn-row {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-refresh, .btn-start {
             border: none;
-            padding: 14px 0;
+            padding: 10px 0;
             flex: 1;
-            border-radius: 25px;
-            font-size: 15px;
-            font-weight: 800;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-        .btn-start {
-            background: #ff6600;
             color: white;
-            border: none;
-            padding: 14px 0;
-            flex: 1;
-            border-radius: 25px;
-            font-size: 15px;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
+        .btn-refresh { background: #1e88e5; }
+        .btn-start { background: #f3511e; }
 
-        .modal-overlay {
+        /* Game Hash Box */
+        .fairness-box {
+            background: #ffffff;
+            color: #222222;
+            padding: 6px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 8px;
+            word-break: break-all;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .fairness-title { font-weight: bold; margin-bottom: 2px; text-transform: uppercase; font-size: 9px; }
+        .fairness-id { background: #e0e0e0; display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 2px; }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75);
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
             z-index: 1000;
-            display: none;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #666;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .nav-item.active { color: #1e88e5; }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); display: none;
+            align-items: center; justify-content: center; z-index: 9999;
         }
         .modal-box {
-            background: #1e293b;
-            color: white;
-            width: 85%;
-            max-width: 320px;
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            border: 2px solid #ff6600;
-        }
-        .modal-box h3 { margin-top: 0; color: #facc15; font-size: 20px; font-weight: 900; }
-        .modal-box p { font-size: 13px; color: #cbd5e1; margin-bottom: 20px; font-weight: 600; }
-        .modal-btn {
-            background: #ff6600; color: white; border: none; padding: 10px 20px;
-            border-radius: 20px; font-size: 14px; font-weight: 800; cursor: pointer; width: 100%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            background: #1b5e20; color: white; width: 85%; max-width: 320px;
+            padding: 20px; border-radius: 16px; text-align: center;
+            border: 2px solid #fdd835;
         }
     </style>
 </head>
 <body>
 
-    <div class="header-title">Edil Bingo</div>
-
     <div class="top-stats">
-        <div class="stat-box">
-            <div class="label">Wallet</div>
-            <div class="value" id="wallet-val">{{ balance | default('50.00') }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Room</div>
-            <div class="value">#{{ game_id }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Stake/Card</div>
-            <div class="value" id="entry-price">{{ entry_price }}</div>
-        </div>
-        <div class="stat-box">
-            <div class="label">Selected</div>
-            <div class="value" id="selected-count">0/4</div>
-        </div>
+        <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance | default('0.00') }}</div></div>
+        <div class="stat-box"><div class="label">Bonus</div><div class="value">{{ bonus | default('0.00') }}</div></div>
+        <div class="stat-box"><div class="label">Active Game</div><div class="value">#{{ game_id }}</div></div>
+        <div class="stat-box"><div class="label">Stake</div><div class="value" id="entry-price">{{ entry_price }}</div></div>
     </div>
 
-    <div class="timer-banner" id="timerBanner">Game starts in: <span id="countdownTimer">30</span>s</div>
-    <div class="select-subtitle">Select Up to 4 Cartelas (1-200)</div>
+    <div class="jackpot-banner">
+        <span>JACKPOT</span>
+        <span>--:-- / 1000</span>
+    </div>
+
+    <div class="select-subtitle">Select Up to 4 Cartelas (1-200) [<span id="selected-count">0</span>/4]</div>
 
     <div class="cartela-container">
         <div class="cartela-grid" id="cartelaGrid">
             {% for i in range(1, 201) %}
                 <div class="cartela-number {% if i in used_cartelas %}unavailable{% endif %}"
-                     id="cartela-{{ i }}"
-                     data-number="{{ i }}">
+                     id="cartela-{{ i }}" data-number="{{ i }}">
                     {{ i }}
                 </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="previews-wrapper">
-        <div class="preview-box" id="previewLbl">Selected Cartelas: None</div>
-        <div class="mini-cartelas-row" id="miniCartelasRow"></div>
+    <div class="bottom-preview-area">
+        <div class="mini-card-preview">
+            <div id="previewTitle" style="font-size:9px; font-weight:bold; text-align:center; margin-bottom:3px;">Preview</div>
+            <div class="mini-card-grid" id="miniCartelaGrid"></div>
+        </div>
+
+        <div class="right-action-wrapper">
+            <div class="btn-row">
+                <button class="btn-refresh" onclick="location.reload()">Refresh</button>
+                <button class="btn-start" onclick="confirmJoin()">Start Game</button>
+            </div>
+
+            <!-- Fairness Hash Block -->
+            <div class="fairness-box">
+                <div class="fairness-title">Game Hash (Fairness)</div>
+                <div class="fairness-id">ID: {{ game_id_hash | default('Qz4931') }}</div>
+                <div id="hashValue">9dd2a51b40132e3868ac99c836a0936ff118bee58277ef5827300dbaf23d0f2</div>
+            </div>
+        </div>
     </div>
 
-    <div class="action-buttons">
-        <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-        <button class="btn-start" onclick="confirmJoin()">Start Game</button>
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <a href="/" class="nav-item active"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
     </div>
 
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
-            <h3>⚠️ Notice / Error</h3>
-            <p id="modal-error-text">Please top up your wallet first to play this game!</p>
-            <button class="modal-btn" onclick="closeModal()">OK</button>
+            <h3 style="color:#fdd835; margin-top:0;">⚠️ Notice</h3>
+            <p id="modal-error-text">Game already started or finished!</p>
+            <button style="background:#ff6600; color:white; border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold;" onclick="closeModal()">OK</button>
         </div>
     </div>
 
@@ -314,11 +297,8 @@
     <script>
         let selectedCartelas = [];
         let maxCards = 4;
-        let entryPrice = parseFloat(document.getElementById('entry-price').innerText) || 10;
-        let userWallet = parseFloat(document.getElementById('wallet-val').innerText) || 0;
         let gameId = parseInt(document.getElementById('game-data').dataset.gameId, 10) || 0;
 
-        // Agregar los eventos onclick de forma limpia sin errores de Jinja2
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.cartela-number').forEach(item => {
                 item.addEventListener('click', () => {
@@ -328,22 +308,22 @@
             });
         });
 
+        // Dynamic Status Polling
         setInterval(checkGameStatus, 2000);
 
         function checkGameStatus() {
             fetch(`/game/${gameId}/status`)
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'countdown') {
-                    document.getElementById('timerBanner').style.display = 'block';
-                    document.getElementById('countdownTimer').innerText = data.countdown_remaining;
-                    if (data.countdown_remaining <= 0) {
-                        window.location.href = `/game/${gameId}`;
-                    }
-                } else if (data.status === 'active') {
-                    window.location.href = `/game/${gameId}`;
+                // Check if game has already started or finished
+                if (data.status === 'active' || data.status === 'finished') {
+                    document.getElementById('modal-error-text').innerText = "Game already started or finished!";
+                    document.getElementById('topupModal').style.display = 'flex';
+                    setTimeout(() => { window.location.href = `/game/${gameId}`; }, 2000);
+                    return;
                 }
 
+                // Update cartelas locked by other players
                 if (data.taken_cartelas) {
                     data.taken_cartelas.forEach(cNum => {
                         let cEl = document.getElementById('cartela-' + cNum);
@@ -365,11 +345,7 @@
             let oCol = getUniqueRandoms(61, 75, 5, id + 40);
 
             for (let r = 0; r < 5; r++) {
-                numbers.push(bCol[r]);
-                numbers.push(iCol[r]);
-                numbers.push(nCol[r]);
-                numbers.push(gCol[r]);
-                numbers.push(oCol[r]);
+                numbers.push(bCol[r]); numbers.push(iCol[r]); numbers.push(nCol[r]); numbers.push(gCol[r]); numbers.push(oCol[r]);
             }
             return numbers;
         }
@@ -386,13 +362,12 @@
 
         function toggleCartela(number) {
             let target = document.getElementById('cartela-' + number);
-            if (!target || target.classList.contains('unavailable') || target.classList.contains('other-selected')) {
+            if (!target || target.classList.contains('unavailable')) {
                 alert('This cartela number is already taken.');
                 return;
             }
 
             let index = selectedCartelas.indexOf(number);
-
             if (index > -1) {
                 selectedCartelas.splice(index, 1);
                 target.classList.remove('selected');
@@ -405,41 +380,22 @@
                 target.classList.add('selected');
             }
 
-            document.getElementById('selected-count').innerText = selectedCartelas.length + '/' + maxCards;
-            
-            let previewLbl = document.getElementById('previewLbl');
-            let rowContainer = document.getElementById('miniCartelasRow');
-            rowContainer.innerHTML = '';
+            document.getElementById('selected-count').innerText = selectedCartelas.length;
+            renderPreview(selectedCartelas[selectedCartelas.length - 1] || number);
+        }
 
-            if (selectedCartelas.length > 0) {
-                previewLbl.innerText = "Selected Cartelas: #" + selectedCartelas.join(', #');
-                
-                selectedCartelas.forEach(cardId => {
-                    let cardBox = document.createElement('div');
-                    cardBox.className = 'mini-card-preview';
-                    
-                    let title = document.createElement('div');
-                    title.className = 'mini-card-title';
-                    title.innerText = `#${cardId}`;
-                    cardBox.appendChild(title);
+        function renderPreview(cardId) {
+            let grid = document.getElementById('miniCartelaGrid');
+            grid.innerHTML = '';
+            document.getElementById('previewTitle').innerText = `#${cardId}`;
 
-                    let gridDiv = document.createElement('div');
-                    gridDiv.className = 'mini-card-grid';
-
-                    let numbers = generateCartelaNumbers(cardId);
-                    numbers.forEach((num, idx) => {
-                        let cell = document.createElement('div');
-                        cell.className = 'mini-cell' + (idx === 12 ? ' star' : '');
-                        cell.innerText = idx === 12 ? '★' : num;
-                        gridDiv.appendChild(cell);
-                    });
-
-                    cardBox.appendChild(gridDiv);
-                    rowContainer.appendChild(cardBox);
-                });
-            } else {
-                previewLbl.innerText = "Selected Cartelas: None";
-            }
+            let numbers = generateCartelaNumbers(cardId);
+            numbers.forEach((num, idx) => {
+                let cell = document.createElement('div');
+                cell.className = 'mini-cell' + (idx === 12 ? ' star' : '');
+                cell.innerText = idx === 12 ? '★' : num;
+                grid.appendChild(cell);
+            });
         }
 
         function confirmJoin() {
@@ -448,41 +404,22 @@
                 return;
             }
 
-            let totalCost = selectedCartelas.length * entryPrice;
-            if (userWallet < totalCost) {
-                document.getElementById('modal-error-text').innerText = `Insufficient balance! You need ${totalCost} Birr for ${selectedCartelas.length} cards.`;
-                document.getElementById('topupModal').style.display = 'flex';
-                return;
-            }
-
-            joinCardsSequentially(0);
-        }
-
-        function joinCardsSequentially(index) {
-            if (index >= selectedCartelas.length) {
-                window.location.href = `/game/${gameId}`;
-                return;
-            }
-
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cartela_number: selectedCartelas[index] })
+                body: JSON.stringify({ cartela_number: selectedCartelas[0], cartelas: selectedCartelas })
             })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                if (data.low_balance || (data.error && data.error.includes('balance'))) {
-                    document.getElementById('modal-error-text').innerText = data.error || "Low balance!";
+                if (data.error) {
+                    document.getElementById('modal-error-text').innerText = data.error;
                     document.getElementById('topupModal').style.display = 'flex';
-                } else if (data.error) {
-                    alert(data.error);
                 } else {
-                    joinCardsSequentially(index + 1);
+                    window.location.href = `/game/${gameId}`;
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('modal-error-text').innerText = "Connection error while joining game.";
+            .catch(err => {
+                document.getElementById('modal-error-text').innerText = "Connection error!";
                 document.getElementById('topupModal').style.display = 'flex';
             });
         }

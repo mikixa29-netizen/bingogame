@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edil Bingo - History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; }
+        body {
+            margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
+        }
+        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; }
+        .history-card {
+            background: rgba(255, 255, 255, 0.2); width: 100%; max-width: 420px;
+            border-radius: 12px; padding: 12px; margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3); font-size: 13px;
+        }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
+            display: flex; justify-content: space-around; padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1000;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #666; font-size: 11px; font-weight: bold; }
+        .nav-item.active { color: #1e88e5; }
+    </style>
+</head>
+<body>
+    <div class="header-title">📋 Bingo History</div>
+
+    <div style="width: 100%; max-width: 420px;">
+        {% for hist in game_history %}
+        <div class="history-card">
+            <div>🎮 Game ID: #{{ hist.game_id }}</div>
+            <div>📌 Board: #{{ hist.cartela_number }}</div>
+            <div>💰 Prize/Status: {{ hist.status }}</div>
+        </div>
+        {% else %}
+        <div class="history-card" style="text-align: center;">No game history found.</div>
+        {% endfor %}
+    </div>
+
+    <div class="bottom-nav">
+        <a href="/" class="nav-item"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item active"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
+    </div>
+</body>
+</html>
