@@ -2,21 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - History</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Inria Serif', serif; }
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
             display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
         }
-        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; }
+        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        
+        .history-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 10px; }
+        
         .history-card {
             background: rgba(255, 255, 255, 0.2); width: 100%; max-width: 420px;
-            border-radius: 12px; padding: 12px; margin-bottom: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.3); font-size: 13px;
+            border-radius: 12px; padding: 14px; border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size: 13px; color: #fff;
         }
+        .history-row { display: flex; justify-content: space-between; margin-bottom: 6px; align-items: center; }
+        .history-row span { font-weight: bold; }
+        .winner-tag { color: #f1c40f; font-size: 14px; }
+        
+        .called-numbers-preview {
+            display: flex; flex-wrap: wrap; gap: 4px; max-height: 60px; overflow-y: auto;
+            background: rgba(0,0,0,0.15); padding: 6px; border-radius: 8px; margin-top: 8px;
+        }
+        .mini-ball {
+            background: #27ae60; color: white; width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;
+        }
+
+        .empty-card { text-align: center; padding: 20px; background: rgba(255,255,255,0.2); border-radius: 12px; }
+
+        /* Bottom Nav */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 8px 0;
@@ -27,17 +46,39 @@
     </style>
 </head>
 <body>
-    <div class="header-title">📋 Bingo History</div>
+    <div class="header-title">📋 Bingo Game History</div>
 
-    <div style="width: 100%; max-width: 420px;">
+    <div class="history-container">
         {% for hist in game_history %}
         <div class="history-card">
-            <div>🎮 Game ID: #{{ hist.game_id }}</div>
-            <div>📌 Board: #{{ hist.cartela_number }}</div>
-            <div>💰 Prize/Status: {{ hist.status }}</div>
+            <div class="history-row">
+                <div>🎮 Game ID: <span>#{{ hist.game_id }}</span></div>
+                <div style="font-size: 11px; opacity: 0.85;">{{ hist.finished_at.strftime('%Y-%m-%d %H:%M') if hist.finished_at else '' }}</div>
+            </div>
+            <div class="history-row">
+                <div>🏆 Winner: <span class="winner-tag">{{ hist.winner_name | default('Unknown') }}</span></div>
+                <div>📌 Cartela: <span>#{{ hist.winning_cartela }}</span></div>
+            </div>
+            <div class="history-row">
+                <div>📞 Total Calls: <span>{{ hist.total_calls }} calls</span></div>
+                <div>💰 Prize: <span style="color: #f1c40f;">{{ hist.prize_amount }} ETB</span></div>
+            </div>
+            
+            <div style="margin-top: 6px; font-size: 11px; opacity: 0.9;">Called Numbers:</div>
+            <div class="called-numbers-preview">
+                {% if hist.called_numbers_str %}
+                    {% for num in hist.called_numbers_str.split(',') %}
+                    <div class="mini-ball">{{ num }}</div>
+                    {% endfor %}
+                {% else %}
+                    <span style="font-size: 11px; opacity: 0.7;">No details recorded</span>
+                {% endif %}
+            </div>
         </div>
         {% else %}
-        <div class="history-card" style="text-align: center;">No game history found.</div>
+        <div class="empty-card">
+            No game history found yet! Play some games to see results here.
+        </div>
         {% endfor %}
     </div>
 

@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Inria Serif', serif; }
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
             display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
@@ -15,13 +15,39 @@
             width: 80px; height: 80px; border-radius: 50%; background: #1b5e20;
             display: flex; align-items: center; justify-content: center; font-size: 32px;
             font-weight: bold; margin: 20px 0 10px 0; border: 2px solid #fdd835;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .profile-name { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+        .profile-name { font-size: 18px; font-weight: bold; margin-bottom: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        
+        .profile-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; }
+        
         .profile-box {
             background: rgba(255, 255, 255, 0.2); width: 100%; max-width: 420px;
-            border-radius: 12px; padding: 14px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; 
+            align-items: center; border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 14px; font-weight: bold;
         }
+        .profile-box span { color: #f1c40f; }
+
+        .transfer-card {
+            background: rgba(255, 255, 255, 0.25); border-radius: 12px; padding: 14px;
+            width: 100%; max-width: 420px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .transfer-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; opacity: 0.9; }
+        .form-control {
+            width: 100%; padding: 10px; border-radius: 8px; border: none;
+            background: #fff; color: #333; font-size: 14px; font-weight: bold;
+        }
+        .btn-transfer {
+            background: #27ae60; color: white; border: none; width: 100%; padding: 12px;
+            border-radius: 20px; font-size: 15px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2); margin-top: 5px;
+        }
+
+        /* Bottom Nav */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 8px 0;
@@ -33,16 +59,44 @@
 </head>
 <body>
     <div class="profile-avatar">👤</div>
-    <div class="profile-name">Player Profile</div>
+    <div class="profile-name">{{ username | default('Player Profile') }}</div>
 
-    <div style="width: 100%; max-width: 420px;">
+    <div class="profile-container">
         <div class="profile-box">
-            <div>User ID</div>
-            <div>#{{ session.get('user_id', 'N/A') }}</div>
+            <div>User ID / Telegram ID</div>
+            <span>#{{ user_id | default(session.get('user_id', 'N/A')) }}</span>
         </div>
         <div class="profile-box">
-            <div>Sound Settings</div>
-            <div>Enabled</div>
+            <div>Main Balance</div>
+            <span>{{ balance | default('0.00') }} ETB</span>
+        </div>
+        <div class="profile-box">
+            <div>Bonus Balance</div>
+            <span>{{ bonus_balance | default('0.00') }} ETB</span>
+        </div>
+        <div class="profile-box">
+            <div>Games Played</div>
+            <span>{{ games_played | default(0) }}</span>
+        </div>
+        <div class="profile-box">
+            <div>Games Won</div>
+            <span>{{ games_won | default(0) }}</span>
+        </div>
+
+        <!-- Transfer Balance Section -->
+        <div class="transfer-card">
+            <div class="transfer-title">💸 Transfer Balance to Friend</div>
+            <form id="transferForm" onsubmit="handleTransfer(event)">
+                <div class="form-group">
+                    <label>Recipient User ID / Username</label>
+                    <input type="text" id="recipient" class="form-control" placeholder="Enter recipient ID" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount (ETB)</label>
+                    <input type="number" id="transferAmount" class="form-control" placeholder="Min 10 ETB" min="10" required>
+                </div>
+                <button type="submit" class="btn-transfer">Send to Bonus Balance</button>
+            </form>
         </div>
     </div>
 
@@ -53,5 +107,31 @@
         <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
         <a href="/profile" class="nav-item active"><span>👤</span> Profile</a>
     </div>
+
+    <script>
+        function handleTransfer(event) {
+            event.preventDefault();
+            const recipient = document.getElementById('recipient').value;
+            const amount = document.getElementById('transferAmount').value;
+
+            fetch('/transfer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipient: recipient, amount: amount })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Successfully transferred! Amount added to recipient bonus balance.');
+                    location.reload();
+                } else {
+                    alert(data.error || 'Transfer failed');
+                }
+            })
+            .catch(err => {
+                alert('An error occurred during transfer.');
+            });
+        }
+    </script>
 </body>
 </html>

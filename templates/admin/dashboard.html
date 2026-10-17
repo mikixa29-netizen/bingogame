@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="am">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edil Bingo - Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; }
         body {
             margin: 0;
             padding: 20px;
-            background-color: #a483cf;
-            font-family: Arial, sans-serif;
+            background-color: #89C149; /* Matching the game green theme */
             color: #fff;
             display: flex;
             flex-direction: column;
@@ -18,21 +20,37 @@
         }
         .container {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1200px;
         }
         .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
         }
         h2, h3 {
             margin: 0;
             color: #fff;
+        }
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .lang-select {
+            background: #fff;
+            color: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
         }
         .logout-btn {
             background: #e74c3c;
@@ -43,6 +61,7 @@
             font-size: 14px;
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: 0.3s;
         }
         .logout-btn:hover {
             background: #c0392b;
@@ -54,17 +73,19 @@
             flex-wrap: wrap;
         }
         .stat-card {
-            background: #fff;
-            color: #333;
-            padding: 15px 20px;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 20px;
+            border-radius: 14px;
             flex: 1;
             min-width: 200px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             text-align: center;
+            border: 1px solid rgba(255,255,255,0.3);
         }
         .stat-card h3 {
-            color: #4a154b;
+            color: #fdd835;
             font-size: 13px;
             text-transform: uppercase;
             margin-bottom: 8px;
@@ -72,86 +93,91 @@
         .stat-card p {
             margin: 5px 0;
             font-size: 14px;
-            color: #555;
+            color: #f0f0f0;
         }
         .stat-card strong {
-            font-size: 20px;
-            color: #222;
+            font-size: 24px;
+            color: #fff;
         }
         .section-box {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(10px);
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 14px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.25);
         }
         .section-box h3 {
-            font-size: 16px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            font-size: 17px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.25);
             padding-bottom: 8px;
+            color: #fdd835;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background: #f3eafa;
+            background: rgba(255, 255, 255, 0.9);
             color: #333;
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
             font-size: 14px;
             margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         th, td {
-            padding: 10px 12px;
+            padding: 12px 14px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #e0e0e0;
         }
         th {
-            background-color: #4a154b;
+            background-color: #1b5e20;
             color: white;
             font-size: 13px;
         }
-        input[type="number"], input[type="text"], textarea {
-            padding: 6px;
-            border-radius: 6px;
+        input[type="number"], input[type="text"], select, textarea {
+            padding: 8px;
+            border-radius: 8px;
             border: 1px solid #ccc;
             background: #fff;
             color: #333;
             font-size: 13px;
             box-sizing: border-box;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            outline: none;
         }
-        button {
-            background: #008000;
+        button, .btn {
+            background: #27ae60;
             color: white;
             border: none;
-            padding: 7px 14px;
-            border-radius: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             font-size: 13px;
+            text-decoration: none;
+            display: inline-block;
+            transition: 0.2s;
         }
-        button:hover {
-            background: #006600;
+        button:hover, .btn:hover {
+            opacity: 0.9;
         }
         .btn-danger {
             background: #c0392b;
         }
-        .btn-danger:hover {
-            background: #962d22;
-        }
         .btn-warning {
             background: #d35400;
         }
-        .btn-warning:hover {
-            background: #ba4a00;
+        .btn-primary {
+            background: #1e88e5;
         }
         .form-group {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
             font-size: 13px;
             font-weight: bold;
             color: #fff;
@@ -172,13 +198,25 @@
             text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        .form-inline {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header-row">
-            <h2>Edil Bingo Admin Dashboard</h2>
-            <a href="{{ url_for('admin_logout') }}" class="logout-btn">Logout</a>
+            <h2>🍀 Edil Bingo Admin Dashboard</h2>
+            <div class="header-controls">
+                <select class="lang-select" id="langSelect" onchange="switchLanguage()">
+                    <option value="am">አማርኛ (Amharic)</option>
+                    <option value="en">English</option>
+                </select>
+                <a href="{{ url_for('admin_logout') }}" class="logout-btn">Logout</a>
+            </div>
         </div>
 
         {% with messages = get_flashed_messages() %}
@@ -195,11 +233,11 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <h3>Total Players</h3>
-                <p><strong>{{ total_players }}</strong></p>
+                <p><strong>{{ total_players if total_players is defined else users|length }}</strong></p>
             </div>
             <div class="stat-card">
                 <h3>Active Games</h3>
-                <p><strong>{{ active_games }}</strong></p>
+                <p><strong>{{ active_games if active_games is defined else 0 }}</strong></p>
             </div>
             <div class="stat-card">
                 <h3>Pending Withdrawals</h3>
@@ -251,38 +289,52 @@
             </table>
         </div>
 
-        <!-- Active Games Section -->
+        <!-- Active Games Rooms Section (Detailed: Players, Pool, Status, Winners & Prize) -->
         <div class="section-box">
-            <h3>Active Games Rooms</h3>
+            <h3>Active Games Rooms & Pool Details</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Game ID</th>
+                        <th>Stake</th>
                         <th>Players Count</th>
-                        <th>Stake / Price</th>
+                        <th>Total Cards</th>
+                        <th>Pool (ደራሽ)</th>
                         <th>Status</th>
+                        <th>Winner / Prize</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for g in games %}
-                    <tr>
-                        <td>#{{ g.game_id }}</td>
-                        <td>{{ g.players|length }}</td>
-                        <td>{{ g.entry_price }} Birr</td>
-                        <td>{{ g.status }}</td>
-                    </tr>
+                    {% if games %}
+                        {% for g in games %}
+                        <tr>
+                            <td>#{{ g.game_id }}</td>
+                            <td>{{ g.entry_price }} Birr</td>
+                            <td>{{ g.players|length }}</td>
+                            <td>{{ g.get_total_cards() if g.get_total_cards else '-' }}</td>
+                            <td>{{ g.pool if g.pool is defined else 0.0 }} Birr</td>
+                            <td><span style="color: #27ae60; font-weight: bold;">{{ g.status }}</span></td>
+                            <td>
+                                {% if g.winners %}
+                                    🏆 {{ g.winners[0].username }} ({{ g.prize_per_winner if g.prize_per_winner is defined else 0 }} Birr)
+                                {% else %}
+                                    ገና በሂደት ላይ...
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
                     {% else %}
                     <tr>
-                        <td colspan="4" style="text-align: center; color: #666;">No active games running.</td>
+                        <td colspan="7" style="text-align: center; color: #666;">No active games running.</td>
                     </tr>
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
 
-        <!-- User Management & Balance & Status Control -->
+        <!-- User Management, Details, Balance & Role Control -->
         <div class="section-box">
-            <h3>Users Management, Balance & Status Control</h3>
+            <h3>Users Management, Income/Expense Details & Status Control</h3>
             <table>
                 <thead>
                     <tr>
@@ -300,9 +352,9 @@
                         <td>{{ u.username or u.phone or 'N/A' }}</td>
                         <td>
                             <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; align-items: center;">
-                                <input type="number" step="0.01" name="balance" value="{{ u.balance }}" placeholder="Main" title="Main Balance" style="width: 75px;">
-                                <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" placeholder="Bonus" title="Bonus Balance" style="width: 75px;">
-                                <input type="number" name="coin" value="{{ u.coin }}" placeholder="Coin" title="Coins" style="width: 55px;">
+                                <input type="number" step="0.01" name="balance" value="{{ u.balance }}" placeholder="Main" style="width: 75px;">
+                                <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" placeholder="Bonus" style="width: 75px;">
+                                <input type="number" name="coin" value="{{ u.coin }}" placeholder="Coin" style="width: 55px;">
                                 <button type="submit" style="padding: 6px 10px; font-size: 11px;">Save</button>
                             </form>
                         </td>
@@ -314,24 +366,42 @@
                             {% endif %}
                         </td>
                         <td>
-                            <div style="display:flex; flex-direction:column; gap:6px;">
-                                <form action="{{ url_for('admin_toggle_block', user_id=u.id) }}" method="POST">
+                            <div style="display:flex; gap:6px; align-items: center;">
+                                <a href="/admin/user/{{ u.id }}/details" class="btn btn-primary" style="padding: 6px 10px; font-size: 12px;">View Details</a>
+                                <form action="{{ url_for('admin_toggle_block', user_id=u.id) }}" method="POST" style="display:inline;">
                                     {% if u.is_blocked %}
-                                        <button type="submit" class="btn-warning" style="width: 100%;">Unblock</button>
+                                        <button type="submit" class="btn-warning" style="padding: 6px 10px; font-size: 12px;">Unblock</button>
                                     {% else %}
-                                        <button type="submit" class="btn-danger" style="width: 100%;">Block</button>
+                                        <button type="submit" class="btn-danger" style="padding: 6px 10px; font-size: 12px;">Block</button>
                                     {% endif %}
+                                </form>
+                                <form action="/admin/delete/user/{{ u.id }}" method="POST" style="display:inline;" onsubmit="return confirm('እርግጠኛ ኖት ይህንን ተጠቃሚ ሙሉ በሙሉ ለመደለት?');">
+                                    <button type="submit" class="btn-danger" style="padding: 6px 10px; font-size: 12px;"><i class="fa fa-trash"></i></button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" style="text-align: center; color: #666;">No registered users found in the database.</td>
+                        <td colspan="5" style="text-align: center; color: #666;">No registered users found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Add Staff (Admin or Agent by Role) Section -->
+        <div class="section-box">
+            <h3>Add New Admin or Agent (Staff Role)</h3>
+            <form action="/admin/staff/add" method="POST" class="form-inline">
+                <input type="text" name="username" placeholder="Username" required style="flex: 1;">
+                <input type="password" name="password" placeholder="Password" required style="flex: 1;">
+                <select name="role" required style="flex: 1;">
+                    <option value="admin">Admin (አድሚን)</option>
+                    <option value="agent">Agent (አጀንት)</option>
+                </select>
+                <button type="submit" style="background: #1b5e20;">Add Staff</button>
+            </form>
         </div>
 
         <!-- Broadcast News & Welcome Photo Section -->
@@ -339,7 +409,7 @@
             <h3>Bot Broadcast News & Welcome Image Settings</h3>
             <form action="{{ url_for('admin_broadcast_news') }}" method="POST" class="form-group">
                 <label>Broadcast Message / News:</label>
-                <textarea name="broadcast_text" rows="3" placeholder="Enter news or announcement for all users..." required></textarea>
+                <textarea name="broadcast_text" rows="3" placeholder="Enter news or announcement for all users..." required style="width: 100%;"></textarea>
                 <button type="submit">Send Broadcast to All Users</button>
             </form>
             <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
@@ -350,9 +420,9 @@
             </form>
         </div>
 
-        <!-- Financial Transactions Log Section -->
+        <!-- Financial Transactions Log Section with Deletion -->
         <div class="section-box">
-            <h3>Recent Financial Transactions (Deposits & Withdrawals)</h3>
+            <h3>Recent Financial Transactions (Deposits & Withdrawals Log)</h3>
             <table>
                 <thead>
                     <tr>
@@ -362,6 +432,7 @@
                         <th>Amount</th>
                         <th>Status</th>
                         <th>Date / Details</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -374,16 +445,28 @@
                             <td>{{ tx.amount }} Birr</td>
                             <td>{{ tx.status }}</td>
                             <td>{{ tx.withdrawal_phone or tx.completed_at or 'N/A' }}</td>
+                            <td>
+                                <form action="/admin/delete/transaction/{{ tx.id }}" method="POST" style="display:inline;" onsubmit="return confirm('ይህንን ሪኮርድ ለመደለት እርግጠኛ ኖት?');">
+                                    <button type="submit" class="btn-danger" style="padding: 4px 8px; font-size: 11px;"><i class="fa fa-trash"></i></button>
+                                </form>
+                            </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                     <tr>
-                        <td colspan="6" style="text-align: center; color: #666;">No recent transactions recorded.</td>
+                        <td colspan="7" style="text-align: center; color: #666;">No recent transactions recorded.</td>
                     </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
     </div>
+
+    <script>
+        function switchLanguage() {
+            const lang = document.getElementById('langSelect').value;
+            alert(lang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል!' : 'Language switched to English!');
+        }
+    </script>
 </body>
 </html>

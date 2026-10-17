@@ -9,7 +9,7 @@
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 10px;
-            background-color: #89C149; /* Edil Bingo Green Theme */
+            background-color: #89C149;
             color: #FFFEFE;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; padding-bottom: 75px;
@@ -49,7 +49,6 @@
 
         .room-action-area { display: flex; flex-direction: column; align-items: flex-end; position: relative; }
         
-        /* Badges */
         .status-badge-container { display: flex; flex-direction: column; align-items: flex-end; }
         .status-badge { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-bottom: 2px; text-align: center; }
         .status-badge.active-count { background: #3498db; color: white; }
@@ -108,9 +107,7 @@
     </div>
 
     <!-- Dynamic Room List Container -->
-    <div id="rooms-container" style="width: 100%; max-width: 440px;">
-        <!-- Rooms will be populated dynamically by JavaScript -->
-    </div>
+    <div id="rooms-container" style="width: 100%; max-width: 440px;"></div>
 
     <!-- FREE PRACTICE MODE -->
     <div class="demo-card">
@@ -119,7 +116,7 @@
             <div>No real money (Max 5 Cartelas)</div>
         </div>
         <div class="demo-buttons">
-            <button class="btn-open" onclick="alert('Demo Mode Rules: Practice bingo with default 4 cartelas against AI (Max 5 cartelas allowed)!')">OPEN</button>
+            <button class="btn-open" onclick="alert('Demo Mode Rules: Practice bingo with default cartelas!')">OPEN</button>
             <button class="btn-try" onclick="startDemoMode()">TRY</button>
         </div>
     </div>
@@ -128,44 +125,50 @@
     <div class="bottom-nav">
         <a href="/" class="nav-item active"><span>🏠</span> Game</a>
         <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
-        <a href="/history" class="nav-item"><span>📋</span> History</a>
+        <a href="/history" class="nav-item"><span>📜</span> History</a>
         <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
         <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
     </div>
 
     <script>
         const roomStakes = [10, 20, 50, 100];
+        
+        // Deduction percentages per stake room: 10: 1.25%, 20: 1.75%, 50: 2%, 100: 4%
+        const deductionPercentages = { 10: 0.0125, 20: 0.0175, 50: 0.02, 100: 0.04 };
 
         function fetchGamesLobbyData() {
             fetch('/game/list')
             .then(res => res.json())
             .then(data => {
-                renderRooms(data);
+                if(data.user_balance !== undefined) {
+                    document.getElementById('hdr-balance').innerText = parseFloat(data.user_balance).toFixed(2);
+                }
+                if(data.user_bonus !== undefined) {
+                    document.getElementById('hdr-bonus').innerText = parseFloat(data.user_bonus).toFixed(2);
+                }
+                renderRooms(data.games || data);
             })
             .catch(err => console.log('Error fetching game status:', err));
         }
 
         function renderRooms(gamesData) {
             const container = document.getElementById('rooms-container');
+            if(!container) return;
             container.innerHTML = '';
 
             roomStakes.forEach((stake, index) => {
                 const gameId = index + 1;
-                const gData = gamesData.find(g => g.entry_price === stake) || {
-                    id: gameId,
-                    players: 0,
-                    total_cards: 0,
-                    entry_price: stake,
-                    status: 'waiting',
-                    countdown_remaining: 30
-                };
+                let gData = Array.isArray(gamesData) ? (gamesData.find(g => g.entry_price === stake) || {}) : {};
 
                 const activePlayers = gData.players || 0;
-                const winAmount = activePlayers > 0 ? activePlayers * stake * 0.85 : 0;
+                const deductionRate = deductionPercentages[stake] || 0.02;
+                const totalPool = activePlayers > 0 ? (activePlayers * stake) * (1 - deductionRate) : 0;
+                const winAmount = activePlayers > 0 ? totalPool : 0;
+                
                 const status = gData.status || 'waiting';
                 const countdown = gData.countdown_remaining || 0;
 
-                const jackpotCurrent = (winAmount * 0.15).toFixed(1);
+                const jackpotCurrent = gData.jackpot_pool || (winAmount * 0.15).toFixed(1);
                 const jackpotMax = stake * 50; 
                 const jackpotPct = Math.min(100, (jackpotCurrent / jackpotMax) * 100).toFixed(1);
 
@@ -176,7 +179,7 @@
                         <div class="status-badge active-count">ACTIVE ${activePlayers}</div>
                         <div class="starts-timer-box">STARTS 0:${secs}</div>
                     `;
-                } else if (status === 'active') {
+                } else if (status === 'active' || status === 'playing') {
                     statusBadgeHtml = `
                         <div class="status-badge active-count" style="background:#e67e22;">PLAYING</div>
                     `;
@@ -199,7 +202,7 @@
                             <div class="status-badge-container">
                                 ${statusBadgeHtml}
                             </div>
-                            <button class="btn-join" onclick="joinRoom(${gData.id}, ${stake}, '${status}')">JOIN</button>
+                            <button class="btn-join" onclick="joinRoom(${gData.id || gameId}, ${stake}, '${status}')">JOIN</button>
                         </div>
                     </div>
                     <div class="jackpot-bar-container">
@@ -220,7 +223,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    const targetGameId = data.game_id;
+                    const targetGameId = data.game_id || gameId;
                     if (data.has_cartela || status === 'active' || status === 'playing') {
                         window.location.href = `/game/${targetGameId}`;
                     } else {
@@ -235,7 +238,6 @@
             });
         }
 
-        // Free Practice (Demo Mode) - Entry price 0 ETB, ID 999
         function startDemoMode() {
             fetch('/game/create', {
                 method: 'POST',
@@ -245,17 +247,13 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    if (data.has_cartela) {
-                        window.location.href = `/game/999`;
-                    } else {
-                        window.location.href = `/game/999/select_cartela`;
-                    }
+                    window.location.href = data.has_cartela ? `/game/999` : `/game/999/select_cartela`;
                 } else {
-                    window.location.href = `/game/demo/select_cartela`;
+                    window.location.href = `/game/999/select_cartela`;
                 }
             })
             .catch(err => {
-                window.location.href = `/game/demo/select_cartela`;
+                window.location.href = `/game/999/select_cartela`;
             });
         }
 

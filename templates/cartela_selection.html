@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - Select Cartela</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 8px;
-            background-color: #89C149; /* Green Theme Restored */
+            background-color: #89C149;
             color: #FFFEFE;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; padding-bottom: 75px;
@@ -37,7 +37,7 @@
             border-radius: 14px; margin-bottom: 8px; border: 1px solid rgba(255, 255, 255, 0.25);
         }
         .cartela-grid {
-            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-height: 230px; overflow-y: auto;
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-height: 220px; overflow-y: auto;
         }
         
         .cartela-number {
@@ -46,7 +46,13 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); user-select: none;
         }
         .cartela-number.selected { background: #27ae60 !important; color: #ffffff !important; }
-        .cartela-number.unavailable { background: #ff6600 !important; color: #ffffff !important; cursor: not-allowed; opacity: 0.9; }
+        .cartela-number.unavailable { background: #e67e22 !important; color: #ffffff !important; cursor: not-allowed; opacity: 0.9; }
+
+        .selected-list-box {
+            background: #ffffff; color: #222; width: 100%; max-width: 420px; padding: 8px;
+            border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
 
         .bottom-preview-area { width: 100%; max-width: 420px; display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; }
 
@@ -68,7 +74,7 @@
             cursor: pointer; color: white; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
         .btn-refresh { background: #1e88e5; }
-        .btn-start { background: #ff6600; }
+        .btn-start { background: #e74c3c; }
 
         .fairness-box {
             background: #ffffff; color: #222222; padding: 6px; border-radius: 8px; text-align: center;
@@ -106,7 +112,7 @@
 
     <div class="jackpot-banner">
         <span>JACKPOT</span>
-        <span>--:-- / 1000</span>
+        <span>Active / Persistent</span>
     </div>
 
     <div class="select-subtitle">Select Up to 4 Cartelas (1-200) [<span id="selected-count">0</span>/4]</div>
@@ -122,6 +128,10 @@
         </div>
     </div>
 
+    <div class="selected-list-box" id="selectedListLbl">
+        Selected Cartelas: None
+    </div>
+
     <div class="bottom-preview-area">
         <div class="mini-card-preview">
             <div id="previewTitle" style="font-size:9px; font-weight:bold; text-align:center; margin-bottom:3px;">Preview</div>
@@ -131,10 +141,10 @@
         <div class="right-action-wrapper">
             <div class="btn-row">
                 <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-                <button class="btn-start" onclick="confirmJoin()">Start Game</button>
+                <button class="btn-start" onclick="confirmJoin()">Play Bingo</button>
             </div>
 
-            <!-- Fairness Hash Block with Dynamic Game ID and Unique Hash -->
+            <!-- Fairness Hash Block with Dynamic Game ID and Static Room Hash -->
             <div class="fairness-box">
                 <div class="fairness-title">Game Hash (Fairness)</div>
                 <div class="fairness-id">ID: #{{ game_id }}</div>
@@ -156,7 +166,7 @@
         <div class="modal-box">
             <h3 style="color:#fdd835; margin-top:0;">⚠️ Notice</h3>
             <p id="modal-error-text">Game already started or finished!</p>
-            <button style="background:#ff6600; color:white; border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold;" onclick="closeModal()">OK</button>
+            <button style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold;" onclick="closeModal()">OK</button>
         </div>
     </div>
 
@@ -228,7 +238,7 @@
         function toggleCartela(number) {
             let target = document.getElementById('cartela-' + number);
             if (!target || target.classList.contains('unavailable')) {
-                alert('This cartela number is already taken.');
+                alert('This cartela number is already taken or unavailable.');
                 return;
             }
 
@@ -238,7 +248,7 @@
                 target.classList.remove('selected');
             } else {
                 if (selectedCartelas.length >= maxCards) {
-                    alert('Maximum 4 cards allowed!');
+                    alert('Maximum 4 cartelas allowed!');
                     return;
                 }
                 selectedCartelas.push(number);
@@ -246,11 +256,18 @@
             }
 
             document.getElementById('selected-count').innerText = selectedCartelas.length;
-            renderPreview(selectedCartelas[selectedCartelas.length - 1] || number);
+            
+            if (selectedCartelas.length === 0) {
+                document.getElementById('selectedListLbl').innerText = "Selected Cartelas: None";
+            } else {
+                document.getElementById('selectedListLbl').innerText = "Selected: " + selectedCartelas.map(id => `#${id}`).join(', ');
+                renderPreview(selectedCartelas[selectedCartelas.length - 1]);
+            }
         }
 
         function renderPreview(cardId) {
             let grid = document.getElementById('miniCartelaGrid');
+            if (!grid) return;
             grid.innerHTML = '';
             document.getElementById('previewTitle').innerText = `#${cardId}`;
 
@@ -272,13 +289,18 @@
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cartela_number: selectedCartelas[0], cartelas: selectedCartelas })
+                body: JSON.stringify({ 
+                    cartela_number: selectedCartelas[0], 
+                    cartela_numbers: selectedCartelas 
+                })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
                     document.getElementById('modal-error-text').innerText = data.error;
                     document.getElementById('topupModal').style.display = 'flex';
+                } else if (data.success) {
+                    window.location.href = `/game/${gameId}`;
                 } else {
                     window.location.href = `/game/${gameId}`;
                 }

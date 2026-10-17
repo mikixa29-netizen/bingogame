@@ -270,7 +270,6 @@ async def process_play_bingo_command_or_callback(event, state: FSMContext = None
     with app.app_context():
         user = get_or_create_user(user_id, username)
 
-    # Directly open the WebApp game lobby (game_lobby.html)
     webapp_lobby_url = f"{WEBAPP_URL}/?user_id={user_id}"
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -365,7 +364,7 @@ async def process_deposit_command_or_callback(event, state: FSMContext = None):
         ]
     ])
 
-    caption = "💳 <b>Deposit Funds</b>\n\nChoose your preferred payment method:"
+    caption = "💳 <b>Deposit Funds</b>\n\nChoose your preferred payment method (Min: 50 birr, Max: 1000 birr):"
     if isinstance(event, CallbackQuery):
         try:
             await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
@@ -490,7 +489,7 @@ async def process_deposit_reference(message: Message, state: FSMContext):
 
             await message.answer(
                 "❌ <b>Deposit Verification Failed</b>\n\n"
-                "We could not automatically verify your transaction reference with Telebirr / CBE Birr API. Please check your reference number and try again using /deposit.",
+                "We could not automatically verify your transaction reference. Please check your reference number and try again using /deposit.",
                 parse_mode="HTML"
             )
     

@@ -26,22 +26,35 @@ def init_db(app):
         import models  # Import models here to avoid circular imports
         db.create_all()
         
-        # Safely add missing columns to the user table if they don't exist yet[cite: 11]
+        # Safely add missing columns to the tables if they don't exist yet
         with db.engine.connect() as connection:
             connection = connection.execution_options(isolation_level="AUTOCOMMIT")
             
-            columns_to_add = [
+            # User table missing columns
+            user_columns_to_add = [
                 ('is_blocked', 'BOOLEAN DEFAULT FALSE'),
                 ('bonus_balance', 'DOUBLE PRECISION DEFAULT 20.0'),
                 ('coin', 'INTEGER DEFAULT 0'),
                 ('games_played', 'INTEGER DEFAULT 0'),
                 ('games_won', 'INTEGER DEFAULT 0'),
                 ('referrer_id', 'BIGINT'),
-                ('phone', 'VARCHAR(30)')  # Added phone column for user registration
+                ('phone', 'VARCHAR(30)')
             ]
             
-            for col_name, col_type in columns_to_add:
+            for col_name, col_type in user_columns_to_add:
                 try:
                     connection.execute(text(f'ALTER TABLE "user" ADD COLUMN {col_name} {col_type};'))
                 except Exception:
-                    pass  # Skip silently if the column already exists[cite: 11]
+                    pass  # Skip silently if the column already exists
+
+            # Game table missing columns (hash_key & jackpot_pool)
+            game_columns_to_add = [
+                ('hash_key', 'VARCHAR(64)'),
+                ('jackpot_pool', 'DOUBLE PRECISION DEFAULT 0.0')
+            ]
+
+            for col_name, col_type in game_columns_to_add:
+                try:
+                    connection.execute(text(f'ALTER TABLE "game" ADD COLUMN {col_name} {col_type};'))
+                except Exception:
+                    pass  # Skip silently if the column already exists

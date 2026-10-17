@@ -2,22 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - Wallet</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Inria Serif', serif; }
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 75px;
         }
-        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; }
+        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        
+        .wallet-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; }
+        
         .wallet-card {
-            background: rgba(255, 255, 255, 0.25); width: 100%; max-width: 420px;
-            border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.25); border-radius: 16px; padding: 20px; text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
-        .wallet-card .balance { font-size: 28px; font-weight: bold; margin-top: 10px; color: #fdd835; }
+        .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .balance-box { background: rgba(0,0,0,0.15); padding: 10px; border-radius: 10px; }
+        .balance-box .label { font-size: 11px; opacity: 0.9; text-transform: uppercase; }
+        .balance-box .value { font-size: 18px; font-weight: bold; color: #fdd835; margin-top: 4px; }
+
+        .action-section {
+            background: rgba(255, 255, 255, 0.2); border-radius: 14px; padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+        }
+        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; opacity: 0.9; }
+        .form-control {
+            width: 100%; padding: 10px; border-radius: 8px; border: none;
+            background: #fff; color: #333; font-size: 14px; font-weight: bold;
+        }
+        .btn-action {
+            background: #27ae60; color: white; border: none; width: 100%; padding: 12px;
+            border-radius: 20px; font-size: 15px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2); margin-top: 5px;
+        }
+        .btn-withdraw { background: #e74c3c; }
+        .btn-transfer { background: #2980b9; }
+        .rules-text { font-size: 10.5px; opacity: 0.85; margin-top: 6px; line-height: 1.4; color: #fffee0; }
+
+        /* Bottom Nav */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 8px 0;
@@ -28,11 +55,74 @@
     </style>
 </head>
 <body>
-    <div class="header-title">💰 My Wallet</div>
+    <div class="header-title">💰 My Wallet & Transactions</div>
 
-    <div class="wallet-card">
-        <div>Total Balance</div>
-        <div class="balance">{{ balance | default('0.00') }} ETB</div>
+    <div class="wallet-container">
+        <!-- Balance Card -->
+        <div class="wallet-card">
+            <div style="font-size: 14px; font-weight: bold;">Account Balances</div>
+            <div class="balance-grid">
+                <div class="balance-box">
+                    <div class="label">Main Balance</div>
+                    <div class="value">{{ balance | default('0.00') }} ETB</div>
+                </div>
+                <div class="balance-box">
+                    <div class="label">Bonus Balance</div>
+                    <div class="value">{{ bonus_balance | default('0.00') }} ETB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deposit Section -->
+        <div class="action-section">
+            <div class="section-title">📥 Deposit Money</div>
+            <form onsubmit="handleDeposit(event)">
+                <div class="form-group">
+                    <label>Amount (Min: 50 ETB, Max: 1000 ETB)</label>
+                    <input type="number" id="depositAmount" class="form-control" placeholder="Enter amount (50 - 1000)" min="50" max="1000" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number / Transaction ID</label>
+                    <input type="text" id="depositRef" class="form-control" placeholder="Enter phone or TX ID" required>
+                </div>
+                <button type="submit" class="btn-action">Deposit Now</button>
+                <div class="rules-text">⚠️ Note: Minimum deposit is 50 ETB, and maximum deposit per transaction is 1000 ETB.</div>
+            </form>
+        </div>
+
+        <!-- Withdraw Section -->
+        <div class="action-section">
+            <div class="section-title">📤 Withdraw Money</div>
+            <form onsubmit="handleWithdraw(event)">
+                <div class="form-group">
+                    <label>Withdrawal Amount (ETB)</label>
+                    <input type="number" id="withdrawAmount" class="form-control" placeholder="Enter amount to withdraw" min="50" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="withdrawPhone" class="form-control" placeholder="09xxxxxxxx" required>
+                </div>
+                <button type="submit" class="btn-action btn-withdraw">Request Withdrawal</button>
+                <div class="rules-text">⚠️ Rules: You must play at least 1 game before withdrawing. Without winning, you cannot withdraw more than 1 time per day.</div>
+            </form>
+        </div>
+
+        <!-- Transfer Section -->
+        <div class="action-section">
+            <div class="section-title">💸 Transfer Balance</div>
+            <form onsubmit="handleTransfer(event)">
+                <div class="form-group">
+                    <label>Recipient User ID / Username</label>
+                    <input type="text" id="transferReceiver" class="form-control" placeholder="Enter recipient ID" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount (ETB)</label>
+                    <input type="number" id="transferAmount" class="form-control" placeholder="Enter amount" min="10" required>
+                </div>
+                <button type="submit" class="btn-action btn-transfer">Transfer to Bonus</button>
+                <div class="rules-text">💡 Note: Transferred balance will be credited directly to the recipient's Bonus Balance.</div>
+            </form>
+        </div>
     </div>
 
     <div class="bottom-nav">
@@ -42,5 +132,59 @@
         <a href="/wallet" class="nav-item active"><span>💰</span> Wallet</a>
         <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
     </div>
+
+    <script>
+        function handleDeposit(event) {
+            event.preventDefault();
+            const amount = document.getElementById('depositAmount').value;
+            const ref = document.getElementById('depositRef').value;
+            if(amount < 50 || amount > 1000) {
+                alert('Deposit amount must be between 50 ETB and 1000 ETB.');
+                return;
+            }
+            fetch('/deposit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount: amount, reference: ref })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) { alert('Deposit request submitted successfully!'); location.reload(); }
+                else { alert(data.error || 'Deposit failed'); }
+            });
+        }
+
+        function handleWithdraw(event) {
+            event.preventDefault();
+            const amount = document.getElementById('withdrawAmount').value;
+            const phone = document.getElementById('withdrawPhone').value;
+            fetch('/withdraw', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount: amount, phone: phone })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) { alert('Withdrawal request submitted successfully!'); location.reload(); }
+                else { alert(data.error || 'Withdrawal restriction: Must play at least 1 game, and max 1 withdrawal per day without winning.'); }
+            });
+        }
+
+        function handleTransfer(event) {
+            event.preventDefault();
+            const receiver = document.getElementById('transferReceiver').value;
+            const amount = document.getElementById('transferAmount').value;
+            fetch('/transfer', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ recipient: receiver, amount: amount })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) { alert('Transfer successful! Added to recipient bonus balance.'); location.reload(); }
+                else { alert(data.error || 'Transfer failed'); }
+            });
+        }
+    </script>
 </body>
 </html>

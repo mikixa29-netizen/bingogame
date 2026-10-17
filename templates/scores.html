@@ -2,22 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - Scores</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Inria Serif', serif; }
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
             display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
         }
-        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; }
+        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        
+        .scores-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; }
+        
         .card-box {
             background: rgba(255, 255, 255, 0.2); width: 100%; max-width: 420px;
-            border-radius: 14px; padding: 12px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            font-size: 14px; font-weight: bold;
         }
+        .rank-badge {
+            background: #f1c40f; color: #111; width: 26px; height: 26px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;
+            margin-right: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .player-info { display: flex; align-items: center; gap: 6px; }
+        .score-val { color: #f1c40f; font-size: 15px; }
+
+        .empty-card { text-align: center; padding: 20px; background: rgba(255,255,255,0.2); border-radius: 12px; font-weight: bold; }
+
+        /* Bottom Nav */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 8px 0;
@@ -28,16 +42,21 @@
     </style>
 </head>
 <body>
-    <div class="header-title">🏆 SCORE BOARD</div>
+    <div class="header-title">🏆 TOP 10 LEADERBOARD</div>
     
-    <div style="width: 100%; max-width: 420px;">
+    <div class="scores-container">
         {% for score in top_scores %}
         <div class="card-box">
-            <div>👤 {{ score.username }}</div>
-            <div>⭐ {{ score.points }} Points</div>
+            <div class="player-info">
+                <div class="rank-badge">{{ loop.index }}</div>
+                <div>👤 {{ score.username | default('Player') }}</div>
+            </div>
+            <div class="score-val">⭐ {{ score.games_won | default(score.points) }} Wins</div>
         </div>
         {% else %}
-        <div class="card-box" style="justify-content: center;">No scores available yet.</div>
+        <div class="empty-card">
+            No scores available yet. Play and win to appear on the leaderboard!
+        </div>
         {% endfor %}
     </div>
 

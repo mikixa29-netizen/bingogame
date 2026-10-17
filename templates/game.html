@@ -14,7 +14,7 @@
         body {
             margin: 0;
             padding: 8px;
-            background-color: #89C149; /* Requested Background Color */
+            background-color: #89C149;
             color: #FFFEFE;
             display: flex;
             flex-direction: column;
@@ -228,7 +228,6 @@
         .board-list { display: flex; flex-direction: column; gap: 3px; }
         .board-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
         
-        /* Master Board: Inria Serif, bold, 16px, #FFFEFE */
         .board-item {
             background: rgba(255, 255, 255, 0.15);
             font-family: 'Inria Serif', serif;
@@ -302,7 +301,6 @@
             font-weight: bold; font-size: 9px;
         }
 
-        /* Spacious User Cartelas (At least 2 fully visible) */
         .user-cartelas-container {
             display: flex;
             flex-direction: column;
@@ -327,7 +325,6 @@
             margin-top: 6px;
         }
         
-        /* Cartela Numbers: Inria Serif, bold, 24px, #000000 */
         .ucell {
             background: #f4f6f8;
             color: #000000;
@@ -343,7 +340,6 @@
         }
         .ucell.marked { background: #27ae60 !important; color: #FFFEFE !important; border-radius: 50% !important; }
 
-        /* Bottom Action Buttons */
         .bottom-action-area {
             display: flex;
             flex-direction: column;
@@ -532,7 +528,6 @@
             return 'badge-o';
         }
 
-        // እውነተኛ የአማርኛ ድምፅ በ Google Translate TTS በኩል ማጫወት
         function speakNumber(callStr) {
             if (!isSoundOn) return;
             let parts = callStr.split('-');
@@ -701,7 +696,11 @@
             .then(data => { if (data.winner) showWinnerModal(data); else alert(data.message || 'Not a winning bingo yet!'); });
         }
 
-        function leaveGame() { window.location.href = '/'; }
+        function leaveGame() { 
+            fetch(`/game/${gameId}/leave`, {method: 'POST'}).finally(() => {
+                window.location.href = '/';
+            });
+        }
 
         function showWinnerModal(data) {
             if (isGameOver) return;
@@ -765,15 +764,17 @@
                 let currentCallNum = data.current_call ? parseInt(data.current_call.split('-')[1]) : null;
 
                 let calledRawNumbers = [];
-                data.called_numbers.forEach(callStr => {
-                    let num = parseInt(callStr.split('-')[1]);
-                    calledRawNumbers.push(num);
-                    let el = document.getElementById('bnum-' + num);
-                    if (el) {
-                        if (num === currentCallNum) el.classList.add('current-green');
-                        else el.classList.add('called-orange');
-                    }
-                });
+                if (data.called_numbers) {
+                    data.called_numbers.forEach(callStr => {
+                        let num = parseInt(callStr.split('-')[1]);
+                        calledRawNumbers.push(num);
+                        let el = document.getElementById('bnum-' + num);
+                        if (el) {
+                            if (num === currentCallNum) el.classList.add('current-green');
+                            else el.classList.add('called-orange');
+                        }
+                    });
+                }
 
                 let autoMarked = false;
                 playerCards.forEach(card => {
@@ -788,17 +789,19 @@
                     renderUserCartelas();
                 }
 
-                let recentList = document.getElementById('recentList');
-                recentList.innerHTML = '';
-                let last4 = data.called_numbers.slice(-4).reverse();
-                last4.forEach(callStr => {
-                    let parts = callStr.split('-');
-                    let letter = parts[0];
-                    let ball = document.createElement('div');
-                    ball.className = 'recent-ball ' + getLetterBadgeClass(letter);
-                    ball.innerText = callStr;
-                    recentList.appendChild(ball);
-                });
+                if (data.called_numbers) {
+                    let recentList = document.getElementById('recentList');
+                    recentList.innerHTML = '';
+                    let last4 = data.called_numbers.slice(-4).reverse();
+                    last4.forEach(callStr => {
+                        let parts = callStr.split('-');
+                        let letter = parts[0];
+                        let ball = document.createElement('div');
+                        ball.className = 'recent-ball ' + getLetterBadgeClass(letter);
+                        ball.innerText = callStr;
+                        recentList.appendChild(ball);
+                    });
+                }
 
                 if (data.status === 'finished' || data.status === 'completed' || (data.winners && data.winners.length > 0)) {
                     showWinnerModal(data);
