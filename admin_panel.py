@@ -9,7 +9,7 @@ from database import db
 from models import User, Transaction, GameHistory, Admin
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
 
-# አድሚን ብሉፕሪንት መፍጠር
+# Admin Blueprint creation
 admin_bp = Blueprint('admin', __name__, template_folder='templates')
 
 def admin_required(f):
@@ -26,7 +26,7 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # ከአድሚን ሞዴል ወይም ከኮንፊግ ማረጋገጥ
+        # Verify from Admin model or config
         admin = Admin.query.filter_by(username=username).first()
         if admin and hashlib.sha256(password.encode()).hexdigest() == admin.password_hash:
             session['admin_logged_in'] = True
@@ -39,7 +39,7 @@ def login():
             session['admin_username'] = ADMIN_USERNAME
             return redirect(url_for('admin.dashboard'))
         else:
-            flash('የተሳሳተ መግቢያ ስም ወይም የይለፍ ቃል!', 'error')
+            flash('Invalid username or password!', 'error')
             
     return render_template('admin/login.html')
 
@@ -67,7 +67,7 @@ def dashboard():
         is_super_admin=session.get('is_super_admin', False)
     )
 
-# የተጠቃሚን ዝርዝር ገቢ እና ወጪ ማየት (View Details)
+# View user details and transactions
 @admin_bp.route('/admin/user/<int:user_id>/details')
 @admin_required
 def user_details(user_id):
@@ -75,7 +75,7 @@ def user_details(user_id):
     transactions = Transaction.query.filter_by(user_id=user.id).order_by(Transaction.id.desc()).all()
     return render_template('admin/user_details.html', user=user, transactions=transactions)
 
-# የተጠቃሚ ባላንስ፣ ቦነስ እና ኮይን ማስተካከል (Update User Balance)
+# Update user balance, bonus, and coins
 @admin_bp.route('/admin/user/<int:user_id>/update', methods=['POST'])
 @admin_required
 def update_user(user_id):
@@ -85,37 +85,37 @@ def update_user(user_id):
         user.bonus_balance = float(request.form.get('bonus_balance', user.bonus_balance))
         user.coin = int(request.form.get('coin', user.coin))
         db.session.commit()
-        flash('የተጠቃሚው መረጃ በተሳካ ሁኔታ ተዘምኗል!', 'success')
+        flash('User information updated successfully!', 'success')
     except Exception as e:
-        flash('መረጃውን ማዘመን አልተቻለም: ' + str(e), 'error')
+        flash('Failed to update information: ' + str(e), 'error')
     return redirect(url_for('admin.dashboard'))
 
-# ተጠቃሚን ማገድ ወይም መክፈት (Block / Unblock)
+# Block or Unblock user
 @admin_bp.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
 @admin_required
 def toggle_block(user_id):
     user = User.query.get_or_404(user_id)
     user.is_blocked = not user.is_blocked
     db.session.commit()
-    status_text = 'ታግዷል' if user.is_blocked else 'ተከፍቷል'
-    flash(f'ተጠቃሚው አሁን {status_text}!', 'success')
+    status_text = 'Blocked' if user.is_blocked else 'Active'
+    flash(f'User is now {status_text}!', 'success')
     return redirect(url_for('admin.dashboard'))
 
-# አድሚን ወይም አጀንት በሮል (Role) ማከል (Superadmin only)
+# Add admin or agent by role (Superadmin only)
 @admin_bp.route('/admin/staff/add', methods=['POST'])
 @admin_required
 def add_staff():
     if not session.get('is_super_admin'):
-        flash('ሱፐር አድሚን ብቻ ነው አድሚን መመዝገብ የሚችለው!', 'error')
+        flash('Only super admin can add staff!', 'error')
         return redirect(url_for('admin.dashboard'))
         
     username = request.form.get('username')
     password = request.form.get('password')
-    role = request.form.get('role', 'agent') # admin ወይም agent
+    role = request.form.get('role', 'agent')
     
     existing = Admin.query.filter_by(username=username).first()
     if existing:
-        flash('ይህ ዩዘርናም ቀድሞ አለ!', 'error')
+        flash('Username already exists!', 'error')
     else:
         new_admin = Admin(
             username=username,
@@ -124,39 +124,39 @@ def add_staff():
         )
         db.session.add(new_admin)
         db.session.commit()
-        flash(f'አዲስ {role} በተሳካ ሁኔታ ተጨመረ!', 'success')
+        flash(f'New {role} added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
-# አድሚን መሰረዝ
+# Delete staff member
 @admin_bp.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
 @admin_required
 def delete_staff(admin_id):
     if not session.get('is_super_admin'):
-        flash('ፈቃድ የለዎትም!', 'error')
+        flash('Unauthorized action!', 'error')
         return redirect(url_for('admin.dashboard'))
         
     adm = Admin.query.get_or_404(admin_id)
     db.session.delete(adm)
     db.session.commit()
-    flash('አድሚኑ ተሰርዟል።', 'success')
+    flash('Staff member deleted successfully.', 'success')
     return redirect(url_for('admin.dashboard'))
 
-# ዳታዎችን (ተጠቃሚ ወይም ትራንዛክሽን) መደለት
+# Delete data (user or transaction)
 @admin_bp.route('/admin/delete/<string:data_type>/<int:item_id>', methods=['POST'])
 @admin_required
 def delete_data(data_type, item_id):
     if data_type == 'user':
         item = User.query.get_or_404(item_id)
         db.session.delete(item)
-        flash('ተጠቃሚው ተሰርዟል።', 'success')
+        flash('User deleted successfully.', 'success')
     elif data_type == 'transaction':
         item = Transaction.query.get_or_404(item_id)
         db.session.delete(item)
-        flash('ትራንዛክሽኑ ተሰርዟል።', 'success')
+        flash('Transaction deleted successfully.', 'success')
     db.session.commit()
     return redirect(url_for('admin.dashboard'))
 
-# የዊዝድሮዋል ጥያቄ ማጽደቅ (Completed) -> ተጠቃሚው ስታስ/ሂስቶሪ ሲገባ ማየት ይችላል
+# Approve withdrawal request
 @admin_bp.route('/admin/withdrawal/<int:tx_id>/approve', methods=['POST'])
 @admin_required
 def approve_withdrawal(tx_id):
@@ -165,12 +165,12 @@ def approve_withdrawal(tx_id):
         tx.status = 'completed'
         tx.completed_at = datetime.utcnow()
         db.session.commit()
-        flash('የገንዘብ ማውጣት ጥያቄው ጸድቋል (Completed)!', 'success')
+        flash('Withdrawal request approved (Completed)!', 'success')
     else:
-        flash('ትራንዛክሽኑ አልተገኘም ወይም ቀድሞ ተሰርቷል።', 'error')
+        flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
 
-# የዊዝድሮዋል ጥያቄ ውድቅ ማድረግ (Rejected) እና ገንዘቡን መመለስ
+# Reject withdrawal request and refund amount
 @admin_bp.route('/admin/withdrawal/<int:tx_id>/reject', methods=['POST'])
 @admin_required
 def reject_withdrawal(tx_id):
@@ -181,12 +181,12 @@ def reject_withdrawal(tx_id):
         if user:
             user.balance += abs(tx.amount)
         db.session.commit()
-        flash('የገንዘብ ማውጣት ጥያቄው ውድቅ ተደርጎ (Rejected) ገንዘቡ ተመልሷል!', 'success')
+        flash('Withdrawal request rejected and amount refunded to user balance!', 'success')
     else:
-        flash('ትራንዛክሽኑ አልተገኘም ወይም ቀድሞ ተሰርቷል።', 'error')
+        flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
 
-# ዜና ማሰራጨት (Broadcast News) - በቀጥታ ቦቱ ላይ በራስ-ሰር እንዲታይ
+# Broadcast news to bot
 @admin_bp.route('/admin/broadcast', methods=['POST'])
 @admin_required
 def broadcast_news():
@@ -204,12 +204,12 @@ def broadcast_news():
         config['broadcast_time'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
         with open(config_file, 'w') as f:
             json.dump(config, f)
-        flash('ዜናው ተለጥፎ ቦቱ ላይ በራስ-ሰር እንዲታይ ተደረገ!', 'success')
+        flash('Broadcast news posted and updated on bot automatically!', 'success')
     else:
-        flash('እባክዎ የዜና ይዘት ያስገቡ!', 'error')
+        flash('Please enter broadcast message text!', 'error')
     return redirect(url_for('admin.dashboard'))
 
-# የእንኳን ደህና መጡ ፎቶ ከስልክ ወይም ፒሲ መርጦ አድ ማድረግ (Welcome Image Upload)
+# Update welcome image (Upload file or URL)
 @admin_bp.route('/admin/settings/image', methods=['POST'])
 @admin_required
 def update_welcome_image():
@@ -235,18 +235,17 @@ def update_welcome_image():
             config['welcome_image_url'] = image_url
             with open(config_file, 'w') as f:
                 json.dump(config, f)
-            flash('የእንኳን ደህና መጡ ፎቶ ከስልክ/ፒሲ ተጭኖ ቦቱ ላይ ተስተካክሏል!', 'success')
+            flash('Welcome image uploaded from device and updated successfully!', 'success')
             return redirect(url_for('admin.dashboard'))
             
-    # በሊንክ ማስገባት ከፈለጉ
     image_url = request.form.get('image_url')
     if image_url:
         config['welcome_image_url'] = image_url
         with open(config_file, 'w') as f:
             json.dump(config, f)
-        flash('የእንኳን ደህና መጡ ፎቶ ዩአርኤል ተዘምኗል!', 'success')
+        flash('Welcome image URL updated successfully!', 'success')
     else:
-        flash('እባክዎ ፎቶ ይምረጡ ወይም ሊንክ ያስገቡ!', 'error')
+        flash('Please select an image file or enter a valid URL!', 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/logout')

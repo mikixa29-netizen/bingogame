@@ -8,7 +8,6 @@ from flask import Flask, jsonify, request, session, render_template, redirect, u
 from datetime import datetime, date, timedelta
 from database import db, init_db
 from game_logic import BingoGame
-
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
 
 logging.basicConfig(
@@ -49,7 +48,7 @@ def save_config(config):
         json.dump(config, f)
 
 # ==========================================
-# USER ROUTES (Player-facing views)
+# USER ROUTES (Player-facing views - English)
 # ==========================================
 
 @app.route('/')
@@ -79,7 +78,7 @@ def scores():
 
 @app.route('/scores/data', methods=['GET'])
 def scores_data():
-    timeframe = request.args.get('timeframe', 'today') # today, week, month
+    timeframe = request.args.get('timeframe', 'today')
     now = datetime.utcnow()
     
     query = db.session.query(
@@ -103,7 +102,6 @@ def scores_data():
     
     scores_list = []
     for r in results:
-        # ስልክ ቁጥርን እንደ ጠየቁት ማመንጨት (Masking)
         phone_masked = "**********"
         if r.phone and len(str(r.phone)) >= 7:
             p_str = str(r.phone)
@@ -156,7 +154,9 @@ def list_games():
     
     games_data = []
     for g_id, game in active_games.items():
-        if game.entry_price > 0 and game.status in ["waiting", "countdown", "active", "playing"]:
+        if game.entry_price >= 0 and game.status in ["waiting", "countdown", "active", "playing"]:
+            # Check if user already joined this game -> re-join routing
+            user_joined = user and (user.telegram_id in game.players)
             games_data.append({
                 'id': g_id,
                 'unique_code': getattr(game, 'unique_code', str(g_id)),
@@ -165,7 +165,8 @@ def list_games():
                 'entry_price': game.entry_price,
                 'status': game.status,
                 'countdown_remaining': game.get_remaining_countdown() if game.status == 'countdown' else 30,
-                'jackpot_pool': getattr(game, 'jackpot_pool', 0.0)
+                'jackpot_pool': getattr(game, 'jackpot_pool', 100.0),
+                'user_joined': user_joined
             })
     return jsonify({
         'games': games_data,
@@ -203,7 +204,7 @@ def create_game():
             })
 
         if not user.phone:
-            return jsonify({'error': 'እባክዎ መጫወት ከመጀመርዎ በፊት ስልክ ቁጥርዎን ይመዝገቡ (Register).'}), 400
+            return jsonify({'error': 'Please register your phone number before playing.'}), 400
 
         waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status in ['waiting', 'countdown']), None)
         if waiting_game:
@@ -257,6 +258,7 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
+    # Re-join check: If user already picked cartela, go straight to play room
     if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
         return redirect(url_for('play_game', game_id=g_id))
 
@@ -301,6 +303,11 @@ def join_game(game_id):
 
     if not cartela_numbers:
         return jsonify({'error': 'Please select at least one cartela number'}), 400
+
+    # If already joined, just return success to proceed
+    if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
+        session['active_game_id'] = game_id
+        return jsonify({'success': True, 'game_id': game_id})
 
     existing_cards_count = len(game.players.get(user.telegram_id, []))
     if existing_cards_count + len(cartela_numbers) > game.max_cards_per_player:
@@ -414,11 +421,13 @@ def mark_number(game_id):
     if check_win:
         winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
         if winner and game.entry_price > 0:
+            # Add prize pool to winner's balance correctly
             user.balance += prize_per_winner
             user.games_won += 1
             user.games_played += 1
             db.session.commit()
             
+            # Record Game History for scores and history pages
             hist = GameHistory(
                 game_id=game_id,
                 game_unique_code=getattr(game, 'unique_code', str(game_id)),
@@ -431,6 +440,15 @@ def mark_number(game_id):
                 prize_amount=prize_per_winner
             )
             db.session.add(hist)
+            
+            # Record transaction for win
+            tx = Transaction(
+                user_id=user.id,
+                type='win',
+                amount=prize_per_winner,
+                status='completed'
+            )
+            db.session.add(tx)
             db.session.commit()
 
         return jsonify({
@@ -539,7 +557,7 @@ def transfer_balance():
     return jsonify({'success': True, 'message': 'Transfer successful!'})
 
 # ==========================================
-# ADMIN ROUTES
+# ADMIN ROUTES (Fixed 500 Error & English)
 # ==========================================
 
 def admin_required(f):
@@ -556,16 +574,21 @@ def admin_login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        admin = Admin.query.filter_by(username=username).first()
-        if admin and hashlib.sha256(password.encode()).hexdigest() == admin.password_hash:
-            session['admin_logged_in'] = True
-            session['is_super_admin'] = admin.is_super
-            return redirect(url_for('admin_dashboard'))
-        elif username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        try:
+            admin = Admin.query.filter_by(username=username).first()
+            if admin and hashlib.sha256(password.encode()).hexdigest() == admin.password_hash:
+                session['admin_logged_in'] = True
+                session['is_super_admin'] = admin.is_super
+                return redirect(url_for('admin_dashboard'))
+        except Exception:
+            pass
+            
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
             session['is_super_admin'] = True
             return redirect(url_for('admin_dashboard'))
-        flash('Invalid credentials')
+            
+        flash('Invalid username or password!')
     return render_template('admin/login.html')
 
 @app.route('/admin/dashboard')
@@ -587,7 +610,7 @@ def admin_dashboard():
 @admin_required
 def admin_add_staff():
     if not session.get('is_super_admin'):
-        flash('ሱፐር አድሚን ብቻ ነው አድሚን መመዝገብ የሚችለው!', 'error')
+        flash('Only super admin can add staff!', 'error')
         return redirect(url_for('admin_dashboard'))
         
     username = request.form.get('username')
@@ -595,7 +618,7 @@ def admin_add_staff():
     
     existing = Admin.query.filter_by(username=username).first()
     if existing:
-        flash('ይህ ዩዘርናም ቀድሞ አለ!', 'error')
+        flash('Username already exists!', 'error')
     else:
         new_admin = Admin(
             username=username,
@@ -604,20 +627,20 @@ def admin_add_staff():
         )
         db.session.add(new_admin)
         db.session.commit()
-        flash('አዲስ አድሚን በተሳካ ሁኔታ ተጨመረ!', 'success')
+        flash('New staff added successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
 @admin_required
 def admin_delete_staff(admin_id):
     if not session.get('is_super_admin'):
-        flash('ፈቃድ የለዎትም!', 'error')
+        flash('Unauthorized action!', 'error')
         return redirect(url_for('admin_dashboard'))
         
     adm = Admin.query.get_or_404(admin_id)
     db.session.delete(adm)
     db.session.commit()
-    flash('አድሚኑ ተሰርዟል።', 'success')
+    flash('Staff deleted successfully.', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/user/<int:user_id>/details')

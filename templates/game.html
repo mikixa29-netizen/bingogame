@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -391,10 +391,32 @@
         }
         .winner-modal-card {
             background: #1b5e20; border-radius: 16px; padding: 20px;
-            width: 90%; max-width: 340px; text-align: center; color: #fff;
+            width: 90%; max-width: 360px; text-align: center; color: #fff;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             border: 2px solid #fdd835;
         }
+        .winning-board-preview {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            background: #ffffff;
+            padding: 8px;
+            border-radius: 8px;
+            margin: 10px auto;
+            width: 200px;
+        }
+        .win-cell {
+            background: #f0f0f0;
+            color: #000;
+            font-size: 11px;
+            font-weight: bold;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .win-cell.marked { background: #27ae60 !important; color: #fff !important; }
     </style>
 </head>
 <body>
@@ -430,7 +452,7 @@
     <div id="game-screen">
         <div class="game-top-stats">
             <div class="game-stat-box"><div class="label">Game</div><div class="value" id="gameIdLbl">P{{ game_id }}</div></div>
-            <div class="game-stat-box"><div class="label">Derash</div><div class="value" id="derashVal">{{ pool | default('--') }}</div></div>
+            <div class="game-stat-box"><div class="label">Pool</div><div class="value" id="derashVal">{{ pool | default('--') }}</div></div>
             <div class="game-stat-box"><div class="label">Bonus</div><div class="value" id="bonusVal">{{ bonus | default('On') }}</div></div>
             <div class="game-stat-box"><div class="label">Players</div><div class="value" id="playersVal">{{ active_players | default('--') }}</div></div>
             <div class="game-stat-box"><div class="label">Stake</div><div class="value" id="stakeVal">{{ entry_price | default('--') }}</div></div>
@@ -479,11 +501,13 @@
     <!-- WINNER MODAL -->
     <div id="winnerModal" class="winner-modal-overlay">
         <div class="winner-modal-card">
-            <div style="font-size:36px;" id="modalCrown">👑</div>
-            <div style="font-size:20px; font-weight:bold; color:#fdd835;" id="modalTitle">BINGO WINNER!</div>
-            <div style="font-size:13px; font-weight:bold; margin: 8px 0;" id="wNameText">--</div>
-            <div style="background:#2e7d32; padding:6px; border-radius:8px; font-size:12px; font-weight:bold;" id="wCartelaTag">Cartela: --</div>
-            <div style="font-size:11px; margin-top:10px; color:#dcf3a1;" id="redirectTimerLbl">Returning to selection screen in 5s...</div>
+            <div style="font-size:32px;" id="modalCrown">👑</div>
+            <div style="font-size:18px; font-weight:bold; color:#fdd835;" id="modalTitle">BINGO WINNER!</div>
+            <div style="font-size:12px; font-weight:bold; margin: 6px 0;" id="wNameText">--</div>
+            <div style="background:#2e7d32; padding:5px; border-radius:6px; font-size:11px; font-weight:bold; margin-bottom:6px;" id="wCartelaTag">Cartela: --</div>
+            <div style="font-size:11px; font-weight:bold; color:#fdd835;">Winning Cartela Board:</div>
+            <div class="winning-board-preview" id="winningBoardPreview"></div>
+            <div style="font-size:11px; margin-top:8px; color:#dcf3a1;" id="redirectTimerLbl">Returning to cartela selection in 5s...</div>
         </div>
     </div>
 
@@ -528,7 +552,6 @@
             return 'badge-o';
         }
 
-        // --- በአማርኛ ድምፅ መናገሪያ (በስልክም ሆነ በ PC ከችግር ነፃ የሆነ) ---
         function speakNumber(callStr) {
             if (!isSoundOn || !callStr) return;
             let parts = callStr.split('-');
@@ -536,27 +559,14 @@
             let letter = parts[0];
             let num = parts[1];
 
-            let amharicLetter = letter;
-            if (letter === 'B') amharicLetter = 'ቢ';
-            else if (letter === 'I') amharicLetter = 'አይ';
-            else if (letter === 'N') amharicLetter = 'ኤን';
-            else if (letter === 'G') amharicLetter = 'ጂ';
-            else if (letter === 'O') amharicLetter = 'ኦ';
+            let textToSpeak = `${letter} ${num}`;
 
-            let textToSpeak = `${amharicLetter} ${num}`;
-
-            // 1. የብራውዘር Web Speech API አጠቃቀም
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // ያለፈውን ድምፅ ማቋረጥ
+                window.speechSynthesis.cancel();
                 let utterance = new SpeechSynthesisUtterance(textToSpeak);
-                utterance.lang = 'am-ET';
+                utterance.lang = 'en-US';
                 utterance.rate = 0.9;
                 window.speechSynthesis.speak(utterance);
-            } else {
-                // 2. Fallback Google TTS Audio
-                let audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(textToSpeak)}&tl=am&client=tw-ob`;
-                let audio = new Audio(audioUrl);
-                audio.play().catch(err => console.log("Audio play error:", err));
             }
         }
 
@@ -600,7 +610,7 @@
                         selectedCartelas = selectedCartelas.filter(id => id !== i);
                         cell.classList.remove('selected');
                     } else {
-                        if (selectedCartelas.length >= 4) { alert("በአንድ ጊዜ መምረጥ የሚችሉት ቢበዛ 4 ካርቴላ ብቻ ነው!"); return; }
+                        if (selectedCartelas.length >= 4) { alert("You can select a maximum of 4 cartelas at a time!"); return; }
                         selectedCartelas.push(i);
                         cell.classList.add('selected');
                     }
@@ -636,7 +646,7 @@
         }
 
         function joinAndStartGame() {
-            if (selectedCartelas.length === 0) { alert("እባክዎ መጀመሪያ ቢያንስ 1 ካርቴላ ይምረጡ!"); return; }
+            if (selectedCartelas.length === 0) { alert("Please select at least 1 cartela first!"); return; }
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -710,11 +720,11 @@
 
         function leaveGame() { 
             fetch(`/game/${gameId}/leave`, {method: 'POST'}).finally(() => {
-                window.location.href = '/';
+                window.location.href = `/game/${gameId}/select_cartela`;
             });
         }
 
-        // --- አሸናፊውን እና የመጨረሻውን ቁጥር ገልጾ የማሳያ ሞዳል ---
+        // --- Winner Modal with Cartela Selection Redirection & Winning Board View ---
         function showWinnerModal(data) {
             if (isGameOver) return;
             isGameOver = true;
@@ -723,15 +733,40 @@
             let prize = data.prize_per_winner || 0;
             let isUserWinner = winners.some(w => w.user_id === currentUserId);
 
-            document.getElementById('modalTitle').innerText = isUserWinner ? 'እንኳን ደስ አለዎት አሸንፈዋል! 🎉' : 'የጨዋታው አሸናፊ!';
-            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 አሸናፊ: ${w.username}<br>ካርቴላ #${w.cartela_number}`).join('<br><br>');
-            document.getElementById('wCartelaTag').innerText = "የሽልማት መጠን: " + prize + " Birr";
+            document.getElementById('modalTitle').innerText = isUserWinner ? 'CONGRATULATIONS YOU WON! 🎉' : 'BINGO WINNER!';
+            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
+            document.getElementById('wCartelaTag').innerText = "Prize Amount: " + prize + " ETB";
+
+            // Find winning cartela and render exact marked board in modal
+            let boardPreview = document.getElementById('winningBoardPreview');
+            boardPreview.innerHTML = '';
+            
+            let targetCartelaNum = null;
+            const userWin = winners.find(w => w.user_id === currentUserId);
+            if (userWin) {
+                targetCartelaNum = userWin.cartela_number;
+            } else if (winners.length > 0) {
+                targetCartelaNum = winners[0].cartela_number;
+            }
+
+            let matchedCard = playerCards.find(c => c.cartela_number === targetCartelaNum) || playerCards[0];
+
+            if (matchedCard) {
+                matchedCard.board.forEach((num, idx) => {
+                    let cell = document.createElement('div');
+                    let isMarked = matchedCard.marked.includes(num) || idx === 12;
+                    cell.className = 'win-cell' + (isMarked ? ' marked' : '');
+                    cell.innerText = idx === 12 ? '★' : num;
+                    boardPreview.appendChild(cell);
+                });
+            }
+
             document.getElementById('winnerModal').style.display = 'flex';
 
             let count = 5;
             let timer = setInterval(() => {
                 count--;
-                document.getElementById('redirectTimerLbl').innerText = `ወደ ካርቴላ መምረጫው በመመለስ ላይ... ${count}s`;
+                document.getElementById('redirectTimerLbl').innerText = `Returning to cartela selection in ${count}s...`;
                 if (count <= 0) {
                     clearInterval(timer);
                     fetch(`/game/${gameId}/leave`, {method: 'POST'}).catch(e => {});
@@ -740,7 +775,7 @@
             }, 1000);
         }
 
-        setInterval(() => {
+        let statusInterval = setInterval(() => {
             if (isGameOver) return;
 
             fetch(`/game/${gameId}/status`)
@@ -760,7 +795,7 @@
 
                     if (data.current_call !== lastSpokenCall) {
                         lastSpokenCall = data.current_call;
-                        speakNumber(data.current_call); // በአማርኛ መናገር
+                        speakNumber(data.current_call);
                     }
                 }
 
@@ -773,7 +808,6 @@
                     });
                 }
 
-                // ቦርዱን ሙሉ በሙሉ አቀላላም ማሳየት
                 document.querySelectorAll('.board-item').forEach(el => el.classList.remove('current-green', 'called-orange'));
                 let currentCallNum = data.current_call ? parseInt(data.current_call.split('-')[1]) : null;
 
@@ -817,8 +851,9 @@
                     });
                 }
 
-                // ጨዋታው ሲያልቅ የመጨረሻው ቁጥር ተቀልሞና ተነቦ ካለቀ በኋላ ሞዳሉን ማሳየት
                 if (data.status === 'finished' || data.status === 'completed' || (data.winners && data.winners.length > 0)) {
+                    isGameOver = true;
+                    clearInterval(statusInterval);
                     setTimeout(() => {
                         showWinnerModal(data);
                     }, 1200);
