@@ -111,7 +111,7 @@
             margin-bottom: 15px;
             box-shadow: 0 6px 15px rgba(0,0,0,0.15);
             border: 1px solid rgba(255,255,255,0.4);
-            overflow-x: auto; /* ስልክ ላይ ሰንጠረዡ በቀላሉ እንዲንሸራተት (Scrollable) */
+            overflow-x: auto;
         }
         .section-box h3 {
             font-size: 16px;
@@ -224,7 +224,8 @@
                     <option value="am">አማርኛ (Amharic)</option>
                     <option value="en">English</option>
                 </select>
-                <a href="{{ url_for('admin.logout') }}" class="logout-btn">ውጣ (Logout)</a>
+                <!-- Fixed logout route endpoint -->
+                <a href="{{ url_for('admin_logout') }}" class="logout-btn">ውጣ (Logout)</a>
             </div>
         </div>
 
@@ -419,4 +420,16 @@
             <form action="{{ url_for('admin.broadcast_news') }}" method="POST" class="form-group">
                 <label>የማስታወቂያ መልዕክት (Broadcast News):</label>
                 <textarea name="broadcast_text" rows="3" placeholder="ለተጠቃሚዎች ቦት ላይ የሚላክ መልዕክት እዚህ ይጻፉ..." required style="width: 100%;"></textarea>
-                <button
+                <button type="submit">ማስታወቂያ አስተላልፍ</button>
+            </form>
+
+            <form action="{{ url_for('admin.update_welcome_image') }}" method="POST" enctype="multipart/form-data" class="form-group" style="margin-top: 15px;">
+                <label>የእንኳን ደህና መጡ ፎቶ (Welcome Image URL or File):</label>
+                <input type="text" name="image_url" placeholder="የፎቶ ሊንክ (URL) ያስገቡ" style="width: 100%;">
+                <input type="file" name="welcome_image" accept="image/*" style="width: 100%; background: #fff; padding: 6px;">
+                <button type="submit" style="background: #2980b9; margin-top: 5px;">ፎቶ አዘምን</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
