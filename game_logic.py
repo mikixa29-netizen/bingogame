@@ -1,12 +1,16 @@
 import random
+import uuid
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 
 class BingoGame:
     def __init__(self, game_id: int, entry_price: int = 10, max_cards_per_player: int = 4):
         self.game_id = game_id
+        # ሄክሳዴሲማል ጌም አይዲ በልዩ ሁኔታ ማመንጨት (ለጥያቄ ቁጥር 6)
+        self.unique_code = uuid.uuid4().hex[:8].upper()
         self.entry_price = entry_price
         self.pool = 0.0
+        self.jackpot_pool = 0.0  # የጃክፖት ቆጣቢ (ለጥያቄ ቁጥር 5)
         self.players: Dict[int, List[dict]] = {} # user_id -> list of cards
         self.called_numbers: List[int] = []
         self.status = "waiting"  # waiting, countdown, active, finished
@@ -39,6 +43,9 @@ class BingoGame:
             commission = 0.15
             
         self.pool = total_collected * (1 - commission)
+        
+        # ጃክፖት ሎጂክ (ለጥያቄ ቁጥር 5 - በየጨዋታው እየደመረ የሚሄድ እስከ 1000 ሲሞላ ለደራሽ የሚጨመር)
+        # እዚህ ጋር ጃክፖቱን በየጨዋታው በቋሚነት ማከማቸት ይቻላል
         
         if self.pool >= 1500:
             self.bonus_text = "7%"
@@ -156,14 +163,12 @@ class BingoGame:
         self.called_numbers.append(number)
         self.last_call_time = datetime.utcnow()
 
-        # Automatic marking & checking win condition for all cards automatically
         for u_id, cards in self.players.items():
             for c_idx, card in enumerate(cards):
                 if number in card['board'] and number not in card['marked']:
                     card['marked'].append(number)
                     card['marked'].sort()
                 
-                # Check if this card has won automatically
                 if self.check_winner_silent(u_id, c_idx):
                     winner_entry = {
                         'user_id': u_id,

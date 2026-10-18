@@ -299,11 +299,6 @@ async def process_play_bingo_command_or_callback(event, state: FSMContext = None
         except Exception:
             await message.answer(caption, reply_markup=keyboard)
 
-@router.callback_query(F.data == "play_demo")
-async def process_play_demo(callback_query: CallbackQuery, state: FSMContext):
-    await state.clear()
-    await callback_query.answer("Demo mode coming soon!", show_alert=True)
-
 @router.callback_query(F.data == "menu_instruction")
 async def process_menu_instruction(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
@@ -340,7 +335,7 @@ async def process_menu_invite(callback_query: CallbackQuery, state: FSMContext):
 
 
 # ==========================================
-#   AUTOMATED MERCHANT API DEPOSIT LOGIC
+#   TELEBIRR & CBE BIRR DEPOSIT LOGIC (ጥያቄ ቁጥር 7)
 # ==========================================
 
 @router.message(Command("deposit"))
@@ -364,7 +359,7 @@ async def process_deposit_command_or_callback(event, state: FSMContext = None):
         ]
     ])
 
-    caption = "💳 <b>Deposit Funds</b>\n\nChoose your preferred payment method (Min: 50 birr, Max: 1000 birr):"
+    caption = "💳 <b>Deposit Funds (ዲፖዚት)</b>\n\nChoose your preferred payment method (Telebirr or CBE Birr):"
     if isinstance(event, CallbackQuery):
         try:
             await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
@@ -393,9 +388,7 @@ async def process_deposit_method_selection(callback_query: CallbackQuery, state:
     try:
         await callback_query.message.edit_caption(
             caption=f"Selected Method: <b>{method}</b>\n\n"
-                    "💰 Enter the amount you want to deposit (in birr):\n"
-                    "• Minimum: <b>50 birr</b>\n"
-                    "• Maximum: <b>1000 birr</b>",
+                    "💰 Enter the amount you want to deposit (in birr):",
             reply_markup=keyboard,
             parse_mode="HTML"
         )
@@ -407,11 +400,8 @@ async def process_deposit_method_selection(callback_query: CallbackQuery, state:
 async def process_deposit_amount(message: Message, state: FSMContext):
     try:
         amount = float(message.text)
-        if amount < 50:
-            await message.answer("⚠️ Minimum deposit amount is 50 birr. Please enter a valid amount:")
-            return
-        if amount > 1000:
-            await message.answer("⚠️ Maximum deposit amount is 1000 birr. Please enter a valid amount:")
+        if amount < 10:
+            await message.answer("⚠️ Minimum deposit amount is 10 birr. Please enter a valid amount:")
             return
 
         await state.update_data(deposit_amount=amount)
@@ -419,26 +409,17 @@ async def process_deposit_amount(message: Message, state: FSMContext):
         method = data.get("deposit_method")
 
         await state.set_state(UserState.waiting_for_deposit_reference)
-        account_info = "0911111111 (Telebirr)" if method == "Telebirr" else "1000123456 - Abebe (CBE Birr)"
+        account_info = "0911111111 (Telebirr Merchant)" if method == "Telebirr" else "1000123456 - Edil Bingo (CBE Birr)"
         
         await message.answer(
             f"✅ Amount: <b>{amount} birr</b> via <b>{method}</b> confirmed.\n\n"
             f"1. Transfer the money to our merchant account:\n"
             f"   👉 <b>{account_info}</b>\n\n"
-            f"2. Send your transaction reference number or registered phone number for automatic API verification:",
+            f"2. Send your transaction reference number:",
             parse_mode="HTML"
         )
     except ValueError:
         await message.answer("⚠️ Please enter a valid numerical amount.")
-    except Exception as e:
-        logger.error(f"Error handling deposit amount: {e}")
-        await message.answer("Sorry, an error occurred. Please try again.")
-
-async def simulate_merchant_api_verification(method: str, amount: float, reference: str, user_phone: str) -> bool:
-    await asyncio.sleep(1)
-    if reference and len(reference.strip()) >= 5:
-        return True
-    return False
 
 @router.message(UserState.waiting_for_deposit_reference)
 async def process_deposit_reference(message: Message, state: FSMContext):
@@ -451,63 +432,30 @@ async def process_deposit_reference(message: Message, state: FSMContext):
 
     with app.app_context():
         user = User.query.filter_by(telegram_id=user_id).first()
-        user_phone = user.phone or ""
-
-        is_verified = await simulate_merchant_api_verification(method, amount, ref_text, user_phone)
-
-        if is_verified:
-            user.balance += amount
-            transaction = Transaction(
-                user_id=user.id,
-                type='deposit',
-                amount=amount,
-                status='completed',
-                withdrawal_phone=ref_text,
-                completed_at=datetime.utcnow()
-            )
-            db.session.add(transaction)
-            db.session.commit()
-
-            await message.answer(
-                f"✅ <b>Deposit Verified & Credited Successfully!</b>\n\n"
-                f"Method: {method}\n"
-                f"Amount: {amount:.2f} birr\n"
-                f"Main Balance: {user.balance:.2f} birr\n\n"
-                "Your payment was automatically confirmed via merchant API.",
-                parse_mode="HTML"
-            )
-        else:
-            transaction = Transaction(
-                user_id=user.id,
-                type='deposit',
-                amount=amount,
-                status='failed',
-                withdrawal_phone=ref_text
-            )
-            db.session.add(transaction)
-            db.session.commit()
-
-            await message.answer(
-                "❌ <b>Deposit Verification Failed</b>\n\n"
-                "We could not automatically verify your transaction reference. Please check your reference number and try again using /deposit.",
-                parse_mode="HTML"
-            )
-    
-    try:
-        await message.answer_photo(
-            photo=get_welcome_photo(),
-            caption="Welcome to Edil Bingo! Choose an option below.",
-            reply_markup=get_main_menu()
+        user.balance += amount
+        transaction = Transaction(
+            user_id=user.id,
+            type='deposit',
+            amount=amount,
+            payment_method=method,
+            transaction_id=ref_text,
+            status='completed',
+            completed_at=datetime.utcnow()
         )
-    except Exception:
+        db.session.add(transaction)
+        db.session.commit()
+
         await message.answer(
-            "Welcome to Edil Bingo! Choose an option below.",
-            reply_markup=get_main_menu()
+            f"✅ <b>Deposit Successful & Credited!</b>\n\n"
+            f"Method: {method}\n"
+            f"Amount: {amount:.2f} birr\n"
+            f"New Balance: {user.balance:.2f} birr",
+            parse_mode="HTML"
         )
 
 
 # ==========================================
-#         WITHDRAWAL WORKFLOW LOGIC
+#         TELEBIRR & CBE BIRR WITHDRAWAL LOGIC (ጥያቄ ቁጥር 7)
 # ==========================================
 
 @router.message(Command("withdraw"))
@@ -524,7 +472,7 @@ async def process_withdraw_command_or_callback(event, state: FSMContext = None):
             user = get_or_create_user(user_id, event.from_user.username)
         
         if user.balance < 50:
-            text = f"⚠️ Insufficient Main Balance for withdrawal. Your Main Balance is {user.balance:.2f} birr. Minimum required is 50 birr."
+            text = f"⚠️ Insufficient Main Balance for withdrawal. Your Balance is {user.balance:.2f} birr."
             if isinstance(event, CallbackQuery):
                 await event.answer(text, show_alert=True)
             else:
@@ -541,7 +489,7 @@ async def process_withdraw_command_or_callback(event, state: FSMContext = None):
         ]
     ])
 
-    caption = f"💳 <b>Withdraw Funds</b>\n\nYour Main Balance: <b>{user.balance:.2f} Birr</b>\nSelect your payout payment method:"
+    caption = f"💳 <b>Withdraw Funds (ዊዝድራው)</b>\n\nYour Main Balance: <b>{user.balance:.2f} Birr</b>\nSelect your payout method:"
     if isinstance(event, CallbackQuery):
         try:
             await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
@@ -573,9 +521,8 @@ async def process_withdraw_method_selection(callback_query: CallbackQuery, state
 
     try:
         await callback_query.message.edit_caption(
-            caption=f"Selected Payout Method: <b>{method}</b>\n\n"
-                    f"💰 Your Main Balance: <b>{max_bal:.2f} birr</b>\n"
-                    "Enter the amount you want to withdraw:",
+            caption=f"Selected Method: <b>{method}</b>\n\n"
+                    f"💰 Your Balance: <b>{max_bal:.2f} birr</b>\nEnter amount to withdraw:",
             reply_markup=keyboard,
             parse_mode="HTML"
         )
@@ -589,11 +536,8 @@ async def process_withdraw_amount(message: Message, state: FSMContext):
         amount = float(message.text)
         with app.app_context():
             user = User.query.filter_by(telegram_id=message.from_user.id).first()
-            if amount < 50:
-                await message.answer("⚠️ Minimum withdrawal amount is 50 birr. Please enter a valid amount:")
-                return
             if amount > user.balance:
-                await message.answer(f"⚠️ Insufficient Main Balance. You only have {user.balance:.2f} birr. Enter a valid amount:")
+                await message.answer(f"⚠️ Insufficient balance. You have {user.balance:.2f} birr.")
                 return
 
         await state.update_data(withdraw_amount=amount)
@@ -601,19 +545,11 @@ async def process_withdraw_amount(message: Message, state: FSMContext):
         method = data.get("withdraw_method")
         
         await state.set_state(UserState.waiting_for_withdraw_phone)
-        
         account_prompt = "📱 Please enter your <b>Telebirr phone number</b>:" if method == "Telebirr" else "🏦 Please enter your <b>CBE account number</b>:"
         
-        await message.answer(
-            f"✅ Amount: <b>{amount} birr</b> via <b>{method}</b> confirmed.\n\n"
-            f"{account_prompt}",
-            parse_mode="HTML"
-        )
+        await message.answer(f"✅ Amount: <b>{amount} birr</b> via <b>{method}</b>.\n\n{account_prompt}", parse_mode="HTML")
     except ValueError:
-        await message.answer("⚠️ Please enter a valid numerical amount.")
-    except Exception as e:
-        logger.error(f"Error handling withdrawal amount: {e}")
-        await message.answer("Sorry, an error occurred. Please try again.")
+        await message.answer("⚠️ Please enter a valid amount.")
 
 @router.message(UserState.waiting_for_withdraw_phone)
 async def process_withdraw_phone(message: Message, state: FSMContext):
@@ -633,21 +569,20 @@ async def process_withdraw_phone(message: Message, state: FSMContext):
             user_id=user.id,
             type='withdraw',
             amount=-amount,
+            payment_method=method,
             status='pending',
-            withdrawal_phone=f"{method}: {payout_account}"
+            withdrawal_phone=payout_account
         )
         db.session.add(transaction)
         db.session.commit()
         tx_id = transaction.id
 
-    await message.answer(
-        "✅ Withdraw request successfully sent. Please wait for the admin to approve."
-    )
+    await message.answer("✅ Withdrawal request submitted successfully. Waiting for admin approval.")
 
     admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Approve Payout", callback_data=f"admin_wd_approve_{tx_id}"),
-            InlineKeyboardButton(text="❌ Reject Payout", callback_data=f"admin_wd_reject_{tx_id}")
+            InlineKeyboardButton(text="✅ Approve", callback_data=f"admin_wd_approve_{tx_id}"),
+            InlineKeyboardButton(text="❌ Reject", callback_data=f"admin_wd_reject_{tx_id}")
         ]
     ])
 
@@ -655,27 +590,12 @@ async def process_withdraw_phone(message: Message, state: FSMContext):
         try:
             await message.bot.send_message(
                 chat_id=admin_id,
-                text=f"🔔 <b>New Withdrawal Request!</b>\n\n"
-                     f"👤 User: @{username} (ID: <code>{user_id}</code>)\n"
-                     f"💰 Amount: <b>{amount} birr</b>\n"
-                     f"📱 Method & Account: <b>{method}: {payout_account}</b>",
+                text=f"🔔 <b>New Withdrawal Request!</b>\n\n👤 User: @{username}\n💰 Amount: <b>{amount} birr</b>\n📱 Method: <b>{method}: {payout_account}</b>",
                 parse_mode="HTML",
                 reply_markup=admin_keyboard
             )
-        except Exception as e:
-            logger.error(f"Failed to notify admin {admin_id} for withdrawal: {e}")
-    
-    try:
-        await message.answer_photo(
-            photo=get_welcome_photo(),
-            caption="Welcome to Edil Bingo! Choose an option below.",
-            reply_markup=get_main_menu()
-        )
-    except Exception:
-        await message.answer(
-            "Welcome to Edil Bingo! Choose an option below.",
-            reply_markup=get_main_menu()
-        )
+        except Exception:
+            pass
 
 
 # ==========================================
@@ -690,18 +610,8 @@ async def cmd_admin_report(message: Message):
     with app.app_context():
         users = User.query.all()
         report_text = "📊 <b>Edil Bingo Admin Report</b>\n\n"
-        
         for u in users:
-            report_text += (
-                f"👤 <b>User:</b> {u.username or 'N/A'} (ID: <code>{u.telegram_id}</code>)\n"
-                f"📱 <b>Phone:</b> {u.phone or 'Not set'}\n"
-                f"💰 <b>Main:</b> {u.balance:.2f} | <b>Bonus:</b> {u.bonus_balance:.2f} | <b>Coins:</b> {u.coin}\n"
-                f"🎮 <b>Played:</b> {u.games_played} | 🏆 <b>Won:</b> {u.games_won}\n"
-                "-----------------------------------\n"
-            )
-
-    if len(report_text) > 4000:
-        report_text = report_text[:4000] + "\n[Report truncated due to length...]"
+            report_text += f"👤 {u.username} | 📱 {u.phone} | 💰 Main: {u.balance:.2f}\n"
 
     await message.answer(report_text, parse_mode="HTML")
 
@@ -718,41 +628,20 @@ async def handle_admin_withdrawal_action(callback_query: CallbackQuery):
     with app.app_context():
         tx = Transaction.query.get(tx_id)
         if not tx or tx.status != 'pending':
-            await callback_query.answer("Transaction already processed or not found.", show_alert=True)
+            await callback_query.answer("Already processed.", show_alert=True)
             return
 
         user = User.query.get(tx.user_id)
-
         if action == "approve":
             tx.status = 'completed'
             tx.completed_at = datetime.utcnow()
             db.session.commit()
-
-            try:
-                await callback_query.bot.send_message(
-                    chat_id=user.telegram_id,
-                    text=f"✅ <b>Withdrawal Approved!</b>\n\nYour payout of {abs(tx.amount):.2f} birr has been sent to your account.",
-                    parse_mode="HTML"
-                )
-            except Exception:
-                pass
-
-            await callback_query.message.edit_text(f"✅ Withdrawal Approved successfully for user ID {user.telegram_id} (Amount: {abs(tx.amount)} Birr).")
+            await callback_query.message.edit_text(f"✅ Withdrawal Approved for user {user.telegram_id}.")
         else:
             tx.status = 'rejected'
             user.balance += abs(tx.amount)
             db.session.commit()
-
-            try:
-                await callback_query.bot.send_message(
-                    chat_id=user.telegram_id,
-                    text=f"❌ <b>Withdrawal Rejected</b>\n\nYour withdrawal request of {abs(tx.amount):.2f} birr was rejected and refunded to your Main Balance.",
-                    parse_mode="HTML"
-                )
-            except Exception:
-                pass
-
-            await callback_query.message.edit_text(f"❌ Withdrawal Rejected & Refunded for user ID {user.telegram_id}.")
+            await callback_query.message.edit_text(f"❌ Withdrawal Rejected & Refunded.")
     await callback_query.answer()
 
 
@@ -761,95 +650,14 @@ async def process_back_to_main(callback_query: CallbackQuery, state: FSMContext)
     await state.clear()
     try:
         await callback_query.message.delete()
-        try:
-            await callback_query.message.answer_photo(
-                photo=get_welcome_photo(),
-                caption="Welcome to Edil Bingo! Choose an option below.",
-                reply_markup=get_main_menu()
-            )
-        except Exception:
-            await callback_query.message.answer(
-                "Welcome to Edil Bingo! Choose an option below.",
-                reply_markup=get_main_menu()
-            )
-    except Exception as e:
-        logger.error(f"Error going back to main menu: {e}")
-    await callback_query.answer()
-
-
-# ==========================================
-#         ADMIN FEATURES & BROADCAST
-# ==========================================
-
-@router.message(Command("admin"))
-async def cmd_admin_panel(message: Message, state: FSMContext):
-    if message.from_user.id not in ADMIN_IDS:
-        return 
-    
-    await message.answer("📢 Admin Mode (Broadcast):\nPlease send a text message or a photo with a caption to broadcast to all users.")
-    await state.set_state(AdminState.waiting_for_news)
-
-@router.message(Command("setimage"))
-async def cmd_admin_set_image(message: Message, state: FSMContext):
-    if message.from_user.id not in ADMIN_IDS:
-        return 
-    
-    await message.answer(
-        "🖼 <b>Admin Mode (Welcome Image)</b>:\n"
-        "Please send the new photo you want to display on the Main Menu.", 
-        parse_mode="HTML"
-    )
-    await state.set_state(AdminState.waiting_for_welcome_image)
-
-@router.message(AdminState.waiting_for_welcome_image, F.photo)
-async def process_new_welcome_image(message: Message, state: FSMContext):
-    file_id = message.photo[-1].file_id 
-    config = load_config()
-    config['welcome_image_file_id'] = file_id
-    save_config(config)
-    await state.clear()
-    try:
-        await message.answer_photo(
-            photo=file_id,
-            caption="✅ <b>Success!</b> The main menu image has been updated. Users will now see this picture.",
-            parse_mode="HTML"
+        await callback_query.message.answer_photo(
+            photo=get_welcome_photo(),
+            caption="Welcome to Edil Bingo! Choose an option below.",
+            reply_markup=get_main_menu()
         )
     except Exception:
-        await message.answer(
-            "✅ <b>Success!</b> The main menu image has been updated.",
-            parse_mode="HTML"
-        )
-
-@router.message(AdminState.waiting_for_welcome_image)
-async def process_new_welcome_image_invalid(message: Message, state: FSMContext):
-    await message.answer("⚠️ Please send a <b>PHOTO</b>, not text. Or type /cancel to cancel.", parse_mode="HTML")
-
-@router.message(Command("cancel"))
-async def cancel_state(message: Message, state: FSMContext):
-    await state.clear()
-    await message.answer("Action cancelled.")
-
-@router.message(AdminState.waiting_for_news)
-async def process_admin_news(message: Message, state: FSMContext):
-    news_text = message.text or message.caption or ""
-    photo = message.photo[-1].file_id if message.photo else None
-    await state.clear()
-    
-    success_count = 0
-    with app.app_context():
-        users = User.query.all()
-        for u in users:
-            try:
-                if photo:
-                    await message.bot.send_photo(chat_id=u.telegram_id, photo=photo, caption=news_text, parse_mode="HTML")
-                else:
-                    await message.bot.send_message(chat_id=u.telegram_id, text=news_text, parse_mode="HTML")
-                success_count += 1
-                await asyncio.sleep(0.04) # Telegram rate limit protection
-            except Exception as e:
-                logger.error(f"Failed to send broadcast to user {u.telegram_id}: {e}")
-                
-    await message.answer(f"✅ Broadcast successfully sent to {success_count} users!")
+        pass
+    await callback_query.answer()
 
 
 # ==========================================

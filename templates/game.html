@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="am">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -391,7 +391,7 @@
         }
         .winner-modal-card {
             background: #1b5e20; border-radius: 16px; padding: 20px;
-            width: 90%; max-width: 320px; text-align: center; color: #fff;
+            width: 90%; max-width: 340px; text-align: center; color: #fff;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             border: 2px solid #fdd835;
         }
@@ -528,9 +528,11 @@
             return 'badge-o';
         }
 
+        // --- በአማርኛ ድምፅ መናገሪያ (በስልክም ሆነ በ PC ከችግር ነፃ የሆነ) ---
         function speakNumber(callStr) {
-            if (!isSoundOn) return;
+            if (!isSoundOn || !callStr) return;
             let parts = callStr.split('-');
+            if (parts.length < 2) return;
             let letter = parts[0];
             let num = parts[1];
 
@@ -542,10 +544,20 @@
             else if (letter === 'O') amharicLetter = 'ኦ';
 
             let textToSpeak = `${amharicLetter} ${num}`;
-            let audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(textToSpeak)}&tl=am&client=tw-ob`;
-            
-            let audio = new Audio(audioUrl);
-            audio.play().catch(err => console.log("Audio play error:", err));
+
+            // 1. የብራውዘር Web Speech API አጠቃቀም
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // ያለፈውን ድምፅ ማቋረጥ
+                let utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'am-ET';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                // 2. Fallback Google TTS Audio
+                let audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(textToSpeak)}&tl=am&client=tw-ob`;
+                let audio = new Audio(audioUrl);
+                audio.play().catch(err => console.log("Audio play error:", err));
+            }
         }
 
         function generateCartelaNumbers(id) {
@@ -588,7 +600,7 @@
                         selectedCartelas = selectedCartelas.filter(id => id !== i);
                         cell.classList.remove('selected');
                     } else {
-                        if (selectedCartelas.length >= 4) { alert("Maximum 4 cartelas allowed!"); return; }
+                        if (selectedCartelas.length >= 4) { alert("በአንድ ጊዜ መምረጥ የሚችሉት ቢበዛ 4 ካርቴላ ብቻ ነው!"); return; }
                         selectedCartelas.push(i);
                         cell.classList.add('selected');
                     }
@@ -624,7 +636,7 @@
         }
 
         function joinAndStartGame() {
-            if (selectedCartelas.length === 0) { alert("Please select at least 1 cartela!"); return; }
+            if (selectedCartelas.length === 0) { alert("እባክዎ መጀመሪያ ቢያንስ 1 ካርቴላ ይምረጡ!"); return; }
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -702,6 +714,7 @@
             });
         }
 
+        // --- አሸናፊውን እና የመጨረሻውን ቁጥር ገልጾ የማሳያ ሞዳል ---
         function showWinnerModal(data) {
             if (isGameOver) return;
             isGameOver = true;
@@ -710,15 +723,15 @@
             let prize = data.prize_per_winner || 0;
             let isUserWinner = winners.some(w => w.user_id === currentUserId);
 
-            document.getElementById('modalTitle').innerText = isUserWinner ? 'YOU WIN! 🎉' : 'BINGO WINNER!';
-            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
-            document.getElementById('wCartelaTag').innerText = "Prize: " + prize + " Birr";
+            document.getElementById('modalTitle').innerText = isUserWinner ? 'እንኳን ደስ አለዎት አሸንፈዋል! 🎉' : 'የጨዋታው አሸናፊ!';
+            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 አሸናፊ: ${w.username}<br>ካርቴላ #${w.cartela_number}`).join('<br><br>');
+            document.getElementById('wCartelaTag').innerText = "የሽልማት መጠን: " + prize + " Birr";
             document.getElementById('winnerModal').style.display = 'flex';
 
             let count = 5;
             let timer = setInterval(() => {
                 count--;
-                document.getElementById('redirectTimerLbl').innerText = `Returning to selection screen in ${count}s...`;
+                document.getElementById('redirectTimerLbl').innerText = `ወደ ካርቴላ መምረጫው በመመለስ ላይ... ${count}s`;
                 if (count <= 0) {
                     clearInterval(timer);
                     fetch(`/game/${gameId}/leave`, {method: 'POST'}).catch(e => {});
@@ -747,7 +760,7 @@
 
                     if (data.current_call !== lastSpokenCall) {
                         lastSpokenCall = data.current_call;
-                        speakNumber(data.current_call);
+                        speakNumber(data.current_call); // በአማርኛ መናገር
                     }
                 }
 
@@ -760,6 +773,7 @@
                     });
                 }
 
+                // ቦርዱን ሙሉ በሙሉ አቀላላም ማሳየት
                 document.querySelectorAll('.board-item').forEach(el => el.classList.remove('current-green', 'called-orange'));
                 let currentCallNum = data.current_call ? parseInt(data.current_call.split('-')[1]) : null;
 
@@ -803,8 +817,11 @@
                     });
                 }
 
+                // ጨዋታው ሲያልቅ የመጨረሻው ቁጥር ተቀልሞና ተነቦ ካለቀ በኋላ ሞዳሉን ማሳየት
                 if (data.status === 'finished' || data.status === 'completed' || (data.winners && data.winners.length > 0)) {
-                    showWinnerModal(data);
+                    setTimeout(() => {
+                        showWinnerModal(data);
+                    }, 1200);
                 }
             })
             .catch(err => console.log(err));

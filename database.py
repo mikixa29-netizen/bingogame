@@ -47,14 +47,38 @@ def init_db(app):
                 except Exception:
                     pass  # Skip silently if the column already exists
 
-            # Game table missing columns (hash_key & jackpot_pool)
+            # Game table missing columns
             game_columns_to_add = [
                 ('hash_key', 'VARCHAR(64)'),
-                ('jackpot_pool', 'DOUBLE PRECISION DEFAULT 0.0')
+                ('jackpot_pool', 'DOUBLE PRECISION DEFAULT 0.0'),
+                ('unique_code', 'VARCHAR(16)')
             ]
 
             for col_name, col_type in game_columns_to_add:
                 try:
                     connection.execute(text(f'ALTER TABLE "game" ADD COLUMN {col_name} {col_type};'))
                 except Exception:
-                    pass  # Skip silently if the column already exists
+                    pass
+
+            # GameHistory table missing columns (ለአሸናፊ ቦርድ እና ሄክሳዴሲማል ጌም ኮድ)
+            history_columns_to_add = [
+                ('game_unique_code', 'VARCHAR(16)'),
+                ('winning_board_data', 'TEXT')
+            ]
+
+            for col_name, col_type in history_columns_to_add:
+                try:
+                    connection.execute(text(f'ALTER TABLE "game_history" ADD COLUMN {col_name} {col_type};'))
+                except Exception:
+                    pass
+
+            # Transaction table missing columns (ለቴሌብር እና ሲቢኢ ብር ክፍያ ዘዴ)
+            transaction_columns_to_add = [
+                ('payment_method', 'VARCHAR(32)')
+            ]
+
+            for col_name, col_type in transaction_columns_to_add:
+                try:
+                    connection.execute(text(f'ALTER TABLE "transaction" ADD COLUMN {col_name} {col_type};'))
+                except Exception:
+                    pass

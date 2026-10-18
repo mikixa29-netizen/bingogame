@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="am">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,128 +8,141 @@
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
+            margin: 0; padding: 12px; background-color: #89C149; color: #FFFEFE;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 80px;
         }
         .profile-avatar {
             width: 80px; height: 80px; border-radius: 50%; background: #1b5e20;
             display: flex; align-items: center; justify-content: center; font-size: 32px;
             font-weight: bold; margin: 20px 0 10px 0; border: 2px solid #fdd835;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
         }
-        .profile-name { font-size: 18px; font-weight: bold; margin-bottom: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .profile-name { font-size: 20px; font-weight: bold; margin-bottom: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
         
-        .profile-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; }
+        .profile-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 10px; }
         
         .profile-box {
-            background: rgba(255, 255, 255, 0.2); width: 100%; max-width: 420px;
-            border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 14px; font-weight: bold;
+            background: rgba(255, 255, 255, 0.25); width: 100%;
+            border-radius: 14px; padding: 14px; display: flex; justify-content: space-between; 
+            align-items: center; border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12); font-size: 14px; font-weight: bold;
+            backdrop-filter: blur(5px);
         }
-        .profile-box span { color: #f1c40f; }
+        .profile-box span { color: #fdd835; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
         .transfer-card {
-            background: rgba(255, 255, 255, 0.25); border-radius: 12px; padding: 14px;
-            width: 100%; max-width: 420px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.25); border-radius: 16px; padding: 16px;
+            width: 100%; max-width: 440px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15); backdrop-filter: blur(5px);
         }
-        .transfer-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        .transfer-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; text-align: center; color: #fff; }
         .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
-        .form-group label { font-size: 12px; opacity: 0.9; }
+        .form-group label { font-size: 12px; font-weight: bold; opacity: 0.95; }
         .form-control {
-            width: 100%; padding: 10px; border-radius: 8px; border: none;
+            width: 100%; padding: 12px; border-radius: 10px; border: none;
             background: #fff; color: #333; font-size: 14px; font-weight: bold;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         .btn-transfer {
-            background: #27ae60; color: white; border: none; width: 100%; padding: 12px;
-            border-radius: 20px; font-size: 15px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2); margin-top: 5px;
+            background: #27ae60; color: white; border: none; width: 100%; padding: 14px;
+            border-radius: 22px; font-size: 15px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: 8px; transition: 0.2s;
         }
+        .btn-transfer:active { transform: scale(0.98); }
 
-        /* Bottom Nav */
+        /* Bottom Nav - Modern Unified Design (ለ 5ቱ ሜኑዎች ተመሳሳይ ዘመናዊ ዲዛይን - ጥያቄ ቁጥር 10) */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
-            display: flex; justify-content: space-around; padding: 8px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1000;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
+            border-top-left-radius: 16px; border-top-right-radius: 16px;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #666; font-size: 11px; font-weight: bold; }
-        .nav-item.active { color: #1e88e5; }
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; text-decoration: none; 
+            color: #777; font-size: 11px; font-weight: bold; transition: 0.2s ease;
+        }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+        .nav-item.active { color: #27ae60; transform: translateY(-2px); }
     </style>
 </head>
 <body>
     <div class="profile-avatar">👤</div>
-    <div class="profile-name">{{ username | default('Player Profile') }}</div>
+    <div class="profile-name">{{ username | default('የተጠቃሚ መገለጫ') }}</div>
 
     <div class="profile-container">
         <div class="profile-box">
-            <div>User ID / Telegram ID</div>
+            <div>ዩዘር አይዲ (Telegram ID)</div>
             <span>#{{ user_id | default(session.get('user_id', 'N/A')) }}</span>
         </div>
         <div class="profile-box">
-            <div>Main Balance</div>
-            <span>{{ balance | default('0.00') }} ETB</span>
+            <div>ስልክ ቁጥር (Phone)</div>
+            <span>{{ user.phone | default('አልተመዘገበም') }}</span>
         </div>
         <div class="profile-box">
-            <div>Bonus Balance</div>
-            <span>{{ bonus_balance | default('0.00') }} ETB</span>
+            <div>ዋና ባላንስ (Main Balance)</div>
+            <span>{{ balance | default('0.00') }} ብር</span>
         </div>
         <div class="profile-box">
-            <div>Games Played</div>
+            <div>ቦነስ ባላንስ (Bonus Balance)</div>
+            <span>{{ bonus_balance | default('0.00') }} ብር</span>
+        </div>
+        <div class="profile-box">
+            <div>የተጫወቷቸው ጨዋታዎች</div>
             <span>{{ games_played | default(0) }}</span>
         </div>
         <div class="profile-box">
-            <div>Games Won</div>
+            <div>ያሸነፏቸው ጨዋታዎች</div>
             <span>{{ games_won | default(0) }}</span>
         </div>
 
-        <!-- Transfer Balance Section -->
+        <!-- Transfer Balance Section (በስልክ ቁጥር - ጥያቄ ቁጥር 7) -->
         <div class="transfer-card">
-            <div class="transfer-title">💸 Transfer Balance to Friend</div>
+            <div class="transfer-title">💸 ባላንስ ለጓደኛ ማስተላለፍ (Transfer)</div>
             <form id="transferForm" onsubmit="handleTransfer(event)">
                 <div class="form-group">
-                    <label>Recipient User ID / Username</label>
-                    <input type="text" id="recipient" class="form-control" placeholder="Enter recipient ID" required>
+                    <label>የተቀባዩ ስልክ ቁጥር (Recipient Phone Number)</label>
+                    <input type="text" id="recipientPhone" class="form-control" placeholder="09xxxxxxxx" required>
                 </div>
                 <div class="form-group">
-                    <label>Amount (ETB)</label>
-                    <input type="number" id="transferAmount" class="form-control" placeholder="Min 10 ETB" min="10" required>
+                    <label>የብር መጠን (ETB)</label>
+                    <input type="number" id="transferAmount" class="form-control" placeholder="ዝቅተኛ 10 ብር" min="10" required>
                 </div>
-                <button type="submit" class="btn-transfer">Send to Bonus Balance</button>
+                <button type="submit" class="btn-transfer">ባላንስ አስተላልፍ</button>
             </form>
         </div>
     </div>
 
+    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item"><span>🎮</span> Game</a>
-        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
-        <a href="/history" class="nav-item"><span>📋</span> History</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
-        <a href="/profile" class="nav-item active"><span>👤</span> Profile</a>
+        <a href="/" class="nav-item"><span>🎮</span> ጨዋታ</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> ፉክክር</a>
+        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
+        <a href="/profile" class="nav-item active"><span>👤</span> ප්‍රိုፋይል</a>
     </div>
 
     <script>
         function handleTransfer(event) {
             event.preventDefault();
-            const recipient = document.getElementById('recipient').value;
+            const recipientPhone = document.getElementById('recipientPhone').value;
             const amount = document.getElementById('transferAmount').value;
 
             fetch('/transfer', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recipient: recipient, amount: amount })
+                body: JSON.stringify({ phone: recipientPhone, amount: amount })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert('Successfully transferred! Amount added to recipient bonus balance.');
+                    alert('✅ ባላንሱ በተሳካ ሁኔታ ተላልፏል!');
                     location.reload();
                 } else {
-                    alert(data.error || 'Transfer failed');
+                    alert(data.error || 'ማስተላለፍ አልተሳካም');
                 }
             })
             .catch(err => {
-                alert('An error occurred during transfer.');
+                alert('⚠️ ስህተት አጋጥሟል፣ እባክዎ እንደገና ይሞክሩ።');
             });
         }
     </script>

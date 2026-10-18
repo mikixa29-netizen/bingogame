@@ -5,7 +5,7 @@ import logging
 import hashlib
 from functools import wraps
 from flask import Flask, jsonify, request, session, render_template, redirect, url_for, flash
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from database import db, init_db
 from game_logic import BingoGame
 
@@ -22,7 +22,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
 init_db(app)
 
-from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory
+from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory, Admin
 
 active_games = {}
 
@@ -75,8 +75,51 @@ def scores():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('index'))
-    top_scores = User.query.order_by(User.games_won.desc()).limit(10).all()
-    return render_template('scores.html', top_scores=top_scores)
+    return render_template('scores.html')
+
+@app.route('/scores/data', methods=['GET'])
+def scores_data():
+    timeframe = request.args.get('timeframe', 'today') # today, week, month
+    now = datetime.utcnow()
+    
+    query = db.session.query(
+        User.id,
+        User.username,
+        User.phone,
+        db.func.count(GameHistory.id).label('win_count')
+    ).join(GameHistory, User.id == GameHistory.winner_id)
+    
+    if timeframe == 'today':
+        start_date = datetime(now.year, now.month, now.day)
+        query = query.filter(GameHistory.created_at >= start_date)
+    elif timeframe == 'week':
+        start_date = now - timedelta(days=7)
+        query = query.filter(GameHistory.created_at >= start_date)
+    elif timeframe == 'month':
+        start_date = datetime(now.year, now.month, 1)
+        query = query.filter(GameHistory.created_at >= start_date)
+        
+    results = query.group_by(User.id).order_by(db.desc('win_count')).all()
+    
+    scores_list = []
+    for r in results:
+        # ስልክ ቁጥርን እንደ ጠየቁት ማመንጨት (Masking)
+        phone_masked = "**********"
+        if r.phone and len(str(r.phone)) >= 7:
+            p_str = str(r.phone)
+            phone_masked = p_str[:5] + "**" + p_str[7:]
+        elif r.phone:
+            phone_masked = r.phone[:3] + "**"
+        else:
+            phone_masked = "25190**00000"
+            
+        scores_list.append({
+            'username': r.username or 'Player',
+            'phone': phone_masked,
+            'wins': r.win_count
+        })
+        
+    return jsonify({'scores': scores_list})
 
 @app.route('/history')
 def history():
@@ -116,6 +159,7 @@ def list_games():
         if game.entry_price > 0 and game.status in ["waiting", "countdown", "active", "playing"]:
             games_data.append({
                 'id': g_id,
+                'unique_code': getattr(game, 'unique_code', str(g_id)),
                 'players': len(game.players),
                 'total_cards': game.get_total_cards(),
                 'entry_price': game.entry_price,
@@ -213,6 +257,9 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
+    if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
+        return redirect(url_for('play_game', game_id=g_id))
+
     used_cartelas = set()
     for cards in game.players.values():
         for card in cards:
@@ -232,10 +279,6 @@ def select_cartela(game_id):
         game_hash=game.static_hash_key,
         is_demo=(game.entry_price == 0)
     )
-
-@app.route('/game/demo/select_cartela')
-def demo_select_cartela():
-    return select_cartela('999')
 
 @app.route('/game/<int:game_id>/join', methods=['POST'])
 def join_game(game_id):
@@ -275,6 +318,14 @@ def join_game(game_id):
     total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
     if total_user_balance < total_cost:
         return jsonify({'error': 'Insufficient balance for selected cartelas!'}), 400
+
+    if user.balance >= total_cost:
+        user.balance -= total_cost
+    else:
+        remainder = total_cost - user.balance
+        user.balance = 0.0
+        user.bonus_balance -= remainder
+    db.session.commit()
 
     username = user.username or "Player"
     for c_num in cartela_numbers:
@@ -331,6 +382,7 @@ def game_status_api(game_id):
 
     return jsonify({
         'game_id': game.game_id,
+        'unique_code': getattr(game, 'unique_code', str(game_id)),
         'active_players': len(game.players),
         'total_cards': game.get_total_cards(),
         'pool': round(pool, 2),
@@ -369,9 +421,11 @@ def mark_number(game_id):
             
             hist = GameHistory(
                 game_id=game_id,
+                game_unique_code=getattr(game, 'unique_code', str(game_id)),
                 winner_id=user.id,
                 winner_name=user.username or "Player",
                 winning_cartela=game.players[user.telegram_id][card_index]['cartela_number'],
+                winning_board_data=json.dumps(game.players[user.telegram_id][card_index]),
                 total_calls=len(game.called_numbers),
                 called_numbers_str=",".join([game.format_number(n) for n in game.called_numbers]),
                 prize_amount=prize_per_winner
@@ -401,7 +455,6 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# Wallet & Transfer Endpoints
 @app.route('/deposit', methods=['POST'])
 def deposit():
     user_id = session.get('user_id')
@@ -411,13 +464,24 @@ def deposit():
     
     data = request.json or {}
     amount = float(data.get('amount', 0))
-    if amount < 50 or amount > 1000:
-        return jsonify({'error': 'Deposit amount must be between 50 ETB and 1000 ETB.'}), 400
+    payment_method = data.get('payment_method', 'telebirr')
+    transaction_id = data.get('transaction_id', '')
 
-    tx = Transaction(user_id=user.id, type='deposit', amount=amount, status='pending')
+    if amount < 10:
+        return jsonify({'error': 'Minimum deposit amount is 10 ETB.'}), 400
+
+    user.balance += amount
+    tx = Transaction(
+        user_id=user.id, 
+        type='deposit', 
+        amount=amount, 
+        payment_method=payment_method,
+        transaction_id=transaction_id,
+        status='completed'
+    )
     db.session.add(tx)
     db.session.commit()
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'message': 'Deposit successful!'})
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
@@ -426,29 +490,26 @@ def withdraw():
     if not user:
         return jsonify({'error': 'Unauthorized'}), 401
     
-    if user.games_played < 1:
-        return jsonify({'error': 'Withdrawal restriction: You must play at least 1 game.'}), 400
-
-    today = date.today()
-    today_withdrawals = Transaction.query.filter(
-        Transaction.user_id == user.id,
-        Transaction.type == 'withdraw',
-        db.func.date(Transaction.created_at) == today
-    ).count()
-
-    if user.games_won == 0 and today_withdrawals >= 1:
-        return jsonify({'error': 'Withdrawal limit: Without winning, you can only withdraw 1 time per day.'}), 400
-
     data = request.json or {}
     amount = float(data.get('amount', 0))
+    payment_method = data.get('payment_method', 'telebirr')
+    withdrawal_phone = data.get('withdrawal_phone', '')
+
     if user.balance < amount:
         return jsonify({'error': 'Insufficient main balance.'}), 400
 
     user.balance -= amount
-    tx = Transaction(user_id=user.id, type='withdraw', amount=amount, status='pending')
+    tx = Transaction(
+        user_id=user.id, 
+        type='withdraw', 
+        amount=amount, 
+        payment_method=payment_method,
+        withdrawal_phone=withdrawal_phone,
+        status='pending'
+    )
     db.session.add(tx)
     db.session.commit()
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'message': 'Withdrawal request submitted successfully.'})
 
 @app.route('/transfer', methods=['POST'])
 def transfer_balance():
@@ -458,27 +519,27 @@ def transfer_balance():
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.json or {}
-    recipient_identifier = data.get('recipient')
+    recipient_phone = data.get('phone')
     amount = float(data.get('amount', 0))
 
     if amount <= 0 or sender.balance < amount:
-        return jsonify({'error': 'Invalid amount or insufficient main balance.'}), 400
+        return jsonify({'error': 'Invalid amount or insufficient balance.'}), 400
 
-    recipient = User.query.filter((User.telegram_id == recipient_identifier) | (User.username == recipient_identifier)).first()
+    recipient = User.query.filter_by(phone=recipient_phone).first()
     if not recipient or recipient.id == sender.id:
-        return jsonify({'error': 'Recipient not found.'}), 404
+        return jsonify({'error': 'Recipient not found with this phone number.'}), 404
 
     sender.balance -= amount
-    recipient.bonus_balance += amount
+    recipient.balance += amount
 
     transfer_record = Transfer(sender_id=sender.id, receiver_id=recipient.id, amount=amount)
     db.session.add(transfer_record)
     db.session.commit()
 
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'message': 'Transfer successful!'})
 
 # ==========================================
-# ADMIN ROUTES (Fully Synchronized with Dashboard Template)
+# ADMIN ROUTES
 # ==========================================
 
 def admin_required(f):
@@ -495,8 +556,14 @@ def admin_login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        admin = Admin.query.filter_by(username=username).first()
+        if admin and hashlib.sha256(password.encode()).hexdigest() == admin.password_hash:
             session['admin_logged_in'] = True
+            session['is_super_admin'] = admin.is_super
+            return redirect(url_for('admin_dashboard'))
+        elif username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            session['is_super_admin'] = True
             return redirect(url_for('admin_dashboard'))
         flash('Invalid credentials')
     return render_template('admin/login.html')
@@ -510,10 +577,48 @@ def admin_dashboard():
     return render_template('admin/dashboard.html', 
                            games=games_list,
                            users=User.query.all(),
+                           admins=Admin.query.all(),
                            total_players=User.query.count(),
                            active_games=active_count,
                            pending_withdrawals=Transaction.query.filter_by(type='withdraw', status='pending').all(),
                            transactions=Transaction.query.order_by(Transaction.id.desc()).limit(20).all())
+
+@app.route('/admin/staff/add', methods=['POST'])
+@admin_required
+def admin_add_staff():
+    if not session.get('is_super_admin'):
+        flash('ሱፐር አድሚን ብቻ ነው አድሚን መመዝገብ የሚችለው!', 'error')
+        return redirect(url_for('admin_dashboard'))
+        
+    username = request.form.get('username')
+    password = request.form.get('password')
+    
+    existing = Admin.query.filter_by(username=username).first()
+    if existing:
+        flash('ይህ ዩዘርናም ቀድሞ አለ!', 'error')
+    else:
+        new_admin = Admin(
+            username=username,
+            password_hash=hashlib.sha256(password.encode()).hexdigest(),
+            is_super=False
+        )
+        db.session.add(new_admin)
+        db.session.commit()
+        flash('አዲስ አድሚን በተሳካ ሁኔታ ተጨመረ!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
+@admin_required
+def admin_delete_staff(admin_id):
+    if not session.get('is_super_admin'):
+        flash('ፈቃድ የለዎትም!', 'error')
+        return redirect(url_for('admin_dashboard'))
+        
+    adm = Admin.query.get_or_404(admin_id)
+    db.session.delete(adm)
+    db.session.commit()
+    flash('አድሚኑ ተሰርዟል።', 'success')
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/user/<int:user_id>/details')
 @admin_required
@@ -522,129 +627,34 @@ def admin_user_details(user_id):
     user_txs = Transaction.query.filter_by(user_id=user.id).order_by(Transaction.id.desc()).all()
     return render_template('admin/user_details.html', user=user, transactions=user_txs)
 
-@app.route('/admin/staff/add', methods=['POST'])
-@admin_required
-def admin_add_staff():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    role = request.form.get('role') # 'admin' ወይም 'agent'
-    
-    existing = User.query.filter_by(username=username).first()
-    if existing:
-        flash('ይህ ዩዘርናም ቀድሞ አለ!', 'error')
-    else:
-        new_staff = User(
-            telegram_id=int(os.urandom(4).hex(), 16),
-            username=username,
-            phone=role.upper(),
-            balance=0.0
-        )
-        db.session.add(new_staff)
-        db.session.commit()
-        flash(f'አዲስ {role} በተሳካ ሁኔታ ተጨመረ!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete/<string:data_type>/<int:item_id>', methods=['POST'])
-@admin_required
-def admin_delete_data(data_type, item_id):
-    if data_type == 'user':
-        item = User.query.get_or_404(item_id)
-        db.session.delete(item)
-        flash('ተጠቃሚው ተሰርዟል።', 'success')
-    elif data_type == 'transaction':
-        item = Transaction.query.get_or_404(item_id)
-        db.session.delete(item)
-        flash('ትራንዛክሽኑ ተሰርዟል።', 'success')
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
 @app.route('/admin/withdrawal/<int:tx_id>/approve', methods=['POST'])
-@app.route('/admin/withdrawal/approve', methods=['POST'])
 @admin_required
-def admin_approve_withdrawal(tx_id=None):
-    if not tx_id:
-        tx_id = request.form.get('tx_id')
-    tx = Transaction.query.get(tx_id) if tx_id else None
-    if not tx:
-        tx_id_form = request.form.get('id')
-        if tx_id_form:
-            tx = Transaction.query.get(tx_id_form)
-
-    if tx and tx.status == 'pending':
+def admin_approve_withdrawal(tx_id):
+    tx = Transaction.query.get_or_404(tx_id)
+    if tx.status == 'pending':
         tx.status = 'completed'
         tx.completed_at = datetime.utcnow()
         db.session.commit()
         flash('Withdrawal approved successfully!', 'success')
-    else:
-        flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/withdrawal/<int:tx_id>/reject', methods=['POST'])
-@app.route('/admin/withdrawal/reject', methods=['POST'])
 @admin_required
-def admin_reject_withdrawal(tx_id=None):
-    if not tx_id:
-        tx_id = request.form.get('tx_id')
-    tx = Transaction.query.get(tx_id) if tx_id else None
-    if not tx:
-        tx_id_form = request.form.get('id')
-        if tx_id_form:
-            tx = Transaction.query.get(tx_id_form)
-
-    if tx and tx.status == 'pending':
+def admin_reject_withdrawal(tx_id):
+    tx = Transaction.query.get_or_404(tx_id)
+    if tx.status == 'pending':
         tx.status = 'rejected'
         user = User.query.get(tx.user_id)
         if user:
             user.balance += abs(tx.amount)
         db.session.commit()
         flash('Withdrawal rejected and amount refunded.', 'success')
-    else:
-        flash('Transaction not found or already processed.', 'error')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/user/<int:user_id>/update', methods=['POST'])
-@admin_required
-def admin_update_user(user_id):
-    user = User.query.get_or_404(user_id)
-    try:
-        user.balance = float(request.form.get('balance', user.balance))
-        user.bonus_balance = float(request.form.get('bonus_balance', user.bonus_balance))
-        user.coin = int(request.form.get('coin', user.coin))
-        db.session.commit()
-        flash('User balance/coins updated successfully!', 'success')
-    except Exception as e:
-        flash(f'Error updating user: {str(e)}', 'error')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
-@admin_required
-def admin_toggle_block(user_id):
-    user = User.query.get_or_404(user_id)
-    user.is_blocked = not user.is_blocked
-    db.session.commit()
-    status_text = "blocked" if user.is_blocked else "unblocked"
-    flash(f'User successfully {status_text}!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/broadcast', methods=['POST'])
-def admin_broadcast_news():
-    text = request.form.get('broadcast_text')
-    flash('Broadcast feature triggered successfully!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/welcome_image', methods=['POST'])
-def admin_update_welcome_image():
-    image_url = request.form.get('image_url')
-    if image_url:
-        config = load_config()
-        config['welcome_image_file_id'] = image_url
-        save_config(config)
-        flash('Welcome image URL updated successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
+    session.pop('is_super_admin', None)
     return redirect(url_for('admin_login'))
 
 @app.route('/ping')

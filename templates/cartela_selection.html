@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="am">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,88 +8,97 @@
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0; padding: 8px;
+            margin: 0; padding: 12px;
             background-color: #89C149;
             color: #FFFEFE;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; padding-bottom: 75px;
+            min-height: 100vh; padding-bottom: 80px;
         }
         
         .top-stats {
-            display: flex; gap: 6px; justify-content: space-between; margin-bottom: 8px; width: 100%; max-width: 420px;
+            display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; width: 100%; max-width: 440px;
         }
         .stat-box {
-            background: rgba(255, 255, 255, 0.25); color: #FFFEFE; border-radius: 12px; padding: 6px 4px; text-align: center; flex: 1;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.25); color: #FFFEFE; border-radius: 12px; padding: 8px 6px; text-align: center; flex: 1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12); border: 1px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(5px);
         }
-        .stat-box .label { font-size: 9px; text-transform: uppercase; font-weight: bold; }
-        .stat-box .value { font-size: 13px; font-weight: bold; margin-top: 2px; }
+        .stat-box .label { font-size: 10px; text-transform: uppercase; font-weight: bold; opacity: 0.9; }
+        .stat-box .value { font-size: 14px; font-weight: bold; margin-top: 3px; color: #fdd835; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
         .jackpot-banner {
-            width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.2); border-radius: 8px;
-            padding: 4px 10px; margin-bottom: 8px; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;
+            width: 100%; max-width: 440px; background: rgba(255, 255, 255, 0.25); border-radius: 12px;
+            padding: 8px 14px; margin-bottom: 10px; font-size: 12px; font-weight: bold; display: flex; justify-content: space-between;
+            border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 10px rgba(0,0,0,0.12); backdrop-filter: blur(5px);
         }
 
-        .select-subtitle { font-size: 13px; font-weight: bold; margin-bottom: 6px; text-align: center; }
+        .select-subtitle { font-size: 15px; font-weight: bold; margin-bottom: 8px; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
         .cartela-container {
-            width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.18); padding: 8px;
-            border-radius: 14px; margin-bottom: 8px; border: 1px solid rgba(255, 255, 255, 0.25);
+            width: 100%; max-width: 440px; background: rgba(255, 255, 255, 0.25); padding: 10px;
+            border-radius: 16px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15); backdrop-filter: blur(5px);
         }
         .cartela-grid {
-            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-height: 220px; overflow-y: auto;
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; max-height: 240px; overflow-y: auto; padding: 2px;
         }
         
         .cartela-number {
-            background: #ffffff; color: #000000; aspect-ratio: 1; display: flex; align-items: center;
-            justify-content: center; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); user-select: none;
+            background: #ffffff; color: #222222; aspect-ratio: 1; display: flex; align-items: center;
+            justify-content: center; font-size: 12px; font-weight: bold; border-radius: 8px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); user-select: none; transition: 0.15s;
         }
-        .cartela-number.selected { background: #27ae60 !important; color: #ffffff !important; }
-        .cartela-number.unavailable { background: #e67e22 !important; color: #ffffff !important; cursor: not-allowed; opacity: 0.9; }
+        .cartela-number:active { transform: scale(0.92); }
+        .cartela-number.selected { background: #27ae60 !important; color: #ffffff !important; box-shadow: 0 0 8px rgba(39, 174, 96, 0.8); }
+        .cartela-number.unavailable { background: #e67e22 !important; color: #ffffff !important; cursor: not-allowed; opacity: 0.85; }
 
         .selected-list-box {
-            background: #ffffff; color: #222; width: 100%; max-width: 420px; padding: 8px;
-            border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+            background: rgba(255, 255, 255, 0.25); color: #fff; width: 100%; max-width: 440px; padding: 10px;
+            border-radius: 12px; text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12); border: 1px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(5px);
         }
 
-        .bottom-preview-area { width: 100%; max-width: 420px; display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; }
+        .bottom-preview-area { width: 100%; max-width: 440px; display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
 
         .mini-card-preview {
-            background: rgba(255, 255, 255, 0.25); border-radius: 10px; padding: 6px; width: 120px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.25); border-radius: 12px; padding: 8px; width: 130px;
+            border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 10px rgba(0,0,0,0.12); backdrop-filter: blur(5px);
         }
-        .mini-card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+        .mini-card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
         .mini-cell {
-            background: #ffffff; color: #000000; font-size: 9px; aspect-ratio: 1; display: flex;
-            align-items: center; justify-content: center; border-radius: 2px; font-weight: bold;
+            background: #ffffff; color: #000000; font-size: 10px; aspect-ratio: 1; display: flex;
+            align-items: center; justify-content: center; border-radius: 3px; font-weight: bold;
         }
         .mini-cell.star { background: #27ae60; color: #fff; }
 
-        .right-action-wrapper { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-        .btn-row { display: flex; gap: 6px; }
+        .right-action-wrapper { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .btn-row { display: flex; gap: 8px; }
         .btn-refresh, .btn-start {
-            border: none; padding: 10px 0; flex: 1; border-radius: 20px; font-size: 13px; font-weight: bold;
-            cursor: pointer; color: white; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            border: none; padding: 12px 0; flex: 1; border-radius: 20px; font-size: 14px; font-weight: bold;
+            cursor: pointer; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.2s;
         }
         .btn-refresh { background: #1e88e5; }
-        .btn-start { background: #e74c3c; }
+        .btn-start { background: #27ae60; }
 
         .fairness-box {
-            background: #ffffff; color: #222222; padding: 6px; border-radius: 8px; text-align: center;
-            font-size: 8px; word-break: break-all; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.25); color: #fff; padding: 8px; border-radius: 10px; text-align: center;
+            font-size: 9px; word-break: break-all; box-shadow: 0 4px 10px rgba(0,0,0,0.12); border: 1px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(5px);
         }
-        .fairness-title { font-weight: bold; margin-bottom: 2px; text-transform: uppercase; font-size: 9px; }
-        .fairness-id { background: #e0e0e0; display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 2px; }
+        .fairness-title { font-weight: bold; margin-bottom: 3px; text-transform: uppercase; font-size: 10px; color: #fdd835; }
+        .fairness-id { background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: bold; margin-bottom: 3px; color: #fdd835; }
 
-        /* Bottom Nav */
+        /* Bottom Nav - Modern Unified Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
-            display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1000;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
+            border-top-left-radius: 16px; border-top-right-radius: 16px;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #666; font-size: 11px; font-weight: bold; }
-        .nav-item.active { color: #1e88e5; }
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; text-decoration: none; 
+            color: #777; font-size: 11px; font-weight: bold; transition: 0.2s ease;
+        }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+        .nav-item.active { color: #27ae60; transform: translateY(-2px); }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -98,24 +107,25 @@
         .modal-box {
             background: #1b5e20; color: white; width: 85%; max-width: 320px;
             padding: 20px; border-radius: 16px; text-align: center; border: 2px solid #fdd835;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
     </style>
 </head>
 <body>
 
     <div class="top-stats">
-        <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance | default('0.00') }}</div></div>
-        <div class="stat-box"><div class="label">Bonus</div><div class="value">{{ bonus | default('0.00') }}</div></div>
-        <div class="stat-box"><div class="label">Active Game</div><div class="value">#{{ game_id }}</div></div>
-        <div class="stat-box"><div class="label">Stake</div><div class="value" id="entry-price">{{ entry_price }}</div></div>
+        <div class="stat-box"><div class="label">ዋሌት</div><div class="value" id="wallet-val">{{ balance | default('0.00') }} ብር</div></div>
+        <div class="stat-box"><div class="label">ቦነስ</div><div class="value">{{ bonus | default('0.00') }} ብር</div></div>
+        <div class="stat-box"><div class="label">ጌም ኮድ</div><div class="value">#{{ game_id }}</div></div>
+        <div class="stat-box"><div class="label">መደብ</div><div class="value" id="entry-price">{{ entry_price }} ብር</div></div>
     </div>
 
     <div class="jackpot-banner">
-        <span>JACKPOT</span>
-        <span>Active / Persistent</span>
+        <span>ጃክፖት (JACKPOT)</span>
+        <span style="color: #fdd835;">ንቁ / ቋሚ (Active)</span>
     </div>
 
-    <div class="select-subtitle">Select Up to 4 Cartelas (1-200) [<span id="selected-count">0</span>/4]</div>
+    <div class="select-subtitle">እስከ 4 ካርቴላዎች መምረጥ ይችላሉ (ከ 1 እስከ 200) [<span id="selected-count">0</span>/4]</div>
 
     <div class="cartela-container">
         <div class="cartela-grid" id="cartelaGrid">
@@ -129,44 +139,44 @@
     </div>
 
     <div class="selected-list-box" id="selectedListLbl">
-        Selected Cartelas: None
+        የተመረጡ ካርቴላዎች: የሉም
     </div>
 
     <div class="bottom-preview-area">
         <div class="mini-card-preview">
-            <div id="previewTitle" style="font-size:9px; font-weight:bold; text-align:center; margin-bottom:3px;">Preview</div>
+            <div id="previewTitle" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:#fdd835;">ቅድመ-ዕይታ</div>
             <div class="mini-card-grid" id="miniCartelaGrid"></div>
         </div>
 
         <div class="right-action-wrapper">
             <div class="btn-row">
-                <button class="btn-refresh" onclick="location.reload()">Refresh</button>
-                <button class="btn-start" onclick="confirmJoin()">Play Bingo</button>
+                <button class="btn-refresh" onclick="location.reload()">ማደስ</button>
+                <button class="btn-start" onclick="confirmJoin()">ጨዋታ ጀምር</button>
             </div>
 
             <!-- Fairness Hash Block with Dynamic Game ID and Static Room Hash -->
             <div class="fairness-box">
-                <div class="fairness-title">Game Hash (Fairness)</div>
-                <div class="fairness-id">ID: #{{ game_id }}</div>
+                <div class="fairness-title">የጨዋታ እውነተኛነት (Fairness Hash)</div>
+                <div class="fairness-id">අአቁም: #{{ game_id }}</div>
                 <div id="hashValue">{{ game_hash }}</div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item active"><span>🎮</span> Game</a>
-        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
-        <a href="/history" class="nav-item"><span>📋</span> History</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
-        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
+        <a href="/" class="nav-item active"><span>🎮</span> ጨዋታ</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> ፉክክር</a>
+        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
+        <a href="/profile" class="nav-item"><span>👤</span> ප්‍රိုፋይል</a>
     </div>
 
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
-            <h3 style="color:#fdd835; margin-top:0;">⚠️ Notice</h3>
-            <p id="modal-error-text">Game already started or finished!</p>
-            <button style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold;" onclick="closeModal()">OK</button>
+            <h3 style="color:#fdd835; margin-top:0;">⚠️ ማስታወሻ</h3>
+            <p id="modal-error-text">ጨዋታው አስቀድሞ ተጀምሯል ወይም አልቋል!</p>
+            <button style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold; cursor:pointer;" onclick="closeModal()">እሺ</button>
         </div>
     </div>
 
@@ -193,7 +203,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'active' || data.status === 'finished') {
-                    document.getElementById('modal-error-text').innerText = "Game already started or finished!";
+                    document.getElementById('modal-error-text').innerText = "ጨዋታው አስቀድሞ ተጀምሯል ወይም አልቋል!";
                     document.getElementById('topupModal').style.display = 'flex';
                     setTimeout(() => { window.location.href = `/game/${gameId}`; }, 2000);
                     return;
@@ -238,7 +248,7 @@
         function toggleCartela(number) {
             let target = document.getElementById('cartela-' + number);
             if (!target || target.classList.contains('unavailable')) {
-                alert('This cartela number is already taken or unavailable.');
+                alert('ይህ ካርቴላ ቁጥር ተይዟል ወይም መምረጥ አይቻልም።');
                 return;
             }
 
@@ -248,7 +258,7 @@
                 target.classList.remove('selected');
             } else {
                 if (selectedCartelas.length >= maxCards) {
-                    alert('Maximum 4 cartelas allowed!');
+                    alert('ከ 4 ካርቴላ በላይ መምረጥ አይቻልም!');
                     return;
                 }
                 selectedCartelas.push(number);
@@ -258,9 +268,9 @@
             document.getElementById('selected-count').innerText = selectedCartelas.length;
             
             if (selectedCartelas.length === 0) {
-                document.getElementById('selectedListLbl').innerText = "Selected Cartelas: None";
+                document.getElementById('selectedListLbl').innerText = "የተመረጡ ካርቴላዎች: የሉም";
             } else {
-                document.getElementById('selectedListLbl').innerText = "Selected: " + selectedCartelas.map(id => `#${id}`).join(', ');
+                document.getElementById('selectedListLbl').innerText = "የተመረጡ: " + selectedCartelas.map(id => `#${id}`).join(', ');
                 renderPreview(selectedCartelas[selectedCartelas.length - 1]);
             }
         }
@@ -269,7 +279,7 @@
             let grid = document.getElementById('miniCartelaGrid');
             if (!grid) return;
             grid.innerHTML = '';
-            document.getElementById('previewTitle').innerText = `#${cardId}`;
+            document.getElementById('previewTitle').innerText = `#${cardId} ቅድመ-ዕይታ`;
 
             let numbers = generateCartelaNumbers(cardId);
             numbers.forEach((num, idx) => {
@@ -282,7 +292,7 @@
 
         function confirmJoin() {
             if (selectedCartelas.length === 0) {
-                alert('Please select at least 1 cartela!');
+                alert('እባክዎ ቢያንስ 1 ካርቴላ ይምረጡ!');
                 return;
             }
 
@@ -306,7 +316,7 @@
                 }
             })
             .catch(err => {
-                document.getElementById('modal-error-text').innerText = "Connection error!";
+                document.getElementById('modal-error-text').innerText = "የኔትወርክ ስህተት አጋጥሟል!";
                 document.getElementById('topupModal').style.display = 'flex';
             });
         }

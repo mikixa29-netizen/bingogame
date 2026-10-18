@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="am">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,102 +8,111 @@
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0; padding: 10px;
+            margin: 0; padding: 12px;
             background-color: #89C149;
             color: #FFFEFE;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; padding-bottom: 75px;
+            min-height: 100vh; padding-bottom: 80px;
         }
         
         .app-header {
             width: 100%; max-width: 440px; display: flex; justify-content: space-between; align-items: center;
-            padding: 4px 6px; font-size: 13px; font-weight: bold; margin-bottom: 10px;
+            padding: 8px 12px; font-size: 13.5px; font-weight: bold; margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.2); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .live-indicator { display: flex; align-items: center; gap: 5px; color: #fff; }
-        .live-dot { width: 8px; height: 8px; background-color: #2ecc71; border-radius: 50%; box-shadow: 0 0 6px #2ecc71; }
+        .live-indicator { display: flex; align-items: center; gap: 6px; color: #fff; }
+        .live-dot { width: 9px; height: 9px; background-color: #2ecc71; border-radius: 50%; box-shadow: 0 0 8px #2ecc71; }
 
         .section-header {
             width: 100%; max-width: 440px; display: flex; align-items: center; gap: 6px;
-            font-size: 14px; font-weight: bold; color: #ffffff; margin: 10px 0 6px 0; letter-spacing: 0.5px;
+            font-size: 16px; font-weight: bold; color: #ffffff; margin: 10px 0 6px 0; letter-spacing: 0.5px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
         
         .table-headers {
             width: 100%; max-width: 440px; display: grid; grid-template-columns: 1fr 1.5fr 1fr;
-            padding: 4px 8px; font-size: 10px; font-weight: bold; opacity: 0.9; text-transform: uppercase;
+            padding: 6px 10px; font-size: 11px; font-weight: bold; opacity: 0.95; text-transform: uppercase;
         }
         .table-headers div:nth-child(2) { text-align: center; }
         .table-headers div:nth-child(3) { text-align: right; }
 
         .room-card {
-            background: rgba(255, 255, 255, 0.2); border-radius: 12px; width: 100%; max-width: 440px;
-            margin-bottom: 10px; position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.25); border-radius: 16px; width: 100%; max-width: 440px;
+            margin-bottom: 12px; position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15); backdrop-filter: blur(5px);
         }
-        .room-row-content { display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: center; padding: 10px 10px 6px 10px; }
-        .room-bet { font-size: 20px; font-weight: bold; color: #fff; }
-        .room-bet span { font-size: 10px; display: block; opacity: 0.85; }
+        .room-row-content { display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: center; padding: 12px 12px 8px 12px; }
+        .room-bet { font-size: 22px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .room-bet span { font-size: 11px; display: block; opacity: 0.9; }
         
         .room-win-info { text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .win-amount { font-size: 17px; font-weight: bold; color: #f1c40f; display: flex; align-items: center; gap: 4px; }
-        .win-players { font-size: 10px; opacity: 0.9; margin-top: 1px; }
+        .win-amount { font-size: 18px; font-weight: bold; color: #fdd835; display: flex; align-items: center; gap: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .win-players { font-size: 11px; opacity: 0.95; margin-top: 2px; }
 
         .room-action-area { display: flex; flex-direction: column; align-items: flex-end; position: relative; }
         
         .status-badge-container { display: flex; flex-direction: column; align-items: flex-end; }
-        .status-badge { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-bottom: 2px; text-align: center; }
+        .status-badge { font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 6px; margin-bottom: 3px; text-align: center; }
         .status-badge.active-count { background: #3498db; color: white; }
-        .status-badge.ready { background: rgba(46, 204, 113, 0.7); color: white; }
+        .status-badge.ready { background: rgba(46, 204, 113, 0.85); color: white; }
         .starts-timer-box { 
-            background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255,255,255,0.4); 
-            border-radius: 6px; padding: 2px 6px; text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 3px; 
+            background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255,255,255,0.5); 
+            border-radius: 6px; padding: 2px 8px; text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 4px; 
         }
 
         .btn-join {
-            background: #27ae60; color: white; border: none; padding: 6px 20px; border-radius: 16px;
-            font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; margin-top: 2px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s;
+            background: #27ae60; color: white; border: none; padding: 7px 22px; border-radius: 18px;
+            font-size: 13px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; margin-top: 2px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.1s;
         }
         .btn-join:active { transform: scale(0.95); }
 
-        .jackpot-bar-container { width: 100%; background: rgba(0,0,0,0.25); height: 12px; position: relative; margin-top: 6px; display: flex; align-items: center; }
-        .jackpot-text { position: absolute; width: 100%; text-align: center; font-size: 8.5px; font-weight: bold; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2; }
-        .jackpot-fill { height: 100%; background: #f1c40f; transition: width 0.4s ease; z-index: 1; }
+        .jackpot-bar-container { width: 100%; background: rgba(0,0,0,0.3); height: 14px; position: relative; margin-top: 6px; display: flex; align-items: center; }
+        .jackpot-text { position: absolute; width: 100%; text-align: center; font-size: 9px; font-weight: bold; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2; }
+        .jackpot-fill { height: 100%; background: #fdd835; transition: width 0.4s ease; z-index: 1; }
 
         .demo-card {
-            background: rgba(255, 255, 255, 0.2); border-radius: 12px; width: 100%; max-width: 440px;
-            margin-bottom: 8px; padding: 12px 10px; display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.25); border-radius: 16px; width: 100%; max-width: 440px;
+            margin-bottom: 12px; padding: 14px 12px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 6px 15px rgba(0,0,0,0.15); backdrop-filter: blur(5px);
         }
-        .demo-info div:first-child { font-size: 15px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 5px; }
-        .demo-info div:last-child { font-size: 10px; opacity: 0.85; margin-top: 2px; }
-        .demo-buttons { display: flex; gap: 6px; }
-        .btn-open { background: rgba(255,255,255,0.25); color: white; border: none; padding: 6px 12px; border-radius: 14px; font-size: 11px; font-weight: bold; cursor: pointer; }
-        .btn-try { background: #34495e; color: white; border: none; padding: 6px 16px; border-radius: 14px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .demo-info div:first-child { font-size: 16px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .demo-info div:last-child { font-size: 11px; opacity: 0.9; margin-top: 3px; }
+        .demo-buttons { display: flex; gap: 8px; }
+        .btn-open { background: rgba(255,255,255,0.3); color: white; border: none; padding: 7px 14px; border-radius: 16px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-try { background: #34495e; color: white; border: none; padding: 7px 18px; border-radius: 16px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
 
-        /* Bottom Nav */
+        /* Bottom Nav - Modern Unified Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
-            display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1000;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
+            border-top-left-radius: 16px; border-top-right-radius: 16px;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #666; font-size: 11px; font-weight: bold; }
-        .nav-item.active { color: #1e88e5; }
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; text-decoration: none; 
+            color: #777; font-size: 11px; font-weight: bold; transition: 0.2s ease;
+        }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+        .nav-item.active { color: #27ae60; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
     <!-- Header Stats -->
     <div class="app-header">
-        <div class="live-indicator"><div class="live-dot"></div> Live</div>
-        <div>Bonus: <span id="hdr-bonus">{{ bonus_balance | default('0.00') }}</span></div>
-        <div>Balance: <span id="hdr-balance">{{ main_balance | default('0.00') }}</span></div>
+        <div class="live-indicator"><div class="live-dot"></div> በህይወት (Live)</div>
+        <div>ቦነስ: <span id="hdr-bonus" style="color: #fdd835;">{{ bonus_balance | default('0.00') }}</span> ብር</div>
+        <div>ባላንስ: <span id="hdr-balance" style="color: #fdd835;">{{ main_balance | default('0.00') }}</span> ብር</div>
     </div>
 
     <!-- BINGO GAMES SECTION HEADER -->
-    <div class="section-header">🎮 BINGO GAMES</div>
+    <div class="section-header">🎮 የቢንጎ ጨዋታ ክፍሎች (BINGO ROOMS)</div>
     <div class="table-headers">
-        <div>Bet</div>
-        <div>Win / Player</div>
-        <div style="text-align: right;">Status & Join</div>
+        <div>መደብ (Bet)</div>
+        <div>ሽልማት / ተጫዋች</div>
+        <div style="text-align: right;">ሁኔታ እና መግቢያ</div>
     </div>
 
     <!-- Dynamic Room List Container -->
@@ -112,28 +121,26 @@
     <!-- FREE PRACTICE MODE -->
     <div class="demo-card">
         <div class="demo-info">
-            <div>FREE <span>Practice Mode</span></div>
-            <div>No real money (Max 5 Cartelas)</div>
+            <div>🎮 <span>የነጻ ልምምድ (Demo Mode)</span></div>
+            <div>እውነተኛ ገንዘብ አይጠይቅም (እስከ 5 ካርቴላ)</div>
         </div>
         <div class="demo-buttons">
-            <button class="btn-open" onclick="alert('Demo Mode Rules: Practice bingo with default cartelas!')">OPEN</button>
-            <button class="btn-try" onclick="startDemoMode()">TRY</button>
+            <button class="btn-open" onclick="alert('የዴሞ ጨዋታ ደንብ: በነጻ ካርቴላዎች መለማመድ ይችላሉ!')">መመሪያ</button>
+            <button class="btn-try" onclick="startDemoMode()">ሞክር</button>
         </div>
     </div>
 
-    <!-- Bottom Navigation Bar -->
+    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item active"><span>🏠</span> Game</a>
-        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
-        <a href="/history" class="nav-item"><span>📜</span> History</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
-        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
+        <a href="/" class="nav-item active"><span>🎮</span> ጨዋታ</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> ፉክክር</a>
+        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
+        <a href="/profile" class="nav-item"><span>👤</span> ප්‍රိုፋይል</a>
     </div>
 
     <script>
         const roomStakes = [10, 20, 50, 100];
-        
-        // Deduction percentages per stake room: 10: 1.25%, 20: 1.75%, 50: 2%, 100: 4%
         const deductionPercentages = { 10: 0.0125, 20: 0.0175, 50: 0.02, 100: 0.04 };
 
         function fetchGamesLobbyData() {
@@ -176,16 +183,16 @@
                 if (status === 'countdown') {
                     const secs = countdown < 10 ? `0${countdown}` : countdown;
                     statusBadgeHtml = `
-                        <div class="status-badge active-count">ACTIVE ${activePlayers}</div>
-                        <div class="starts-timer-box">STARTS 0:${secs}</div>
+                        <div class="status-badge active-count">ተጫዋቾች ${activePlayers}</div>
+                        <div class="starts-timer-box">ይጀምራል 0:${secs}</div>
                     `;
                 } else if (status === 'active' || status === 'playing') {
                     statusBadgeHtml = `
-                        <div class="status-badge active-count" style="background:#e67e22;">PLAYING</div>
+                        <div class="status-badge active-count" style="background:#e67e22;">በመጫወት ላይ</div>
                     `;
                 } else {
                     statusBadgeHtml = `
-                        <div class="status-badge ready">ACTIVE ${activePlayers} READY</div>
+                        <div class="status-badge ready">ዝግጁ (${activePlayers})</div>
                     `;
                 }
 
@@ -193,20 +200,20 @@
                 roomCard.className = 'room-card';
                 roomCard.innerHTML = `
                     <div class="room-row-content">
-                        <div class="room-bet">${stake} <span>ETB</span></div>
+                        <div class="room-bet">${stake} <span>ብር</span></div>
                         <div class="room-win-info">
-                            <div class="win-amount">🏆 ${winAmount.toFixed(0)}</div>
-                            <div class="win-players">${activePlayers} players</div>
+                            <div class="win-amount">🏆 ${winAmount.toFixed(0)} ብር</div>
+                            <div class="win-players">${activePlayers} ተጫዋቾች</div>
                         </div>
                         <div class="room-action-area">
                             <div class="status-badge-container">
                                 ${statusBadgeHtml}
                             </div>
-                            <button class="btn-join" onclick="joinRoom(${gData.id || gameId}, ${stake}, '${status}')">JOIN</button>
+                            <button class="btn-join" onclick="joinRoom(${gData.id || gameId}, ${stake}, '${status}')">ግባ</button>
                         </div>
                     </div>
                     <div class="jackpot-bar-container">
-                        <div class="jackpot-text">JACKPOT ${jackpotCurrent} / ${jackpotMax}</div>
+                        <div class="jackpot-text">ጃክፖት (JACKPOT) ${jackpotCurrent} / ${jackpotMax}</div>
                         <div class="jackpot-fill" style="width: ${jackpotPct}%;"></div>
                     </div>
                 `;

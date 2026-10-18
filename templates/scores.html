@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="am">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,64 +8,167 @@
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0; padding: 10px; background-color: #89C149; color: #FFFEFE;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 70px;
+            margin: 0; padding: 12px; background-color: #89C149; color: #FFFEFE;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 80px;
         }
-        .header-title { font-size: 22px; font-weight: bold; margin: 15px 0; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        
-        .scores-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; }
+        .header-container {
+            width: 100%; max-width: 440px; display: flex; justify-content: space-between; align-items: center;
+            margin: 10px 0 15px 0;
+        }
+        .header-title { font-size: 22px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+        .refresh-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+
+        /* Tabs (Today, This Week, This Month) */
+        .tabs-container {
+            width: 100%; max-width: 440px; display: flex; background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px; padding: 4px; margin-bottom: 15px; gap: 4px;
+        }
+        .tab-btn {
+            flex: 1; padding: 8px; text-align: center; border: none; background: transparent;
+            color: #fff; font-size: 13px; font-weight: bold; border-radius: 9px; cursor: pointer; transition: 0.2s;
+        }
+        .tab-btn.active { background: rgba(255, 255, 255, 0.3); color: #fdd835; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+
+        /* Top Winners Circles */
+        .top-circles-container {
+            width: 100%; max-width: 440px; display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding: 5px 0;
+        }
+        .top-circle-item {
+            width: 45px; height: 45px; border-radius: 50%; background: #27ae60; border: 2px solid #fdd835;
+            display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); flex-shrink: 0;
+        }
+
+        .scores-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 10px; }
         
         .card-box {
-            background: rgba(255, 255, 255, 0.2); width: 100%; max-width: 420px;
-            border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            font-size: 14px; font-weight: bold;
+            background: rgba(255, 255, 255, 0.25); width: 100%;
+            border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+            backdrop-filter: blur(5px);
         }
-        .rank-badge {
-            background: #f1c40f; color: #111; width: 26px; height: 26px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;
-            margin-right: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        .player-left { display: flex; align-items: center; gap: 12px; }
+        .avatar-badge {
+            width: 40px; height: 40px; border-radius: 50%; background: #1b5e20; color: #fdd835;
+            display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;
+            border: 1.5px solid #fdd835; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .player-info { display: flex; align-items: center; gap: 6px; }
-        .score-val { color: #f1c40f; font-size: 15px; }
+        .player-details { display: flex; flex-direction: column; gap: 2px; }
+        .player-name { font-size: 15px; font-weight: bold; color: #fff; }
+        .player-phone { font-size: 11px; opacity: 0.85; color: #f3f3f3; }
+        
+        .score-val { color: #fdd835; font-size: 18px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
-        .empty-card { text-align: center; padding: 20px; background: rgba(255,255,255,0.2); border-radius: 12px; font-weight: bold; }
+        .empty-card { text-align: center; padding: 25px; background: rgba(255,255,255,0.2); border-radius: 14px; font-weight: bold; font-size: 14px; }
 
-        /* Bottom Nav */
+        /* Bottom Nav - Modern Unified Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
-            display: flex; justify-content: space-around; padding: 8px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1000;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
+            border-top-left-radius: 16px; border-top-right-radius: 16px;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #666; font-size: 11px; font-weight: bold; }
-        .nav-item.active { color: #1e88e5; }
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; text-decoration: none; 
+            color: #777; font-size: 11px; font-weight: bold; transition: 0.2s ease;
+        }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+        .nav-item.active { color: #27ae60; transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <div class="header-title">🏆 TOP 10 LEADERBOARD</div>
-    
-    <div class="scores-container">
-        {% for score in top_scores %}
-        <div class="card-box">
-            <div class="player-info">
-                <div class="rank-badge">{{ loop.index }}</div>
-                <div>👤 {{ score.username | default('Player') }}</div>
-            </div>
-            <div class="score-val">⭐ {{ score.games_won | default(score.points) }} Wins</div>
-        </div>
-        {% else %}
-        <div class="empty-card">
-            No scores available yet. Play and win to appear on the leaderboard!
-        </div>
-        {% endfor %}
+    <div class="header-container">
+        <div class="header-title">🏆 የውጤት ሰሌዳ (Scores)</div>
+        <button class="refresh-btn" onclick="loadScores('today')">🔄</button>
     </div>
 
-    <div class="bottom-nav">
-        <a href="/" class="nav-item"><span>🎮</span> Game</a>
-        <a href="/scores" class="nav-item active"><span>🏆</span> Scores</a>
-        <a href="/history" class="nav-item"><span>📋</span> History</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
-        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
+    <!-- Tabs (Today, This Week, This Month) -->
+    <div class="tabs-container">
+        <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">ዛሬ (Today)</button>
+        <button class="tab-btn" id="tab-week" onclick="switchTab('week')">ይህ ሳምንት</button>
+        <button class="tab-btn" id="tab-month" onclick="switchTab('month')">ይህ ወር</button>
     </div>
+
+    <!-- Top Winners Circles Row -->
+    <div class="top-circles-container" id="topCirclesContainer">
+        <!-- Dynamically loaded -->
+    </div>
+    
+    <!-- Leaderboard List -->
+    <div class="scores-container" id="scoresContainer">
+        <div class="empty-card">መረጃ በመጫን ላይ...</div>
+    </div>
+
+    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
+    <div class="bottom-nav">
+        <a href="/" class="nav-item"><span>🎮</span> ጨዋታ</a>
+        <a href="/scores" class="nav-item active"><span>🏆</span> ፉክክር</a>
+        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
+        <a href="/profile" class="nav-item"><span>👤</span> ප්‍රိုፋይል</a>
+    </div>
+
+    <script>
+        let currentFilter = 'today';
+
+        function switchTab(filter) {
+            currentFilter = filter;
+            document.getElementById('tab-today').classList.toggle('active', filter === 'today');
+            document.getElementById('tab-week').classList.toggle('active', filter === 'week');
+            document.getElementById('tab-month').classList.toggle('active', filter === 'month');
+            loadScores(filter);
+        }
+
+        function loadScores(filter) {
+            fetch(`/scores/data?timeframe=${filter}`)
+            .then(res => res.json())
+            .then(data => {
+                const scoresList = data.scores || [];
+                const container = document.getElementById('scoresContainer');
+                const circlesContainer = document.getElementById('topCirclesContainer');
+                
+                container.innerHTML = '';
+                circlesContainer.innerHTML = '';
+
+                if (scoresList.length === 0) {
+                    container.innerHTML = `<div class="empty-card">ለዚህ የጊዜ ገደብ የተመዘገበ አሸናፊ የለም።</div>`;
+                    return;
+                }
+
+                // Render Top Circles (Top 5)
+                scoresList.slice(0, 5).forEach(player => {
+                    const initial = player.username ? player.username.charAt(0).toUpperCase() : 'P';
+                    const circle = document.createElement('div');
+                    circle.className = 'top-circle-item';
+                    circle.innerText = initial;
+                    circlesContainer.appendChild(circle);
+                });
+
+                // Render List (All players with >= 1 win)
+                scoresList.forEach((player, index) => {
+                    const initial = player.username ? player.username.charAt(0).toUpperCase() : 'P';
+                    const card = document.createElement('div');
+                    card.className = 'card-box';
+                    card.innerHTML = `
+                        <div class="player-left">
+                            <div class="avatar-badge">${initial}</div>
+                            <div class="player-details">
+                                <div class="player-name">${player.username}</div>
+                                <div class="player-phone">${player.phone}</div>
+                            </div>
+                        </div>
+                        <div class="score-val">${player.wins}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            })
+            .catch(err => {
+                console.error('Error loading scores:', err);
+            });
+        }
+
+        // Initial load
+        loadScores('today');
+    </script>
 </body>
 </html>
