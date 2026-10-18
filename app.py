@@ -3,12 +3,12 @@ import random
 import json
 import logging
 import hashlib
-from functools import wraps
 from flask import Flask, jsonify, request, session, render_template, redirect, url_for, flash
 from datetime import datetime, date, timedelta
 from database import db, init_db
 from game_logic import BingoGame
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
+from adminpanel import admin_bp  # Import admin blueprint
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -20,6 +20,9 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
 init_db(app)
+
+# Register Admin Blueprint to fix all admin.* routing BuildErrors
+app.register_blueprint(admin_bp)
 
 from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory, Admin
 
@@ -400,7 +403,6 @@ def game_status_api(game_id):
         for c in cards:
             taken_cartelas.append(c.get('cartela_number'))
 
-    # Auto-record game history and credit winners if game finished automatically
     if (game.status in ['finished', 'completed'] or game.winners) and not getattr(game, '_history_recorded', False):
         game._history_recorded = True
         prize_per_winner = round(pool / max(len(game.winners), 1), 2) if game.winners else 0.0
@@ -624,130 +626,6 @@ def transfer_balance():
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Transfer successful!'})
-
-# ==========================================
-# ADMIN ROUTES (Fixed 500 Error & English)
-# ==========================================
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'admin_logged_in' not in session:
-            return redirect(url_for('admin_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-@app.route('/admin/login', methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        try:
-            admin = Admin.query.filter_by(username=username).first()
-            if admin and hashlib.sha256(password.encode()).hexdigest() == admin.password_hash:
-                session['admin_logged_in'] = True
-                session['is_super_admin'] = admin.is_super
-                return redirect(url_for('admin_dashboard'))
-        except Exception:
-            pass
-            
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            session['admin_logged_in'] = True
-            session['is_super_admin'] = True
-            return redirect(url_for('admin_dashboard'))
-            
-        flash('Invalid username or password!')
-    return render_template('admin/login.html')
-
-@app.route('/admin/dashboard')
-@admin_required
-def admin_dashboard():
-    games_list = list(active_games.values())
-    active_count = len([g for g in games_list if hasattr(g, 'status') and g.status in ["active", "countdown", "playing"]])
-    
-    return render_template('admin/dashboard.html', 
-                           games=games_list,
-                           users=User.query.all(),
-                           admins=Admin.query.all(),
-                           total_players=User.query.count(),
-                           active_games=active_count,
-                           pending_withdrawals=Transaction.query.filter_by(type='withdraw', status='pending').all(),
-                           transactions=Transaction.query.order_by(Transaction.id.desc()).limit(20).all())
-
-@app.route('/admin/staff/add', methods=['POST'])
-@admin_required
-def admin_add_staff():
-    if not session.get('is_super_admin'):
-        flash('Only super admin can add staff!', 'error')
-        return redirect(url_for('admin_dashboard'))
-        
-    username = request.form.get('username')
-    password = request.form.get('password')
-    
-    existing = Admin.query.filter_by(username=username).first()
-    if existing:
-        flash('Username already exists!', 'error')
-    else:
-        new_admin = Admin(
-            username=username,
-            password_hash=hashlib.sha256(password.encode()).hexdigest(),
-            is_super=False
-        )
-        db.session.add(new_admin)
-        db.session.commit()
-        flash('New staff added successfully!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
-@admin_required
-def admin_delete_staff(admin_id):
-    if not session.get('is_super_admin'):
-        flash('Unauthorized action!', 'error')
-        return redirect(url_for('admin_dashboard'))
-        
-    adm = Admin.query.get_or_404(admin_id)
-    db.session.delete(adm)
-    db.session.commit()
-    flash('Staff deleted successfully.', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/user/<int:user_id>/details')
-@admin_required
-def admin_user_details(user_id):
-    user = User.query.get_or_404(user_id)
-    user_txs = Transaction.query.filter_by(user_id=user.id).order_by(Transaction.id.desc()).all()
-    return render_template('admin/user_details.html', user=user, transactions=user_txs)
-
-@app.route('/admin/withdrawal/<int:tx_id>/approve', methods=['POST'])
-@admin_required
-def admin_approve_withdrawal(tx_id):
-    tx = Transaction.query.get_or_404(tx_id)
-    if tx.status == 'pending':
-        tx.status = 'completed'
-        tx.completed_at = datetime.utcnow()
-        db.session.commit()
-        flash('Withdrawal approved successfully!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/withdrawal/<int:tx_id>/reject', methods=['POST'])
-@admin_required
-def admin_reject_withdrawal(tx_id):
-    tx = Transaction.query.get_or_404(tx_id)
-    if tx.status == 'pending':
-        tx.status = 'rejected'
-        user = User.query.get(tx.user_id)
-        if user:
-            user.balance += abs(tx.amount)
-        db.session.commit()
-        flash('Withdrawal rejected and amount refunded.', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/logout')
-def admin_logout():
-    session.pop('admin_logged_in', None)
-    session.pop('is_super_admin', None)
-    return redirect(url_for('admin_login'))
 
 @app.route('/ping')
 def ping():
