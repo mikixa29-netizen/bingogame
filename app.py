@@ -23,6 +23,21 @@ init_db(app)
 
 from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory, Admin
 
+# Auto-create default admin and ensure tables exist on startup
+with app.app_context():
+    db.create_all()
+    try:
+        if not Admin.query.filter_by(username=ADMIN_USERNAME).first():
+            default_admin = Admin(
+                username=ADMIN_USERNAME,
+                password_hash=hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest(),
+                is_super=True
+            )
+            db.session.add(default_admin)
+            db.session.commit()
+    except Exception as e:
+        logger.exception(f"Error creating default admin: {e}")
+
 active_games = {}
 
 # Rooms Setup: 10, 20, 50, 100 ETB and Demo (999)
@@ -155,8 +170,8 @@ def list_games():
     games_data = []
     for g_id, game in active_games.items():
         if game.entry_price >= 0 and game.status in ["waiting", "countdown", "active", "playing"]:
-            # Check if user already joined this game -> re-join routing
             user_joined = user and (user.telegram_id in game.players)
+            pool, _ = game.update_pool_and_bonus()
             games_data.append({
                 'id': g_id,
                 'unique_code': getattr(game, 'unique_code', str(g_id)),
@@ -165,7 +180,7 @@ def list_games():
                 'entry_price': game.entry_price,
                 'status': game.status,
                 'countdown_remaining': game.get_remaining_countdown() if game.status == 'countdown' else 30,
-                'jackpot_pool': getattr(game, 'jackpot_pool', 100.0),
+                'jackpot_pool': round(pool, 2),
                 'user_joined': user_joined
             })
     return jsonify({
@@ -258,7 +273,6 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
-    # Re-join check: If user already picked cartela, go straight to play room
     if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
         return redirect(url_for('play_game', game_id=g_id))
 
@@ -304,7 +318,6 @@ def join_game(game_id):
     if not cartela_numbers:
         return jsonify({'error': 'Please select at least one cartela number'}), 400
 
-    # If already joined, just return success to proceed
     if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
         session['active_game_id'] = game_id
         return jsonify({'success': True, 'game_id': game_id})
@@ -387,6 +400,49 @@ def game_status_api(game_id):
         for c in cards:
             taken_cartelas.append(c.get('cartela_number'))
 
+    # Auto-record game history and credit winners if game finished automatically
+    if (game.status in ['finished', 'completed'] or game.winners) and not getattr(game, '_history_recorded', False):
+        game._history_recorded = True
+        prize_per_winner = round(pool / max(len(game.winners), 1), 2) if game.winners else 0.0
+        
+        for winner_info in game.winners:
+            w_tid = winner_info.get('user_id')
+            w_user = User.query.filter_by(telegram_id=w_tid).first()
+            if w_user:
+                if game.entry_price > 0:
+                    w_user.balance += prize_per_winner
+                w_user.games_won = (w_user.games_won or 0) + 1
+                
+                try:
+                    hist = GameHistory(
+                        game_id=game_id,
+                        game_unique_code=getattr(game, 'unique_code', str(game_id)),
+                        winner_id=w_user.id,
+                        winner_name=w_user.username or "Player",
+                        winning_cartela=winner_info.get('cartela_number', 1),
+                        winning_board_data=json.dumps(winner_info),
+                        total_calls=len(game.called_numbers),
+                        called_numbers_str=",".join([game.format_number(n) for n in game.called_numbers]),
+                        prize_amount=prize_per_winner
+                    )
+                    db.session.add(hist)
+                    if game.entry_price > 0:
+                        tx = Transaction(
+                            user_id=w_user.id,
+                            type='win',
+                            amount=prize_per_winner,
+                            status='completed'
+                        )
+                        db.session.add(tx)
+                except Exception as e:
+                    logger.exception(f"Error auto-recording history: {e}")
+
+        for p_tid in game.players.keys():
+            p_user = User.query.filter_by(telegram_id=p_tid).first()
+            if p_user:
+                p_user.games_played = (p_user.games_played or 0) + 1
+        db.session.commit()
+
     return jsonify({
         'game_id': game.game_id,
         'unique_code': getattr(game, 'unique_code', str(game_id)),
@@ -399,7 +455,7 @@ def game_status_api(game_id):
         'called_numbers': formatted_called,
         'current_call': formatted_called[-1] if formatted_called else '---',
         'winners': game.winners,
-        'prize_per_winner': round(pool / len(game.winners), 2) if game.winners else 0.0,
+        'prize_per_winner': round(pool / max(len(game.winners), 1), 2) if game.winners else 0.0,
         'taken_cartelas': taken_cartelas
     })
 
@@ -419,37 +475,50 @@ def mark_number(game_id):
     check_win = data.get('check_win', False)
 
     if check_win:
+        pool, bonus_text = game.update_pool_and_bonus()
         winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
-        if winner and game.entry_price > 0:
-            # Add prize pool to winner's balance correctly
-            user.balance += prize_per_winner
-            user.games_won += 1
-            user.games_played += 1
-            db.session.commit()
+        
+        if winner:
+            if prize_per_winner <= 0 and pool > 0:
+                prize_per_winner = pool / max(len(game.winners), 1)
             
-            # Record Game History for scores and history pages
-            hist = GameHistory(
-                game_id=game_id,
-                game_unique_code=getattr(game, 'unique_code', str(game_id)),
-                winner_id=user.id,
-                winner_name=user.username or "Player",
-                winning_cartela=game.players[user.telegram_id][card_index]['cartela_number'],
-                winning_board_data=json.dumps(game.players[user.telegram_id][card_index]),
-                total_calls=len(game.called_numbers),
-                called_numbers_str=",".join([game.format_number(n) for n in game.called_numbers]),
-                prize_amount=prize_per_winner
-            )
-            db.session.add(hist)
+            if game.entry_price > 0:
+                user.balance += prize_per_winner
+
+            user.games_won = (user.games_won or 0) + 1
             
-            # Record transaction for win
-            tx = Transaction(
-                user_id=user.id,
-                type='win',
-                amount=prize_per_winner,
-                status='completed'
-            )
-            db.session.add(tx)
-            db.session.commit()
+            for p_tid in game.players.keys():
+                p_user = User.query.filter_by(telegram_id=p_tid).first()
+                if p_user:
+                    p_user.games_played = (p_user.games_played or 0) + 1
+
+            try:
+                hist = GameHistory(
+                    game_id=game_id,
+                    game_unique_code=getattr(game, 'unique_code', str(game_id)),
+                    winner_id=user.id,
+                    winner_name=user.username or "Player",
+                    winning_cartela=game.players[user.telegram_id][card_index]['cartela_number'],
+                    winning_board_data=json.dumps(game.players[user.telegram_id][card_index]),
+                    total_calls=len(game.called_numbers),
+                    called_numbers_str=",".join([game.format_number(n) for n in game.called_numbers]),
+                    prize_amount=prize_per_winner
+                )
+                db.session.add(hist)
+                
+                if game.entry_price > 0:
+                    tx = Transaction(
+                        user_id=user.id,
+                        type='win',
+                        amount=prize_per_winner,
+                        status='completed'
+                    )
+                    db.session.add(tx)
+                
+                db.session.commit()
+            except Exception as e:
+                logger.exception(f"Error recording win history: {e}")
+                db.session.rollback()
 
         return jsonify({
             'winner': winner,
