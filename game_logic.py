@@ -162,6 +162,7 @@ class BingoGame:
 
     def update_active_game(self):
         if self.status == "active":
+            # ቁጥሮቹ 75 ከደረሱ ወይም አሸናፊ ካለ ጨዋታው መጠናቀቁን እናረጋግጣለን
             if len(self.called_numbers) >= 75 or self.winners:
                 self.status = "finished"
                 if not self.finished_at:
@@ -205,7 +206,8 @@ class BingoGame:
         available = [n for n in range(1, 76) if n not in self.called_numbers]
         if not available:
             self.status = "finished"
-            self.finished_at = datetime.utcnow()
+            if not self.finished_at:
+                self.finished_at = datetime.utcnow()
             return None
             
         number = random.choice(available)
@@ -294,7 +296,6 @@ class BingoGame:
         return False, "Keep playing"
 
     def finalize_game_winners(self):
-        """ጨዋታው ሲያልቅ የጃክፖቱ ገደብ ደርሶ ከሆነ ለሰጠውና ወደ 0 የሚመልስ ክፍል"""
         self.status = "finished"
         if not self.finished_at:
             self.finished_at = datetime.utcnow()
@@ -305,7 +306,6 @@ class BingoGame:
         if current_jp >= target and not self.jackpot_won_in_this_game:
             self.jackpot_won_in_this_game = True
             self.jackpot_payout_amount = target
-            # ክፍያው ሲፈጸም ለዚህ entry_price ብቻ ጃክፖቱ ወደ 0 ይመለሳል
             BingoGame.jackpot_pools[self.entry_price] = 0.0
 
     def claim_bingo(self, user_id: int, card_index: int) -> Tuple[bool, str, float]:
