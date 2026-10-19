@@ -910,16 +910,23 @@
                     });
                 }
 
-                if (data.status === 'finished' || data.status === 'completed' || (data.winners && data.winners.length > 0)) {
+                // --- የጨዋታ ማጠናቀቂያ ሁኔታዎች (በሰፊው እንዲመረመር የተደረገ) ---
+                const statusLower = (data.status || '').toLowerCase();
+                const isFinished = ['finished', 'completed', 'ended', 'game_over', 'stopped', 'closed', 'inactive'].includes(statusLower);
+                const hasWinners = data.winners && data.winners.length > 0;
+                const isInactive = data.is_active === false || data.game_over === true;
+                const maxCallsReached = data.called_numbers && data.called_numbers.length >= 75;
+
+                if (isFinished || hasWinners || isInactive || maxCallsReached) {
                     isGameOver = true;
                     clearInterval(statusInterval);
                     setTimeout(() => {
                         showWinnerModal(data);
-                    }, 1200);
+                    }, 500);
                 }
             })
             .catch(err => console.log(err));
-        }, 2000);
+        }, 1500);
     </script>
 </body>
 </html>
