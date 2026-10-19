@@ -910,7 +910,6 @@
                     });
                 }
 
-                // --- የጨዋታ ማጠናቀቂያ ሁኔታዎች (በሰፊው እንዲመረመር የተደረገ) ---
                 const statusLower = (data.status || '').toLowerCase();
                 const isFinished = ['finished', 'completed', 'ended', 'game_over', 'stopped', 'closed', 'inactive'].includes(statusLower);
                 const hasWinners = data.winners && data.winners.length > 0;

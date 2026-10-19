@@ -162,6 +162,12 @@ class BingoGame:
 
     def update_active_game(self):
         if self.status == "active":
+            if len(self.called_numbers) >= 75 or self.winners:
+                self.status = "finished"
+                if not self.finished_at:
+                    self.finished_at = datetime.utcnow()
+                return
+            
             if not self.last_call_time:
                 self.call_number()
             else:
@@ -189,10 +195,19 @@ class BingoGame:
     def call_number(self) -> Optional[str]:
         if self.status != "active":
             return None
+        
+        if len(self.called_numbers) >= 75 or self.winners:
+            self.status = "finished"
+            if not self.finished_at:
+                self.finished_at = datetime.utcnow()
+            return None
+
         available = [n for n in range(1, 76) if n not in self.called_numbers]
         if not available:
             self.status = "finished"
+            self.finished_at = datetime.utcnow()
             return None
+            
         number = random.choice(available)
         self.called_numbers.append(number)
         self.last_call_time = datetime.utcnow()
@@ -215,7 +230,7 @@ class BingoGame:
                     if not any(w['user_id'] == u_id and w['card_index'] == c_idx for w in self.winners):
                         self.winners.append(winner_entry)
 
-        if self.winners:
+        if self.winners or len(self.called_numbers) >= 75:
             self.finalize_game_winners()
 
         return self.format_number(number)
@@ -281,7 +296,8 @@ class BingoGame:
     def finalize_game_winners(self):
         """ጨዋታው ሲያልቅ የጃክፖቱ ገደብ ደርሶ ከሆነ ለሰጠውና ወደ 0 የሚመልስ ክፍል"""
         self.status = "finished"
-        self.finished_at = datetime.utcnow()
+        if not self.finished_at:
+            self.finished_at = datetime.utcnow()
 
         target = BingoGame.jackpot_targets.get(self.entry_price, 500.0)
         current_jp = BingoGame.jackpot_pools.get(self.entry_price, 0.0)
