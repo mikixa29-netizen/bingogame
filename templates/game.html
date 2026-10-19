@@ -571,7 +571,6 @@
             let letter = parts[0];
             let num = parts[1];
 
-            // Convert English bingo letters to Amharic pronunciation for the voice
             let amharicLetter = letter;
             if (letter === 'B') amharicLetter = 'ቢ';
             else if (letter === 'I') amharicLetter = 'አይ';
@@ -584,10 +583,9 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 let utterance = new SpeechSynthesisUtterance(textToSpeak);
-                utterance.lang = 'am-ET'; // Amharic voice output
+                utterance.lang = 'am-ET';
                 utterance.rate = 0.85;
                 
-                // Fallback for mobile devices if am-ET voice is not available
                 utterance.onerror = () => {
                     let fallback = new SpeechSynthesisUtterance(`${letter} ${num}`);
                     fallback.lang = 'en-US';
@@ -783,21 +781,29 @@
 
             let winners = data.winners || [];
             let prize = data.prize_per_winner || 0;
-            let isUserWinner = winners.some(w => w.user_id === currentUserId);
+            let isUserWinner = winners.length > 0 && winners.some(w => w.user_id === currentUserId);
 
-            document.getElementById('modalTitle').innerText = isUserWinner ? 'CONGRATULATIONS YOU WON! 🎉' : 'BINGO WINNER!';
-            document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
-            document.getElementById('wCartelaTag').innerText = "Prize Amount: " + prize + " Br";
+            if (winners.length > 0) {
+                document.getElementById('modalTitle').innerText = isUserWinner ? 'CONGRATULATIONS YOU WON! 🎉' : 'BINGO WINNER!';
+                document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
+                document.getElementById('wCartelaTag').innerText = "Prize Amount: " + prize + " Br";
+            } else {
+                document.getElementById('modalTitle').innerText = 'GAME OVER';
+                document.getElementById('wNameText').innerHTML = 'No winner in this round.';
+                document.getElementById('wCartelaTag').innerText = 'Game Finished';
+            }
 
             let boardPreview = document.getElementById('winningBoardPreview');
             boardPreview.innerHTML = '';
             
             let targetCartelaNum = null;
-            const userWin = winners.find(w => w.user_id === currentUserId);
+            const userWin = winners.length > 0 ? winners.find(w => w.user_id === currentUserId) : null;
             if (userWin) {
                 targetCartelaNum = userWin.cartela_number;
             } else if (winners.length > 0) {
                 targetCartelaNum = winners[0].cartela_number;
+            } else if (playerCards.length > 0) {
+                targetCartelaNum = playerCards[0].cartela_number;
             }
 
             let matchedCard = playerCards.find(c => c.cartela_number === targetCartelaNum) || playerCards[0];
