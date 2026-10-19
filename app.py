@@ -8,7 +8,7 @@ from datetime import datetime, date, timedelta
 from database import db, init_db
 from game_logic import BingoGame
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
-from adminpanel import admin_bp  # Import admin blueprint
+from admin_panel import admin_bp # Import admin blueprint
 
 logging.basicConfig(
     level=logging.DEBUG,
