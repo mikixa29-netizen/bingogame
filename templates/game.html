@@ -531,6 +531,7 @@
         let playerCards = JSON.parse(serverData.dataset.cards || '[]');
         let lastSpokenCall = '';
         let isGameOver = false;
+        let isModalOpened = false; // Prevents duplicate execution
         let isSoundOn = true;
         let isAutoMarkOn = true;
 
@@ -563,7 +564,7 @@
             return 'badge-o';
         }
 
-        // --- AMHARIC VOICE SPEECH SYNTHESIS (WORKS ON MOBILE & WEB) ---
+        // --- AMHARIC VOICE SPEECH SYNTHESIS ---
         function speakNumber(callStr) {
             if (!isSoundOn || !callStr) return;
             let parts = callStr.split('-');
@@ -776,39 +777,39 @@
 
         // --- WINNER MODAL & 5 SECONDS REDIRECT ---
         function showWinnerModal(data) {
-            if (isGameOver) return;
+            if (isModalOpened) return;
+            isModalOpened = true;
             isGameOver = true;
 
             let winners = data.winners || [];
             let prize = data.prize_per_winner || 0;
             let isUserWinner = winners.length > 0 && winners.some(w => w.user_id === currentUserId);
 
-            if (winners.length > 0) {
-                document.getElementById('modalTitle').innerText = isUserWinner ? 'CONGRATULATIONS YOU WON! 🎉' : 'BINGO WINNER!';
-                document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
-                document.getElementById('wCartelaTag').innerText = "Prize Amount: " + prize + " Br";
-            } else {
-                document.getElementById('modalTitle').innerText = 'GAME OVER';
-                document.getElementById('wNameText').innerHTML = 'No winner in this round.';
-                document.getElementById('wCartelaTag').innerText = 'Game Finished';
-            }
-
-            let boardPreview = document.getElementById('winningBoardPreview');
-            boardPreview.innerHTML = '';
-            
+            let titleText = 'GAME OVER';
+            let nameText = 'No winner in this round.';
+            let cartelaTagText = 'Game Finished';
             let targetCartelaNum = null;
-            const userWin = winners.length > 0 ? winners.find(w => w.user_id === currentUserId) : null;
-            if (userWin) {
-                targetCartelaNum = userWin.cartela_number;
-            } else if (winners.length > 0) {
+
+            if (winners.length > 0) {
+                titleText = isUserWinner ? 'CONGRATULATIONS YOU WON! 🎉' : 'BINGO WINNER!';
+                nameText = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
+                cartelaTagText = "Prize Amount: " + prize + " Br";
                 targetCartelaNum = winners[0].cartela_number;
             } else if (playerCards.length > 0) {
                 targetCartelaNum = playerCards[0].cartela_number;
             }
 
+            document.getElementById('modalTitle').innerText = titleText;
+            document.getElementById('wNameText').innerHTML = nameText;
+            
+            let boardPreview = document.getElementById('winningBoardPreview');
+            boardPreview.innerHTML = '';
+
             let matchedCard = playerCards.find(c => c.cartela_number === targetCartelaNum) || playerCards[0];
 
             if (matchedCard) {
+                document.getElementById('wCartelaTag').innerText = `Cartela #${matchedCard.cartela_number}`;
+                
                 matchedCard.board.forEach((num, idx) => {
                     let cell = document.createElement('div');
                     let isMarked = matchedCard.marked.includes(num) || idx === 12;
@@ -816,6 +817,8 @@
                     cell.innerText = idx === 12 ? '★' : num;
                     boardPreview.appendChild(cell);
                 });
+            } else {
+                document.getElementById('wCartelaTag').innerText = cartelaTagText;
             }
 
             document.getElementById('winnerModal').style.display = 'flex';
@@ -913,10 +916,9 @@
                 const statusLower = (data.status || '').toLowerCase();
                 const isFinished = ['finished', 'completed', 'ended', 'game_over', 'stopped', 'closed', 'inactive'].includes(statusLower);
                 const hasWinners = data.winners && data.winners.length > 0;
-                const isInactive = data.is_active === false || data.game_over === true;
                 const maxCallsReached = data.called_numbers && data.called_numbers.length >= 75;
 
-                if (isFinished || hasWinners || isInactive || maxCallsReached) {
+                if (isFinished || hasWinners || maxCallsReached) {
                     isGameOver = true;
                     clearInterval(statusInterval);
                     setTimeout(() => {
