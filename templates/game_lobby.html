@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -102,17 +102,17 @@
 
     <!-- Header Stats -->
     <div class="app-header">
-        <div class="live-indicator"><div class="live-dot"></div> በህይወት (Live)</div>
-        <div>ቦነስ: <span id="hdr-bonus" style="color: #fdd835;">{{ bonus_balance | default('0.00') }}</span> ብር</div>
-        <div>ባላንስ: <span id="hdr-balance" style="color: #fdd835;">{{ main_balance | default('0.00') }}</span> ብር</div>
+        <div class="live-indicator"><div class="live-dot"></div> Live</div>
+        <div>Bonus: <span id="hdr-bonus" style="color: #fdd835;">{{ bonus_balance | default('0.00') }}</span> Br</div>
+        <div>Balance: <span id="hdr-balance" style="color: #fdd835;">{{ main_balance | default('0.00') }}</span> Br</div>
     </div>
 
     <!-- BINGO GAMES SECTION HEADER -->
-    <div class="section-header">🎮 የቢንጎ ጨዋታ ክፍሎች (BINGO ROOMS)</div>
+    <div class="section-header">🎮 BINGO ROOMS</div>
     <div class="table-headers">
-        <div>መደብ (Bet)</div>
-        <div>ሽልማት / ተጫዋች</div>
-        <div style="text-align: right;">ሁኔታ እና መግቢያ</div>
+        <div>Bet</div>
+        <div>Prize / Players</div>
+        <div style="text-align: right;">Status & Action</div>
     </div>
 
     <!-- Dynamic Room List Container -->
@@ -121,27 +121,27 @@
     <!-- FREE PRACTICE MODE -->
     <div class="demo-card">
         <div class="demo-info">
-            <div>🎮 <span>የነጻ ልምምድ (Demo Mode)</span></div>
-            <div>እውነተኛ ገንዘብ አይጠይቅም (እስከ 5 ካርቴላ)</div>
+            <div>🎮 <span>Demo Mode</span></div>
+            <div>Free Practice (Up to 5 cards)</div>
         </div>
         <div class="demo-buttons">
-            <button class="btn-open" onclick="alert('የዴሞ ጨዋታ ደንብ: በነጻ ካርቴላዎች መለማመድ ይችላሉ!')">መመሪያ</button>
-            <button class="btn-try" onclick="startDemoMode()">ሞክር</button>
+            <button class="btn-open" onclick="alert('Demo Mode Rules: Practice with free cards!')">Guide</button>
+            <button class="btn-try" onclick="startDemoMode()">Try</button>
         </div>
     </div>
 
-    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item active"><span>🎮</span> ጨዋታ</a>
-        <a href="/scores" class="nav-item"><span>🏆</span> ፉክክር</a>
-        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
-        <a href="/profile" class="nav-item"><span>👤</span> ප්‍රိုፋይል</a>
+        <a href="/" class="nav-item active"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
     </div>
 
     <script>
         const roomStakes = [10, 20, 50, 100];
-        const deductionPercentages = { 10: 0.0125, 20: 0.0175, 50: 0.02, 100: 0.04 };
+        const jackpotTargets = { 10: 500, 20: 1000, 50: 2500, 100: 5000 };
 
         function fetchGamesLobbyData() {
             fetch('/game/list')
@@ -167,32 +167,30 @@
                 const gameId = index + 1;
                 let gData = Array.isArray(gamesData) ? (gamesData.find(g => g.entry_price === stake) || {}) : {};
 
-                const activePlayers = gData.players || 0;
-                const deductionRate = deductionPercentages[stake] || 0.02;
-                const totalPool = activePlayers > 0 ? (activePlayers * stake) * (1 - deductionRate) : 0;
-                const winAmount = activePlayers > 0 ? totalPool : 0;
+                const activePlayers = gData.players_count || gData.players || 0;
+                const winAmount = gData.derash !== undefined ? gData.derash : (gData.pool || 0);
                 
                 const status = gData.status || 'waiting';
                 const countdown = gData.countdown_remaining || 0;
 
-                const jackpotCurrent = gData.jackpot_pool || (winAmount * 0.15).toFixed(1);
-                const jackpotMax = stake * 50; 
+                const jackpotCurrent = gData.jackpot_pool || 0;
+                const jackpotMax = jackpotTargets[stake] || (stake * 50); 
                 const jackpotPct = Math.min(100, (jackpotCurrent / jackpotMax) * 100).toFixed(1);
 
                 let statusBadgeHtml = '';
                 if (status === 'countdown') {
                     const secs = countdown < 10 ? `0${countdown}` : countdown;
                     statusBadgeHtml = `
-                        <div class="status-badge active-count">ተጫዋቾች ${activePlayers}</div>
-                        <div class="starts-timer-box">ይጀምራል 0:${secs}</div>
+                        <div class="status-badge active-count">Players ${activePlayers}</div>
+                        <div class="starts-timer-box">Starts 0:${secs}</div>
                     `;
                 } else if (status === 'active' || status === 'playing') {
                     statusBadgeHtml = `
-                        <div class="status-badge active-count" style="background:#e67e22;">በመጫወት ላይ</div>
+                        <div class="status-badge active-count" style="background:#e67e22;">Playing</div>
                     `;
                 } else {
                     statusBadgeHtml = `
-                        <div class="status-badge ready">ዝግጁ (${activePlayers})</div>
+                        <div class="status-badge ready">Ready (${activePlayers})</div>
                     `;
                 }
 
@@ -200,20 +198,20 @@
                 roomCard.className = 'room-card';
                 roomCard.innerHTML = `
                     <div class="room-row-content">
-                        <div class="room-bet">${stake} <span>ብር</span></div>
+                        <div class="room-bet">${stake} <span>Br</span></div>
                         <div class="room-win-info">
-                            <div class="win-amount">🏆 ${winAmount.toFixed(0)} ብር</div>
-                            <div class="win-players">${activePlayers} ተጫዋቾች</div>
+                            <div class="win-amount">🏆 ${parseFloat(winAmount).toFixed(0)} Br</div>
+                            <div class="win-players">${activePlayers} Players</div>
                         </div>
                         <div class="room-action-area">
                             <div class="status-badge-container">
                                 ${statusBadgeHtml}
                             </div>
-                            <button class="btn-join" onclick="joinRoom(${gData.id || gameId}, ${stake}, '${status}')">ግባ</button>
+                            <button class="btn-join" onclick="joinRoom(${gData.id || gameId}, ${stake}, '${status}')">Join</button>
                         </div>
                     </div>
                     <div class="jackpot-bar-container">
-                        <div class="jackpot-text">ጃክፖት (JACKPOT) ${jackpotCurrent} / ${jackpotMax}</div>
+                        <div class="jackpot-text">JACKPOT ${parseFloat(jackpotCurrent).toFixed(0)} / ${jackpotMax}</div>
                         <div class="jackpot-fill" style="width: ${jackpotPct}%;"></div>
                     </div>
                 `;

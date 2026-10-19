@@ -21,7 +21,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
 init_db(app)
 
-# Register Admin Blueprint to fix all admin.* routing BuildErrors
+# Register Admin Blueprint to fix admin routing errors
 app.register_blueprint(admin_bp)
 
 from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory, Admin
@@ -104,17 +104,17 @@ def scores_data():
         User.username,
         User.phone,
         db.func.count(GameHistory.id).label('win_count')
-    ).join(GameHistory, User.id == GameHistory.winner_id)
+    ).join(GameHistory, User.id == GameHistory.winner_id).filter(GameHistory.is_win == True)
     
     if timeframe == 'today':
         start_date = datetime(now.year, now.month, now.day)
-        query = query.filter(GameHistory.created_at >= start_date)
+        query = query.filter(GameHistory.finished_at >= start_date)
     elif timeframe == 'week':
         start_date = now - timedelta(days=7)
-        query = query.filter(GameHistory.created_at >= start_date)
+        query = query.filter(GameHistory.finished_at >= start_date)
     elif timeframe == 'month':
         start_date = datetime(now.year, now.month, 1)
-        query = query.filter(GameHistory.created_at >= start_date)
+        query = query.filter(GameHistory.finished_at >= start_date)
         
     results = query.group_by(User.id).order_by(db.desc('win_count')).all()
     
@@ -146,6 +146,7 @@ def history():
     if not user:
         return redirect(url_for('index'))
     
+    # ለተጠቃሚው የተደረጉ የጨዋታ ታሪኮች ሁሉ (አሸነፈም ተሸነፈም)
     game_history = GameHistory.query.filter_by(winner_id=user.id).order_by(GameHistory.id.desc()).limit(20).all()
     return render_template('history.html', game_history=game_history)
 
@@ -175,15 +176,21 @@ def list_games():
         if game.entry_price >= 0 and game.status in ["waiting", "countdown", "active", "playing"]:
             user_joined = user and (user.telegram_id in game.players)
             pool, _ = game.update_pool_and_bonus()
+            # ትክክለኛውን የደራሽ (derash) መጠን ከ game_logic ማምጣት
+            derash_amount = game.get_derash_amount() if hasattr(game, 'get_derash_amount') else pool
+            jackpot_current = game.get_current_jackpot() if hasattr(game, 'get_current_jackpot') else 0.0
+
             games_data.append({
                 'id': g_id,
                 'unique_code': getattr(game, 'unique_code', str(g_id)),
-                'players': len(game.players),
+                'players_count': len(game.players),
                 'total_cards': game.get_total_cards(),
                 'entry_price': game.entry_price,
                 'status': game.status,
                 'countdown_remaining': game.get_remaining_countdown() if game.status == 'countdown' else 30,
-                'jackpot_pool': round(pool, 2),
+                'pool': round(pool, 2),
+                'derash': round(derash_amount, 2),
+                'jackpot_pool': round(jackpot_current, 2),
                 'user_joined': user_joined
             })
     return jsonify({
@@ -375,6 +382,7 @@ def play_game(game_id):
 
     player_cards = game.players.get(user.telegram_id, [])
     pool, bonus_text = game.update_pool_and_bonus()
+    derash_amount = game.get_derash_amount() if hasattr(game, 'get_derash_amount') else pool
 
     return render_template('game.html',
                            game_id=game_id,
@@ -384,7 +392,7 @@ def play_game(game_id):
                            active_players=len(game.players),
                            game_status=game.status,
                            entry_price=game.entry_price,
-                           pool=round(pool, 2),
+                           pool=round(derash_amount, 2),
                            bonus=bonus_text,
                            balance=user.balance)
 
@@ -396,6 +404,7 @@ def game_status_api(game_id):
     game = active_games[game_id]
     game.update_active_game()
     pool, bonus_text = game.update_pool_and_bonus()
+    derash_amount = game.get_derash_amount() if hasattr(game, 'get_derash_amount') else pool
     formatted_called = [game.format_number(n) for n in game.called_numbers]
     
     taken_cartelas = []
@@ -405,32 +414,42 @@ def game_status_api(game_id):
 
     if (game.status in ['finished', 'completed'] or game.winners) and not getattr(game, '_history_recorded', False):
         game._history_recorded = True
-        prize_per_winner = round(pool / max(len(game.winners), 1), 2) if game.winners else 0.0
+        prize_per_winner = round(derash_amount / max(len(game.winners), 1), 2) if game.winners else 0.0
         
-        for winner_info in game.winners:
-            w_tid = winner_info.get('user_id')
-            w_user = User.query.filter_by(telegram_id=w_tid).first()
-            if w_user:
-                if game.entry_price > 0:
-                    w_user.balance += prize_per_winner
-                w_user.games_won = (w_user.games_won or 0) + 1
+        winner_user_ids = [w.get('user_id') for w in game.winners]
+
+        # ለአሸናፊዎች እና ለተሸናፊዎች ታሪክን በትክክል መመዝገብ (is_win True/False)
+        for p_tid in game.players.keys():
+            p_user = User.query.filter_by(telegram_id=p_tid).first()
+            if p_user:
+                p_user.games_played = (p_user.games_played or 0) + 1
+                is_winner = p_tid in winner_user_ids
                 
+                if is_winner:
+                    if game.entry_price > 0:
+                        p_user.balance += prize_per_winner
+                    p_user.games_won = (p_user.games_won or 0) + 1
+
+                # የካርቴላ መረጃ ማግኘት
+                player_card_info = next((c for c in game.players.get(p_tid, []) if is_winner and c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
+
                 try:
                     hist = GameHistory(
                         game_id=game_id,
                         game_unique_code=getattr(game, 'unique_code', str(game_id)),
-                        winner_id=w_user.id,
-                        winner_name=w_user.username or "Player",
-                        winning_cartela=winner_info.get('cartela_number', 1),
-                        winning_board_data=json.dumps(winner_info),
+                        winner_id=p_user.id if is_winner else None,
+                        winner_name=p_user.username or "Player",
+                        winning_cartela=player_card_info.get('cartela_number', 1),
+                        winning_board_data=json.dumps(player_card_info),
                         total_calls=len(game.called_numbers),
                         called_numbers_str=",".join([game.format_number(n) for n in game.called_numbers]),
-                        prize_amount=prize_per_winner
+                        prize_amount=prize_per_winner if is_winner else 0.0,
+                        is_win=is_winner
                     )
                     db.session.add(hist)
-                    if game.entry_price > 0:
+                    if is_winner and game.entry_price > 0:
                         tx = Transaction(
-                            user_id=w_user.id,
+                            user_id=p_user.id,
                             type='win',
                             amount=prize_per_winner,
                             status='completed'
@@ -439,10 +458,6 @@ def game_status_api(game_id):
                 except Exception as e:
                     logger.exception(f"Error auto-recording history: {e}")
 
-        for p_tid in game.players.keys():
-            p_user = User.query.filter_by(telegram_id=p_tid).first()
-            if p_user:
-                p_user.games_played = (p_user.games_played or 0) + 1
         db.session.commit()
 
     return jsonify({
@@ -450,14 +465,14 @@ def game_status_api(game_id):
         'unique_code': getattr(game, 'unique_code', str(game_id)),
         'active_players': len(game.players),
         'total_cards': game.get_total_cards(),
-        'pool': round(pool, 2),
+        'pool': round(derash_amount, 2),
         'bonus': bonus_text,
         'status': game.status,
         'countdown_remaining': game.get_remaining_countdown() if game.status == 'countdown' else 0,
         'called_numbers': formatted_called,
         'current_call': formatted_called[-1] if formatted_called else '---',
         'winners': game.winners,
-        'prize_per_winner': round(pool / max(len(game.winners), 1), 2) if game.winners else 0.0,
+        'prize_per_winner': round(derash_amount / max(len(game.winners), 1), 2) if game.winners else 0.0,
         'taken_cartelas': taken_cartelas
     })
 
@@ -478,49 +493,23 @@ def mark_number(game_id):
 
     if check_win:
         pool, bonus_text = game.update_pool_and_bonus()
+        derash_amount = game.get_derash_amount() if hasattr(game, 'get_derash_amount') else pool
         winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
         
         if winner:
-            if prize_per_winner <= 0 and pool > 0:
-                prize_per_winner = pool / max(len(game.winners), 1)
+            if prize_per_winner <= 0 and derash_amount > 0:
+                prize_per_winner = derash_amount / max(len(game.winners), 1)
             
             if game.entry_price > 0:
                 user.balance += prize_per_winner
 
             user.games_won = (user.games_won or 0) + 1
             
+            winner_user_ids = [w.get('user_id') for w in game.winners]
             for p_tid in game.players.keys():
                 p_user = User.query.filter_by(telegram_id=p_tid).first()
                 if p_user:
                     p_user.games_played = (p_user.games_played or 0) + 1
-
-            try:
-                hist = GameHistory(
-                    game_id=game_id,
-                    game_unique_code=getattr(game, 'unique_code', str(game_id)),
-                    winner_id=user.id,
-                    winner_name=user.username or "Player",
-                    winning_cartela=game.players[user.telegram_id][card_index]['cartela_number'],
-                    winning_board_data=json.dumps(game.players[user.telegram_id][card_index]),
-                    total_calls=len(game.called_numbers),
-                    called_numbers_str=",".join([game.format_number(n) for n in game.called_numbers]),
-                    prize_amount=prize_per_winner
-                )
-                db.session.add(hist)
-                
-                if game.entry_price > 0:
-                    tx = Transaction(
-                        user_id=user.id,
-                        type='win',
-                        amount=prize_per_winner,
-                        status='completed'
-                    )
-                    db.session.add(tx)
-                
-                db.session.commit()
-            except Exception as e:
-                logger.exception(f"Error recording win history: {e}")
-                db.session.rollback()
 
         return jsonify({
             'winner': winner,
@@ -528,6 +517,12 @@ def mark_number(game_id):
             'prize_per_winner': prize_per_winner,
             'winners': game.winners
         })
+
+    # ተጫዋቹ በእጁ ቁጥር ማጥቆር ከፈለገ (Manual Mark)
+    number = data.get('number')
+    if number is not None:
+        success = game.mark_number(user.telegram_id, card_index, int(number))
+        return jsonify({'success': success, 'marked': success})
 
     return jsonify({'error': 'Invalid action'}), 400
 

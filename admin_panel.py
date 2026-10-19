@@ -1,6 +1,7 @@
 import os
 import json
 import hashlib
+import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 from datetime import datetime
@@ -8,6 +9,8 @@ from werkzeug.utils import secure_filename
 from database import db
 from models import User, Transaction, GameHistory, Admin
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
+
+logger = logging.getLogger(__name__)
 
 # Admin Blueprint creation
 admin_bp = Blueprint('admin', __name__, template_folder='templates')
@@ -26,46 +29,57 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # Verify from Admin model or config
-        admin = Admin.query.filter_by(username=username).first()
-        if admin and hashlib.sha256(password.encode()).hexdigest() == admin.password_hash:
-            session['admin_logged_in'] = True
-            session['is_super_admin'] = admin.is_super
-            session['admin_username'] = admin.username
-            return redirect(url_for('admin.dashboard'))
-        elif username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            session['admin_logged_in'] = True
-            session['is_super_admin'] = True
-            session['admin_username'] = ADMIN_USERNAME
-            return redirect(url_for('admin.dashboard'))
-        else:
-            flash('Invalid username or password!', 'error')
+        try:
+            # Verify from Admin model or config
+            admin = Admin.query.filter_by(username=username).first()
+            hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
+
+            if admin and hashed_input_password == admin.password_hash:
+                session['admin_logged_in'] = True
+                session['is_super_admin'] = admin.is_super
+                session['admin_username'] = admin.username
+                return redirect(url_for('admin.dashboard'))
+            elif username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+                session['admin_logged_in'] = True
+                session['is_super_admin'] = True
+                session['admin_username'] = ADMIN_USERNAME
+                return redirect(url_for('admin.dashboard'))
+            else:
+                flash('Invalid username or password!', 'error')
+        except Exception as e:
+            logger.exception(f"Error during admin login: {e}")
+            flash('An error occurred during login. Please try again.', 'error')
             
     return render_template('admin/login.html')
 
 @admin_bp.route('/admin/dashboard')
 @admin_required
 def dashboard():
-    from app import active_games
-    games_list = list(active_games.values())
-    active_count = len([g for g in games_list if hasattr(g, 'status') and g.status in ["active", "countdown"]])
-    
-    users = User.query.all()
-    admins = Admin.query.all()
-    pending_withdrawals = Transaction.query.filter_by(type='withdraw', status='pending').all()
-    transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
-    
-    return render_template(
-        'admin/dashboard.html',
-        users=users,
-        admins=admins,
-        games=games_list,
-        active_games=active_count,
-        total_players=len(users),
-        pending_withdrawals=pending_withdrawals,
-        transactions=transactions,
-        is_super_admin=session.get('is_super_admin', False)
-    )
+    try:
+        from app import active_games
+        games_list = list(active_games.values())
+        active_count = len([g for g in games_list if hasattr(g, 'status') and g.status in ["active", "countdown"]])
+        
+        users = User.query.all()
+        admins = Admin.query.all()
+        pending_withdrawals = Transaction.query.filter_by(type='withdraw', status='pending').all()
+        transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
+        
+        return render_template(
+            'admin/dashboard.html',
+            users=users,
+            admins=admins,
+            games=games_list,
+            active_games=active_count,
+            total_players=len(users),
+            pending_withdrawals=pending_withdrawals,
+            transactions=transactions,
+            is_super_admin=session.get('is_super_admin', False)
+        )
+    except Exception as e:
+        logger.exception(f"Error loading admin dashboard: {e}")
+        flash('Error loading dashboard data.', 'error')
+        return redirect(url_for('admin.login'))
 
 # View user details and transactions
 @admin_bp.route('/admin/user/<int:user_id>/details')

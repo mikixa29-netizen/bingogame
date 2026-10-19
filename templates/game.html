@@ -53,12 +53,12 @@
         .sel-stat-box .value { font-size: 14px; font-weight: bold; color: #111; margin-top: 2px; }
 
         .select-subtitle {
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 18px;
+            font-weight: 900;
             margin: 8px 0 10px 0;
             text-align: center;
             color: #FFFEFE;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .number-grid {
             display: grid;
@@ -205,13 +205,13 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             text-align: center;
-            font-weight: bold;
-            font-size: 13px;
+            font-weight: 900;
+            font-size: 16px;
             margin-bottom: 6px;
         }
         .bingo-header-row div {
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -232,13 +232,13 @@
             background: rgba(255, 255, 255, 0.15);
             font-family: 'Inria Serif', serif;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
             color: #FFFEFE;
             text-align: center;
             padding: 4px 0;
             border-radius: 4px;
         }
-        .board-item.current-green { background-color: #27ae60 !important; color: #FFFEFE !important; border-radius: 50% !important; }
+        .board-item.current-green { background-color: #27ae60 !important; color: #FFFEFE !important; border-radius: 50% !important; font-size: 17px; }
         .board-item.called-orange { background-color: #e67e22 !important; color: #FFFEFE !important; border-radius: 50% !important; }
 
         .call-side-area {
@@ -267,8 +267,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: bold;
-            font-size: 13px;
+            font-weight: 900;
+            font-size: 15px;
         }
         .badge-b { background-color: #fbc02d !important; color: #111 !important; }
         .badge-i { background-color: #e91e63 !important; color: #fff !important; }
@@ -278,14 +278,14 @@
 
         .current-call-badge-img {
             border-radius: 50%;
-            width: 38px;
-            height: 38px;
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+            font-size: 16px;
+            font-weight: 900;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
         }
         .recent-calls-box-img {
             background: rgba(255, 255, 255, 0.2);
@@ -296,16 +296,16 @@
             gap: 6px;
         }
         .recent-ball {
-            width: 24px; height: 24px; border-radius: 50%;
+            width: 26px; height: 26px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 9px;
+            font-weight: bold; font-size: 10px;
         }
 
         .user-cartelas-container {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            max-height: 420px;
+            max-height: 400px;
             overflow-y: auto;
             width: 100%;
             padding-right: 2px;
@@ -330,12 +330,13 @@
             color: #000000;
             font-family: 'Inria Serif', serif;
             font-weight: bold;
-            font-size: 24px;
+            font-size: 20px;
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 6px;
+            cursor: pointer;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .ucell.marked { background: #27ae60 !important; color: #FFFEFE !important; border-radius: 50% !important; }
@@ -355,11 +356,12 @@
             width: 100%;
             padding: 14px;
             border-radius: 25px;
-            font-size: 20px;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .action-buttons-game {
             display: flex;
@@ -368,10 +370,10 @@
         }
         .btn-game-action {
             border: none;
-            padding: 12px 0;
+            padding: 10px 0;
             flex: 1;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             cursor: pointer;
             color: white;
@@ -382,6 +384,7 @@
         .btn-blue { background: #2980b9; }
         .btn-orange { background: #d35400; }
         .btn-yellow { background: #f1c40f; color: #111; }
+        .btn-purple { background: #8e44ad; }
 
         /* WINNER MODAL */
         .winner-modal-overlay {
@@ -426,7 +429,7 @@
         <div class="sel-top-stats" style="width: 100%; max-width: 440px;">
             <div class="sel-stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
             <div class="sel-stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
-            <div class="sel-stat-box"><div class="label">Stake/Card</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
+            <div class="sel-stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
             <div class="sel-stat-box"><div class="label">Selected</div><div class="value" id="selectedCountLbl">0/4</div></div>
         </div>
 
@@ -473,7 +476,7 @@
             <!-- Right Column: Call Info & Spacious User Cartelas -->
             <div class="call-side-area">
                 <div class="status-box-img">
-                    <span>Count Down</span>
+                    <span>Countdown</span>
                     <span id="countdownTimer">--</span>
                 </div>
 
@@ -493,7 +496,8 @@
             <div class="action-buttons-game">
                 <button class="btn-game-action btn-blue" onclick="location.reload()">Refresh</button>
                 <button class="btn-game-action btn-orange" onclick="leaveGame()">Leave</button>
-                <button class="btn-game-action btn-yellow" onclick="goToAddCartela()">Add Board</button>
+                <button class="btn-game-action btn-purple" onclick="toggleAutoMark()" id="autoMarkBtn">Auto: ON</button>
+                <button class="btn-game-action btn-yellow" onclick="goToAddCartela()">Add Card</button>
             </div>
         </div>
     </div>
@@ -528,10 +532,17 @@
         let lastSpokenCall = '';
         let isGameOver = false;
         let isSoundOn = true;
+        let isAutoMarkOn = true;
 
         function toggleSound() {
             isSoundOn = !isSoundOn;
             document.getElementById('soundBtnLbl').innerText = isSoundOn ? 'ON' : 'OFF';
+        }
+
+        function toggleAutoMark() {
+            isAutoMarkOn = !isAutoMarkOn;
+            document.getElementById('autoMarkBtn').innerText = isAutoMarkOn ? 'Auto: ON' : 'Auto: OFF';
+            document.getElementById('autoMarkBtn').style.background = isAutoMarkOn ? '#8e44ad' : '#7f8c8d';
         }
 
         if (playerCards.length > 0) {
@@ -552,6 +563,7 @@
             return 'badge-o';
         }
 
+        // --- AMHARIC VOICE SPEECH SYNTHESIS (WORKS ON MOBILE & WEB) ---
         function speakNumber(callStr) {
             if (!isSoundOn || !callStr) return;
             let parts = callStr.split('-');
@@ -559,13 +571,29 @@
             let letter = parts[0];
             let num = parts[1];
 
-            let textToSpeak = `${letter} ${num}`;
+            // Convert English bingo letters to Amharic pronunciation for the voice
+            let amharicLetter = letter;
+            if (letter === 'B') amharicLetter = 'ቢ';
+            else if (letter === 'I') amharicLetter = 'አይ';
+            else if (letter === 'N') amharicLetter = 'ኤን';
+            else if (letter === 'G') amharicLetter = 'ጂ';
+            else if (letter === 'O') amharicLetter = 'ኦ';
+
+            let textToSpeak = `${amharicLetter} ${num}`;
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 let utterance = new SpeechSynthesisUtterance(textToSpeak);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.9;
+                utterance.lang = 'am-ET'; // Amharic voice output
+                utterance.rate = 0.85;
+                
+                // Fallback for mobile devices if am-ET voice is not available
+                utterance.onerror = () => {
+                    let fallback = new SpeechSynthesisUtterance(`${letter} ${num}`);
+                    fallback.lang = 'en-US';
+                    window.speechSynthesis.speak(fallback);
+                };
+
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -610,7 +638,7 @@
                         selectedCartelas = selectedCartelas.filter(id => id !== i);
                         cell.classList.remove('selected');
                     } else {
-                        if (selectedCartelas.length >= 4) { alert("You can select a maximum of 4 cartelas at a time!"); return; }
+                        if (selectedCartelas.length >= 4) { alert("You can select a maximum of 4 cartelas!"); return; }
                         selectedCartelas.push(i);
                         cell.classList.add('selected');
                     }
@@ -646,7 +674,7 @@
         }
 
         function joinAndStartGame() {
-            if (selectedCartelas.length === 0) { alert("Please select at least 1 cartela first!"); return; }
+            if (selectedCartelas.length === 0) { alert("Please select at least 1 cartela!"); return; }
             fetch(`/game/${gameId}/join`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -681,7 +709,7 @@
             let container = document.getElementById('userCartelasContainer');
             if (!container) return;
             container.innerHTML = '';
-            playerCards.forEach((card) => {
+            playerCards.forEach((card, cardIndex) => {
                 let cartelaDiv = document.createElement('div');
                 cartelaDiv.className = 'user-cartela';
                 let headerRow = document.createElement('div');
@@ -696,17 +724,41 @@
                     let isMarked = card.marked.includes(num) || idx === 12;
                     uCell.className = 'ucell' + (isMarked ? ' marked' : '');
                     uCell.innerText = idx === 12 ? '★' : num;
+                    
+                    uCell.onclick = () => {
+                        if (!isAutoMarkOn && num !== '*') {
+                            markUserNumber(cardIndex, num, uCell);
+                        }
+                    };
+
                     gridDiv.appendChild(uCell);
                 });
                 cartelaDiv.appendChild(gridDiv);
                 
                 let lbl = document.createElement('div');
-                lbl.style.textAlign = 'center'; lbl.style.fontSize = '12px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '6px'; lbl.style.color = '#000'; lbl.innerText = `Board #${card.cartela_number}`;
+                lbl.style.textAlign = 'center'; lbl.style.fontSize = '12px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '6px'; lbl.style.color = '#000'; lbl.innerText = `Cartela #${card.cartela_number}`;
                 cartelaDiv.appendChild(lbl);
                 container.appendChild(cartelaDiv);
             });
         }
         if (playerCards.length > 0) renderUserCartelas();
+
+        function markUserNumber(cardIndex, number, cellElement) {
+            fetch(`/game/${gameId}/mark`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ card_index: cardIndex, number: number })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success || data.marked) {
+                    if (!playerCards[cardIndex].marked.includes(number)) {
+                        playerCards[cardIndex].marked.push(number);
+                    }
+                    cellElement.classList.add('marked');
+                }
+            }).catch(err => console.log(err));
+        }
 
         function claimBingo() {
             fetch(`/game/${gameId}/mark`, {
@@ -724,7 +776,7 @@
             });
         }
 
-        // --- Winner Modal with Cartela Selection Redirection & Winning Board View ---
+        // --- WINNER MODAL & 5 SECONDS REDIRECT ---
         function showWinnerModal(data) {
             if (isGameOver) return;
             isGameOver = true;
@@ -735,9 +787,8 @@
 
             document.getElementById('modalTitle').innerText = isUserWinner ? 'CONGRATULATIONS YOU WON! 🎉' : 'BINGO WINNER!';
             document.getElementById('wNameText').innerHTML = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
-            document.getElementById('wCartelaTag').innerText = "Prize Amount: " + prize + " ETB";
+            document.getElementById('wCartelaTag').innerText = "Prize Amount: " + prize + " Br";
 
-            // Find winning cartela and render exact marked board in modal
             let boardPreview = document.getElementById('winningBoardPreview');
             boardPreview.innerHTML = '';
             
@@ -825,16 +876,18 @@
                 }
 
                 let autoMarked = false;
-                playerCards.forEach(card => {
-                    card.board.forEach((num) => {
-                        if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
-                            card.marked.push(num);
-                            autoMarked = true;
-                        }
+                if (isAutoMarkOn) {
+                    playerCards.forEach(card => {
+                        card.board.forEach((num) => {
+                            if (num !== '*' && calledRawNumbers.includes(num) && !card.marked.includes(num)) {
+                                card.marked.push(num);
+                                autoMarked = true;
+                            }
+                        });
                     });
-                });
-                if (autoMarked) {
-                    renderUserCartelas();
+                    if (autoMarked) {
+                        renderUserCartelas();
+                    }
                 }
 
                 if (data.called_numbers) {

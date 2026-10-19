@@ -28,17 +28,17 @@ class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    is_super = db.Column(db.Boolean, default=False)  # ሱፐር አድሚን ወይም ተራ አድሚን ለመለየት (ለጥያቄ ቁጥር 8)
+    is_super = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    unique_code = db.Column(db.String(16), unique=True, nullable=True)  # ሄክሳዴሲማል ጌም አይዲ (ለጥያቄ ቁጥር 6)
+    unique_code = db.Column(db.String(16), unique=True, nullable=True)
     hash_key = db.Column(db.String(64), unique=True, nullable=True)  
     status = db.Column(db.String(20), default='waiting')
     entry_price = db.Column(db.Float, nullable=False)
     pool = db.Column(db.Float, default=0.0)
-    jackpot_pool = db.Column(db.Float, default=0.0)  # የጃክፖት ቆጣቢ (ለጥያቄ ቁጥር 5)
+    jackpot_pool = db.Column(db.Float, default=0.0)
     called_numbers = db.Column(db.String, default='')
     winner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -62,22 +62,23 @@ class GameParticipant(db.Model):
 class GameHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, nullable=False)
-    game_unique_code = db.Column(db.String(16))  # ሄክሳዴሲማል ጌም አይዲ በሂስቶሪ ለማሳየት (ለጥያቄ ቁጥር 6)
+    game_unique_code = db.Column(db.String(16))
     winner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     winner_name = db.Column(db.String(64))
     winning_cartela = db.Column(db.Integer)
-    winning_board_data = db.Column(db.Text)  # የአሸናፊውን ቦርድ እና የተቀለሙ ቁጥሮች ለማስቀመጥ (ለጥያቄ ቁጥር 2)
+    winning_board_data = db.Column(db.Text)
     total_calls = db.Column(db.Integer)
     called_numbers_str = db.Column(db.Text)
     prize_amount = db.Column(db.Float)
+    is_win = db.Column(db.Boolean, default=False) # ተጠቃሚው ማሸነፉን ወይም መሸነፉን በትክክል ለመመዝገብ
     finished_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    type = db.Column(db.String(20))  # deposit, withdraw, win, stake, transfer, etc.
+    type = db.Column(db.String(20))
     amount = db.Column(db.Float, nullable=False)
-    payment_method = db.Column(db.String(32))  # 'telebirr' ወይም 'cbe_birr' (ለጥያቄ ቁጥር 7)
+    payment_method = db.Column(db.String(32))
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
