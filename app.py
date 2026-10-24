@@ -279,12 +279,9 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
-    if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
+    # ጌሙ ገና active/playing ካልሆነ በስተቀር (ማለትም waiting ወይም countdown ላይ ከሆነ) ተጫዋቹ ተጨማሪ ካርቴላ ለመጨመር እንዲገባ ይፈቀድለታል
+    if game.status in ['active', 'playing'] and user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
         return redirect(url_for('play_game', game_id=g_id))
-
-    for ag_id, ag in active_games.items():
-        if ag.entry_price == game.entry_price and ag.status in ['countdown', 'active'] and user.telegram_id in ag.players and len(ag.players[user.telegram_id]) > 0:
-            return redirect(url_for('play_game', game_id=ag_id))
 
     if game.status == 'finished':
         entry_price = game.entry_price
@@ -342,10 +339,6 @@ def join_game(game_id):
 
     if not cartela_numbers:
         return jsonify({'error': 'Please select at least one cartela number'}), 400
-
-    if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
-        session['active_game_id'] = game_id
-        return jsonify({'success': True, 'game_id': game_id})
 
     existing_cards_count = len(game.players.get(user.telegram_id, []))
     if existing_cards_count + len(cartela_numbers) > game.max_cards_per_player:
@@ -434,6 +427,14 @@ def game_status_api(game_id):
         winner_user_ids = [w.get('user_id') for w in game.winners]
         winner_names_str = ", ".join([w.get('username', 'Player') for w in game.winners]) if game.winners else "No Winner"
 
+        # ትክክለኛውን የአሸናፊ ዳታቤዝ ዩዘር ID ማግኘት (ለ Foreign Key ትክክለኛነት)
+        winner_db_id = None
+        if game.winners:
+            w_tg_id = game.winners[0].get('user_id')
+            w_user_obj = User.query.filter_by(telegram_id=w_tg_id).first()
+            if w_user_obj:
+                winner_db_id = w_user_obj.id
+
         for p_tid in game.players.keys():
             p_user = User.query.filter_by(telegram_id=p_tid).first()
             if p_user:
@@ -442,7 +443,7 @@ def game_status_api(game_id):
                 
                 if is_winner:
                     if game.entry_price > 0:
-                        p_user.balance += prize_per_winner
+                        p_user.balance += prize_per_winner  # ዋሌቱ ለአሸናፊው በትክክል ይጨመራል
                     p_user.games_won = (p_user.games_won or 0) + 1
 
                 player_card_info = next((c for c in game.players.get(p_tid, []) if c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
@@ -452,7 +453,7 @@ def game_status_api(game_id):
                         game_id=game_id,
                         game_unique_code=getattr(game, 'unique_code', str(game_id)),
                         user_id=p_user.id,
-                        winner_id=p_user.id if is_winner else (game.winners[0].get('user_id') if game.winners else None),
+                        winner_id=winner_db_id, # የዳታቤዝ ዩዘር ID በትክክል ተቀምጧል
                         winner_name=winner_names_str,
                         winning_cartela=player_card_info.get('cartela_number', 1),
                         winning_board_data=json.dumps(player_card_info),
@@ -511,20 +512,6 @@ def mark_number(game_id):
         derash_amount = game.get_derash_amount() if hasattr(game, 'get_derash_amount') else pool
         winner, message, prize_per_winner = game.claim_bingo(user.telegram_id, card_index)
         
-        if winner:
-            if prize_per_winner <= 0 and derash_amount > 0:
-                prize_per_winner = derash_amount / max(len(game.winners), 1)
-            
-            if game.entry_price > 0:
-                user.balance += prize_per_winner
-
-            user.games_won = (user.games_won or 0) + 1
-            
-            for p_tid in game.players.keys():
-                p_user = User.query.filter_by(telegram_id=p_tid).first()
-                if p_user:
-                    p_user.games_played = (p_user.games_played or 0) + 1
-
         return jsonify({
             'winner': winner,
             'message': message,
