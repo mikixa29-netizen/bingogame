@@ -12,9 +12,7 @@
             display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 80px;
         }
         .header-title { font-size: 24px; font-weight: bold; margin: 15px 0; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
-        
         .history-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 10px; }
-        
         .history-card {
             background: rgba(255, 255, 255, 0.25); width: 100%;
             border-radius: 16px; padding: 16px; border: 1px solid rgba(255, 255, 255, 0.4);
@@ -23,15 +21,10 @@
         }
         .history-row { display: flex; justify-content: space-between; align-items: center; }
         .history-row span { font-weight: bold; }
-        
-        .status-badge {
-            padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase;
-        }
-        .status-badge.win { background: #27ae60; color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .status-badge.lose { background: #c0392b; color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-
-        .winner-tag { color: #fdd835; font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        
+        .status-badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .status-badge.win { background: #27ae60; color: #fff; }
+        .status-badge.lose { background: #c0392b; color: #fff; }
+        .winner-tag { color: #fdd835; font-size: 14px; }
         .called-numbers-preview {
             display: flex; flex-wrap: wrap; gap: 4px; max-height: 70px; overflow-y: auto;
             background: rgba(0,0,0,0.2); padding: 8px; border-radius: 10px; margin-top: 4px;
@@ -41,19 +34,14 @@
             display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: bold;
             border: 1px solid #fdd835;
         }
-
         .empty-card { text-align: center; padding: 30px; background: rgba(255,255,255,0.25); border-radius: 16px; font-weight: bold; font-size: 14px; }
-
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
             border-top-left-radius: 16px; border-top-right-radius: 16px;
         }
-        .nav-item { 
-            display: flex; flex-direction: column; align-items: center; text-decoration: none; 
-            color: #777; font-size: 11px; font-weight: bold; transition: 0.2s ease;
-        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #777; font-size: 11px; font-weight: bold; }
         .nav-item span { font-size: 18px; margin-bottom: 2px; }
         .nav-item.active { color: #27ae60; transform: translateY(-2px); }
     </style>
@@ -66,7 +54,7 @@
         <div class="history-card">
             <div class="history-row">
                 <div>🎮 Game Code: <span style="color: #fdd835;">#{{ hist.game_unique_code | default(hist.game_id) }}</span></div>
-                <div style="font-size: 11px; opacity: 0.9;">{{ hist.created_at.strftime('%Y-%m-%d %H:%M') if hist.created_at else '' }}</div>
+                <div style="font-size: 11px; opacity: 0.9;">{{ hist.finished_at.strftime('%Y-%m-%d %H:%M') if hist.finished_at else '' }}</div>
             </div>
             
             <div class="history-row">
@@ -80,7 +68,7 @@
 
             <div class="history-row">
                 <div>📌 Cartela: <span>#{{ hist.winning_cartela }}</span></div>
-                <div>💰 Prize: <span style="color: #fdd835; font-size: 15px;">{{ hist.prize_amount }} Br</span></div>
+                <div>💰 Prize: <span style="color: #fdd835; font-size: 15px;">{{ hist.prize_amount | default(0.0) }} Br</span></div>
             </div>
             
             <div style="margin-top: 4px; font-size: 11.5px; font-weight: bold; opacity: 0.95;">Called Numbers:</div>

@@ -18,7 +18,6 @@
         .header-title { font-size: 22px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
         .refresh-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
 
-        /* Tabs (Today, This Week, This Month) */
         .tabs-container {
             width: 100%; max-width: 440px; display: flex; background: rgba(0, 0, 0, 0.25);
             border-radius: 12px; padding: 4px; margin-bottom: 15px; gap: 4px;
@@ -29,7 +28,6 @@
         }
         .tab-btn.active { background: rgba(255, 255, 255, 0.3); color: #fdd835; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
 
-        /* Top Winners Circles */
         .top-circles-container {
             width: 100%; max-width: 440px; display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding: 5px 0;
         }
@@ -40,7 +38,6 @@
         }
 
         .scores-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 10px; }
-        
         .card-box {
             background: rgba(255, 255, 255, 0.25); width: 100%;
             border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
@@ -56,22 +53,16 @@
         .player-details { display: flex; flex-direction: column; gap: 2px; }
         .player-name { font-size: 15px; font-weight: bold; color: #fff; }
         .player-phone { font-size: 11px; opacity: 0.85; color: #f3f3f3; }
-        
         .score-val { color: #fdd835; font-size: 18px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-
         .empty-card { text-align: center; padding: 25px; background: rgba(255,255,255,0.2); border-radius: 14px; font-weight: bold; font-size: 14px; }
 
-        /* Bottom Nav - Unified Modern Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
             border-top-left-radius: 16px; border-top-right-radius: 16px;
         }
-        .nav-item { 
-            display: flex; flex-direction: column; align-items: center; text-decoration: none; 
-            color: #777; font-size: 11px; font-weight: bold; transition: 0.2s ease;
-        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #777; font-size: 11px; font-weight: bold; }
         .nav-item span { font-size: 18px; margin-bottom: 2px; }
         .nav-item.active { color: #27ae60; transform: translateY(-2px); }
     </style>
@@ -82,22 +73,17 @@
         <button class="refresh-btn" onclick="loadScores(currentFilter)">🔄</button>
     </div>
 
-    <!-- Tabs (Today, This Week, This Month) -->
     <div class="tabs-container">
         <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">Today</button>
         <button class="tab-btn" id="tab-week" onclick="switchTab('week')">This Week</button>
         <button class="tab-btn" id="tab-month" onclick="switchTab('month')">This Month</button>
     </div>
 
-    <!-- Top Winners Circles Row -->
     <div class="top-circles-container" id="topCirclesContainer"></div>
-    
-    <!-- Leaderboard List -->
     <div class="scores-container" id="scoresContainer">
         <div class="empty-card">Loading leaderboard...</div>
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <a href="/" class="nav-item"><span>🎮</span> Game</a>
         <a href="/scores" class="nav-item active"><span>🏆</span> Scores</a>
@@ -133,7 +119,6 @@
                     return;
                 }
 
-                // Render Top Circles (Top 5)
                 scoresList.slice(0, 5).forEach(player => {
                     const initial = player.username ? player.username.charAt(0).toUpperCase() : 'P';
                     const circle = document.createElement('div');
@@ -142,7 +127,6 @@
                     circlesContainer.appendChild(circle);
                 });
 
-                // Render Leaderboard List
                 scoresList.forEach((player) => {
                     const initial = player.username ? player.username.charAt(0).toUpperCase() : 'P';
                     const card = document.createElement('div');
@@ -166,7 +150,6 @@
             });
         }
 
-        // Initial load
         loadScores('today');
     </script>
 </body>

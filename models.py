@@ -7,7 +7,6 @@ class User(db.Model):
     username = db.Column(db.String(64))
     phone = db.Column(db.String(20))
     
-    # 3-Tier Balance Architecture
     balance = db.Column(db.Float, default=0.0)
     bonus_balance = db.Column(db.Float, default=20.0)
     coin = db.Column(db.Integer, default=0)
@@ -16,10 +15,8 @@ class User(db.Model):
     games_won = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     referrer_id = db.Column(db.BigInteger, nullable=True)
-    
     is_blocked = db.Column(db.Boolean, default=False)
     
-    # Relationships for tracking
     transactions = db.relationship('Transaction', backref='user', lazy=True)
     transfers_sent = db.relationship('Transfer', foreign_keys='Transfer.sender_id', backref='sender', lazy=True)
     transfers_received = db.relationship('Transfer', foreign_keys='Transfer.receiver_id', backref='receiver', lazy=True)
@@ -70,7 +67,7 @@ class GameHistory(db.Model):
     total_calls = db.Column(db.Integer)
     called_numbers_str = db.Column(db.Text)
     prize_amount = db.Column(db.Float)
-    is_win = db.Column(db.Boolean, default=False) # ተጠቃሚው ማሸነፉን ወይም መሸነፉን በትክክል ለመመዝገብ
+    is_win = db.Column(db.Boolean, default=False)
     finished_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Transaction(db.Model):
@@ -84,7 +81,7 @@ class Transaction(db.Model):
     completed_at = db.Column(db.DateTime)
 
     deposit_phone = db.Column(db.String(20))
-    transaction_id = db.Column(db.String(100), unique=True, index=True) # ድርብ ደረሰኝ እንዳይመዝገብ በዳታቤዝ ደረጃ ተቆልፏል
+    transaction_id = db.Column(db.String(100), unique=True, index=True)
     sms_text = db.Column(db.Text)
 
     withdrawal_phone = db.Column(db.String(20))

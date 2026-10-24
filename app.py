@@ -8,7 +8,7 @@ from datetime import datetime, date, timedelta
 from database import db, init_db
 from game_logic import BingoGame
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
-from admin_panel import admin_bp # Import admin blueprint
+from admin_panel import admin_bp
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -20,13 +20,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
 init_db(app)
-
-# Register Admin Blueprint to fix admin routing errors
 app.register_blueprint(admin_bp)
 
 from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory, Admin
 
-# Auto-create default admin and ensure tables exist on startup
 with app.app_context():
     db.create_all()
     try:
@@ -43,7 +40,6 @@ with app.app_context():
 
 active_games = {}
 
-# Rooms Setup: 10, 20, 50, 100 ETB and Demo (999) - max_cards_per_player set to 4
 def init_default_games():
     if not active_games:
         active_games[1] = BingoGame(1, entry_price=10, max_cards_per_player=4)
@@ -53,21 +49,6 @@ def init_default_games():
         active_games[999] = BingoGame(999, entry_price=0, max_cards_per_player=5)
 
 init_default_games()
-
-CONFIG_FILE = "bot_config.json"
-def load_config():
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as f:
-            return json.load(f)
-    return {}
-
-def save_config(config):
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f)
-
-# ==========================================
-# USER ROUTES (Player-facing views - English)
-# ==========================================
 
 @app.route('/')
 def index():
@@ -271,7 +252,6 @@ def select_cartela(game_id):
 
     game = active_games[g_id]
     
-    # If the previous game finished, automatically route/create a fresh active waiting game for this entry price
     if game.status == 'finished':
         entry_price = game.entry_price
         waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status in ['waiting', 'countdown']), None)
@@ -363,7 +343,6 @@ def join_game(game_id):
         if not success:
             return jsonify({'error': msg}), 400
 
-    # Balance deduction starts properly when 2 players join (game status transitions to countdown)
     if game.status == 'countdown' and not getattr(game, 'balances_deducted', False):
         game.balances_deducted = True
         for p_tid, p_cards in game.players.items():
@@ -430,7 +409,6 @@ def game_status_api(game_id):
     if (game.status in ['finished', 'completed'] or game.winners) and not getattr(game, '_history_recorded', False):
         game._history_recorded = True
         prize_per_winner = round(derash_amount / max(len(game.winners), 1), 2) if game.winners else 0.0
-        
         winner_user_ids = [w.get('user_id') for w in game.winners]
 
         for p_tid in game.players.keys():
@@ -561,10 +539,17 @@ def deposit():
     data = request.json or {}
     amount = float(data.get('amount', 0))
     payment_method = data.get('payment_method', 'telebirr')
-    transaction_id = data.get('transaction_id', '')
+    transaction_id = str(data.get('transaction_id', '')).strip()
 
     if amount < 10:
         return jsonify({'error': 'Minimum deposit amount is 10 ETB.'}), 400
+
+    if not transaction_id or len(transaction_id) < 5:
+        return jsonify({'error': 'Please enter a valid receipt or transaction reference ID.'}), 400
+
+    existing_tx = Transaction.query.filter_by(transaction_id=transaction_id).first()
+    if existing_tx:
+        return jsonify({'error': 'This transaction reference ID has already been used!'}), 400
 
     user.balance += amount
     tx = Transaction(
@@ -615,13 +600,20 @@ def transfer_balance():
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.json or {}
-    recipient_phone = data.get('phone')
+    raw_phone = str(data.get('phone', '')).strip()
     amount = float(data.get('amount', 0))
 
-    if amount <= 0 or sender.balance < amount:
-        return jsonify({'error': 'Invalid amount or insufficient balance.'}), 400
+    if amount < 10 or sender.balance < amount:
+        return jsonify({'error': 'Invalid amount or insufficient main balance.'}), 400
 
-    recipient = User.query.filter_by(phone=recipient_phone).first()
+    # Clean and match phone number formats robustly (09..., 2519..., +2519...)
+    clean_phone = raw_phone.replace('+', '').replace(' ', '')
+    recipient = User.query.filter(
+        (User.phone == clean_phone) | 
+        (User.phone == '0' + clean_phone[-9:]) | 
+        (User.phone == '251' + clean_phone[-9:])
+    ).first()
+
     if not recipient or recipient.id == sender.id:
         return jsonify({'error': 'Recipient not found with this phone number.'}), 404
 
@@ -629,10 +621,57 @@ def transfer_balance():
     recipient.balance += amount
 
     transfer_record = Transfer(sender_id=sender.id, receiver_id=recipient.id, amount=amount)
-    db.session.add(transfer_record)
+    tx_sender = Transaction(user_id=sender.id, type='transfer', amount=amount, payment_method='wallet', status='completed')
+    tx_receiver = Transaction(user_id=recipient.id, type='transfer', amount=amount, payment_method='wallet', status='completed')
+    
+    db.session.add_all([transfer_record, tx_sender, tx_receiver])
     db.session.commit()
 
-    return jsonify({'success': True, 'message': 'Transfer successful!'})
+    return jsonify({'success': True, 'message': 'Balance transferred successfully!'})
+
+@app.route('/wallet/transactions', methods=['GET'])
+def get_user_transactions():
+    user_id = session.get('user_id')
+    user = User.query.filter_by(telegram_id=user_id).first()
+    if not user:
+        return jsonify({'transactions': []})
+
+    timeframe = request.args.get('timeframe', 'today')
+    tx_type = request.args.get('type', 'all')
+    now = datetime.utcnow()
+
+    query = Transaction.query.filter_by(user_id=user.id)
+
+    if timeframe == 'today':
+        start_date = datetime(now.year, now.month, now.day)
+        query = query.filter(Transaction.created_at >= start_date)
+    elif timeframe == 'week':
+        start_date = now - timedelta(days=7)
+        query = query.filter(Transaction.created_at >= start_date)
+    elif timeframe == 'month':
+        start_date = now - timedelta(days=30)
+        query = query.filter(Transaction.created_at >= start_date)
+    elif timeframe == '3months':
+        start_date = now - timedelta(days=90)
+        query = query.filter(Transaction.created_at >= start_date)
+
+    if tx_type != 'all':
+        query = query.filter(Transaction.type == tx_type)
+
+    results = query.order_by(Transaction.id.desc()).all()
+    
+    formatted_txs = []
+    for t in results:
+        formatted_txs.append({
+            'id': t.id,
+            'type': t.type,
+            'amount': t.amount,
+            'method': t.payment_method or 'Wallet',
+            'status': t.status or 'completed',
+            'date': t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else ''
+        })
+
+    return jsonify({'transactions': formatted_txs})
 
 @app.route('/ping')
 def ping():
