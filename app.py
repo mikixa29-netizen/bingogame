@@ -26,9 +26,9 @@ from models import User, Game, GameParticipant, Transaction, Transfer, GameHisto
 
 with app.app_context():
     db.create_all()
-    # Safe migration check for Render PostgreSQL is_win column
     try:
         db.session.execute(db.text("ALTER TABLE game_history ADD COLUMN IF NOT EXISTS is_win BOOLEAN DEFAULT FALSE;"))
+        db.session.execute(db.text("ALTER TABLE game_history ADD COLUMN IF NOT EXISTS user_id INTEGER;"))
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -135,7 +135,7 @@ def history():
     if not user:
         return redirect(url_for('index'))
     
-    game_history = GameHistory.query.filter_by(winner_id=user.id).order_by(GameHistory.id.desc()).limit(20).all()
+    game_history = GameHistory.query.filter_by(user_id=user.id).order_by(GameHistory.id.desc()).limit(30).all()
     return render_template('history.html', game_history=game_history)
 
 @app.route('/wallet')
@@ -218,7 +218,6 @@ def create_game():
         if not user.phone:
             return jsonify({'error': 'Please register your phone number before playing.'}), 400
 
-        # Check if user already joined an active/countdown game for this entry price
         for ag_id, ag in active_games.items():
             if ag.entry_price == entry_price and ag.status in ['countdown', 'active'] and user.telegram_id in ag.players and len(ag.players[user.telegram_id]) > 0:
                 return jsonify({
@@ -280,7 +279,6 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
-    # Rejoin active game check: If user already has cards in this game or an active game of same entry price, redirect directly to play_game
     if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
         return redirect(url_for('play_game', game_id=g_id))
 
@@ -314,6 +312,7 @@ def select_cartela(game_id):
     return render_template(
         'cartela_selection.html',
         game_id=g_id,
+        game_code=game.unique_code, # ትክክለኛው Game Code
         entry_price=game.entry_price,
         used_cartelas=used_cartelas,
         balance=user.balance,
@@ -402,6 +401,7 @@ def play_game(game_id):
 
     return render_template('game.html',
                            game_id=game_id,
+                           game_code=game.unique_code, # ትክክለኛው Game Code በጨዋታ ስክሪን ላይ እንዲታይ
                            game=game,
                            player_cards=player_cards,
                            called_numbers=[game.format_number(n) for n in game.called_numbers],
@@ -432,7 +432,9 @@ def game_status_api(game_id):
         game._history_recorded = True
         prize_per_winner = round(derash_amount / max(len(game.winners), 1), 2) if game.winners else 0.0
         winner_user_ids = [w.get('user_id') for w in game.winners]
+        winner_names_str = ", ".join([w.get('username', 'Player') for w in game.winners]) if game.winners else "No Winner"
 
+        # ለእያንዳንዱ ተጫዋች ታሪክ ይመዝገብ (አሸናፊው WIN, ተሸናፊው LOSE)
         for p_tid in game.players.keys():
             p_user = User.query.filter_by(telegram_id=p_tid).first()
             if p_user:
@@ -444,14 +446,15 @@ def game_status_api(game_id):
                         p_user.balance += prize_per_winner
                     p_user.games_won = (p_user.games_won or 0) + 1
 
-                player_card_info = next((c for c in game.players.get(p_tid, []) if is_winner and c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
+                player_card_info = next((c for c in game.players.get(p_tid, []) if c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
 
                 try:
                     hist = GameHistory(
                         game_id=game_id,
                         game_unique_code=getattr(game, 'unique_code', str(game_id)),
-                        winner_id=p_user.id if is_winner else None,
-                        winner_name=p_user.username or "Player",
+                        user_id=p_user.id,
+                        winner_id=p_user.id if is_winner else (game.winners[0].get('user_id') if game.winners else None),
+                        winner_name=winner_names_str,
                         winning_cartela=player_card_info.get('cartela_number', 1),
                         winning_board_data=json.dumps(player_card_info),
                         total_calls=len(game.called_numbers),
@@ -518,7 +521,6 @@ def mark_number(game_id):
 
             user.games_won = (user.games_won or 0) + 1
             
-            winner_user_ids = [w.get('user_id') for w in game.winners]
             for p_tid in game.players.keys():
                 p_user = User.query.filter_by(telegram_id=p_tid).first()
                 if p_user:
@@ -638,7 +640,6 @@ def transfer_balance():
     if not recipient or recipient.id == sender.id:
         return jsonify({'error': 'Recipient not found with this phone number.'}), 404
 
-    # Transfer from bonus_balance to bonus_balance
     sender.bonus_balance -= amount
     recipient.bonus_balance += amount
 
@@ -649,7 +650,7 @@ def transfer_balance():
     db.session.add_all([transfer_record, tx_sender, tx_receiver])
     db.session.commit()
 
-    return jsonify({'success': True, 'message': 'Balance transferred successfully from/to bonus balance!'})
+    return jsonify({'success': True, 'message': 'Balance transferred successfully!'})
 
 @app.route('/wallet/transactions', methods=['GET'])
 def get_user_transactions():

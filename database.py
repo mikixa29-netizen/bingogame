@@ -23,14 +23,12 @@ def init_db(app):
     db.init_app(app)
 
     with app.app_context():
-        import models  # Import models here to avoid circular imports
+        import models  
         db.create_all()
         
-        # Safely add missing columns to the tables if they don't exist yet
         with db.engine.connect() as connection:
             connection = connection.execution_options(isolation_level="AUTOCOMMIT")
             
-            # User table missing columns
             user_columns_to_add = [
                 ('is_blocked', 'BOOLEAN DEFAULT FALSE'),
                 ('bonus_balance', 'DOUBLE PRECISION DEFAULT 20.0'),
@@ -40,40 +38,35 @@ def init_db(app):
                 ('referrer_id', 'BIGINT'),
                 ('phone', 'VARCHAR(30)')
             ]
-            
             for col_name, col_type in user_columns_to_add:
                 try:
                     connection.execute(text(f'ALTER TABLE "user" ADD COLUMN {col_name} {col_type};'))
                 except Exception:
-                    pass  # Skip silently if the column already exists
+                    pass
 
-            # Game table missing columns
             game_columns_to_add = [
                 ('hash_key', 'VARCHAR(64)'),
                 ('jackpot_pool', 'DOUBLE PRECISION DEFAULT 0.0'),
                 ('unique_code', 'VARCHAR(16)')
             ]
-
             for col_name, col_type in game_columns_to_add:
                 try:
                     connection.execute(text(f'ALTER TABLE "game" ADD COLUMN {col_name} {col_type};'))
                 except Exception:
                     pass
 
-            # GameHistory table missing columns (is_win ተጨምሯል!)
             history_columns_to_add = [
                 ('game_unique_code', 'VARCHAR(16)'),
                 ('winning_board_data', 'TEXT'),
-                ('is_win', 'BOOLEAN DEFAULT FALSE')
+                ('is_win', 'BOOLEAN DEFAULT FALSE'),
+                ('user_id', 'INTEGER')
             ]
-
             for col_name, col_type in history_columns_to_add:
                 try:
                     connection.execute(text(f'ALTER TABLE "game_history" ADD COLUMN {col_name} {col_type};'))
                 except Exception:
                     pass
 
-            # Transaction table missing columns
             transaction_columns_to_add = [
                 ('payment_method', 'VARCHAR(32)'),
                 ('transaction_id', 'VARCHAR(100)'),
@@ -83,7 +76,6 @@ def init_db(app):
                 ('withdrawal_status', 'VARCHAR(20)'),
                 ('admin_note', 'TEXT')
             ]
-
             for col_name, col_type in transaction_columns_to_add:
                 try:
                     connection.execute(text(f'ALTER TABLE "transaction" ADD COLUMN {col_name} {col_type};'))

@@ -60,6 +60,7 @@ class GameHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, nullable=False)
     game_unique_code = db.Column(db.String(16))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # ታሪኩ የየትኛው ተጠቃሚ እንደሆነ ለመለየት
     winner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     winner_name = db.Column(db.String(64))
     winning_cartela = db.Column(db.Integer)
