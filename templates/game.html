@@ -185,7 +185,7 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .game-stat-box .label { font-size: 8px; text-transform: uppercase; font-weight: bold; color: #FFFEFE; }
-        .game-stat-box .value { font-size: 11px; font-weight: bold; margin-top: 2px; color: #FFFEFE; }
+        .game-stat-box .value { font-size: 10px; font-weight: bold; margin-top: 2px; color: #fdd835; }
 
         .game-main-area {
             display: flex;
@@ -428,7 +428,7 @@
     <div id="selection-screen">
         <div class="sel-top-stats" style="width: 100%; max-width: 440px;">
             <div class="sel-stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }} Br</div></div>
-            <div class="sel-stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
+            <div class="sel-stat-box"><div class="label">Code</div><div class="value" style="font-size: 11px;">#{{ game_code }}</div></div>
             <div class="sel-stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }} Br</div></div>
             <div class="sel-stat-box"><div class="label">Selected</div><div class="value" id="selectedCountLbl">0/4</div></div>
         </div>
@@ -454,7 +454,7 @@
     <!-- GAME SCREEN -->
     <div id="game-screen">
         <div class="game-top-stats">
-            <div class="game-stat-box"><div class="label">Game</div><div class="value" id="gameIdLbl">P{{ game_id }}</div></div>
+            <div class="game-stat-box"><div class="label">Game</div><div class="value" id="gameIdLbl" style="font-size:9px;">#{{ game_code }}</div></div>
             <div class="game-stat-box"><div class="label">Pool</div><div class="value" id="derashVal">{{ pool | default('--') }}</div></div>
             <div class="game-stat-box"><div class="label">Bonus</div><div class="value" id="bonusVal">{{ bonus | default('On') }}</div></div>
             <div class="game-stat-box"><div class="label">Players</div><div class="value" id="playersVal">{{ active_players | default('--') }}</div></div>
@@ -564,7 +564,6 @@
             return 'badge-o';
         }
 
-        // Voice speech synthesis
         function speakNumber(callStr) {
             if (!isSoundOn || !callStr) return;
             let parts = callStr.split('-');
@@ -761,7 +760,6 @@
             });
         }
 
-        // WINNER MODAL & 5 SECONDS REDIRECT DIRECTLY TO SELECT CARTELA
         function showWinnerModal(data) {
             if (isModalOpened) return;
             isModalOpened = true;

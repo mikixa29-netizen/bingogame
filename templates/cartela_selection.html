@@ -23,7 +23,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.12); border: 1px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(5px);
         }
         .stat-box .label { font-size: 10px; text-transform: uppercase; font-weight: bold; opacity: 0.9; }
-        .stat-box .value { font-size: 14px; font-weight: bold; margin-top: 3px; color: #fdd835; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .stat-box .value { font-size: 13px; font-weight: bold; margin-top: 3px; color: #fdd835; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
         .jackpot-banner {
             width: 100%; max-width: 440px; background: rgba(255, 255, 255, 0.25); border-radius: 12px;
@@ -86,7 +86,6 @@
         .fairness-title { font-weight: bold; margin-bottom: 3px; text-transform: uppercase; font-size: 10px; color: #fdd835; }
         .fairness-id { background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: bold; margin-bottom: 3px; color: #fdd835; }
 
-        /* Bottom Nav - Modern Unified Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
@@ -116,7 +115,7 @@
     <div class="top-stats">
         <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance | default('0.00') }} Br</div></div>
         <div class="stat-box"><div class="label">Bonus</div><div class="value">{{ bonus | default('0.00') }} Br</div></div>
-        <div class="stat-box"><div class="label">Game ID</div><div class="value">#{{ game_id }}</div></div>
+        <div class="stat-box"><div class="label">Game Code</div><div class="value" style="font-size:10px;">#{{ game_code }}</div></div>
         <div class="stat-box"><div class="label">Bet</div><div class="value" id="entry-price">{{ entry_price }} Br</div></div>
     </div>
 
@@ -154,16 +153,14 @@
                 <button class="btn-start" onclick="confirmJoin()">Start Game</button>
             </div>
 
-            <!-- Fairness Hash Block with Dynamic Game ID and Static Room Hash -->
             <div class="fairness-box">
                 <div class="fairness-title">Fairness Hash</div>
-                <div class="fairness-id">Room: #{{ game_id }}</div>
+                <div class="fairness-id">Code: #{{ game_code }}</div>
                 <div id="hashValue">{{ game_hash }}</div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <a href="/" class="nav-item active"><span>🎮</span> Game</a>
         <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>

@@ -312,7 +312,7 @@ def select_cartela(game_id):
     return render_template(
         'cartela_selection.html',
         game_id=g_id,
-        game_code=game.unique_code, # ትክክለኛው Game Code
+        game_code=game.unique_code,
         entry_price=game.entry_price,
         used_cartelas=used_cartelas,
         balance=user.balance,
@@ -401,7 +401,7 @@ def play_game(game_id):
 
     return render_template('game.html',
                            game_id=game_id,
-                           game_code=game.unique_code, # ትክክለኛው Game Code በጨዋታ ስክሪን ላይ እንዲታይ
+                           game_code=game.unique_code,
                            game=game,
                            player_cards=player_cards,
                            called_numbers=[game.format_number(n) for n in game.called_numbers],
@@ -434,7 +434,6 @@ def game_status_api(game_id):
         winner_user_ids = [w.get('user_id') for w in game.winners]
         winner_names_str = ", ".join([w.get('username', 'Player') for w in game.winners]) if game.winners else "No Winner"
 
-        # ለእያንዳንዱ ተጫዋች ታሪክ ይመዝገብ (አሸናፊው WIN, ተሸናፊው LOSE)
         for p_tid in game.players.keys():
             p_user = User.query.filter_by(telegram_id=p_tid).first()
             if p_user:
