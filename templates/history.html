@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -24,7 +24,6 @@
         .history-row { display: flex; justify-content: space-between; align-items: center; }
         .history-row span { font-weight: bold; }
         
-        /* ዊን እና ሎዝ ስታተስ ታግ */
         .status-badge {
             padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase;
         }
@@ -45,7 +44,6 @@
 
         .empty-card { text-align: center; padding: 30px; background: rgba(255,255,255,0.25); border-radius: 16px; font-weight: bold; font-size: 14px; }
 
-        /* Bottom Nav - Modern Unified Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
@@ -61,56 +59,54 @@
     </style>
 </head>
 <body>
-    <div class="header-title">📋 የጨዋታ ታሪክ (History)</div>
+    <div class="header-title">📋 Game History</div>
 
     <div class="history-container">
         {% for hist in game_history %}
         <div class="history-card">
             <div class="history-row">
-                <div>🎮 ጌም ኮድ: <span style="color: #fdd835;">#{{ hist.game_unique_code | default(hist.game_id) }}</span></div>
+                <div>🎮 Game Code: <span style="color: #fdd835;">#{{ hist.game_unique_code | default(hist.game_id) }}</span></div>
                 <div style="font-size: 11px; opacity: 0.9;">{{ hist.created_at.strftime('%Y-%m-%d %H:%M') if hist.created_at else '' }}</div>
             </div>
             
             <div class="history-row">
-                <div>🏆 አሸናፊ: <span class="winner-tag">{{ hist.winner_name | default('ተጫዋች') }}</span></div>
-                <!-- ዊን ወይም ሎዝ ሁኔታን ማሳየት -->
-                {% if hist.winner_id == session.get('user_id') %}
-                    <span class="status-badge win">አሸንፈዋል (WIN)</span>
+                <div>🏆 Winner: <span class="winner-tag">{{ hist.winner_name | default('Player') }}</span></div>
+                {% if hist.is_win %}
+                    <span class="status-badge win">WIN</span>
                 {% else %}
-                    <span class="status-badge lose">ተሸንፈዋል (LOSE)</span>
+                    <span class="status-badge lose">LOSE</span>
                 {% endif %}
             </div>
 
             <div class="history-row">
-                <div>📌 ካርቴላ: <span>#{{ hist.winning_cartela }}</span></div>
-                <div>💰 ሽልማት: <span style="color: #fdd835; font-size: 15px;">{{ hist.prize_amount }} ብር</span></div>
+                <div>📌 Cartela: <span>#{{ hist.winning_cartela }}</span></div>
+                <div>💰 Prize: <span style="color: #fdd835; font-size: 15px;">{{ hist.prize_amount }} Br</span></div>
             </div>
             
-            <div style="margin-top: 4px; font-size: 11.5px; font-weight: bold; opacity: 0.95;">የተጠሩ ቁጥሮች (Called Numbers):</div>
+            <div style="margin-top: 4px; font-size: 11.5px; font-weight: bold; opacity: 0.95;">Called Numbers:</div>
             <div class="called-numbers-preview">
                 {% if hist.called_numbers_str %}
                     {% for num in hist.called_numbers_str.split(',') %}
                     <div class="mini-ball">{{ num }}</div>
                     {% endfor %}
                 {% else %}
-                    <span style="font-size: 11px; opacity: 0.7;">ምንም ዝርዝር የለም</span>
+                    <span style="font-size: 11px; opacity: 0.7;">No details available</span>
                 {% endif %}
             </div>
         </div>
         {% else %}
         <div class="empty-card">
-            ምንም የጨዋታ ታሪክ የለም! ጨዋታዎችን በመጫወት ታሪክዎን እዚህ ይመልከቱ።
+            No game history found! Play games to view your history here.
         </div>
         {% endfor %}
     </div>
 
-    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item"><span>🎮</span> ጨዋታ</a>
-        <a href="/scores" class="nav-item"><span>🏆</span> ፉክክር</a>
-        <a href="/history" class="nav-item active"><span>📋</span> ታሪክ</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
-        <a href="/profile" class="nav-item"><span>👤</span> ප්‍රိုፋይል</a>
+        <a href="/" class="nav-item"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item active"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
     </div>
 </body>
 </html>

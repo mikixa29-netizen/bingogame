@@ -83,7 +83,6 @@
         .btn-open { background: rgba(255,255,255,0.3); color: white; border: none; padding: 7px 14px; border-radius: 16px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-try { background: #34495e; color: white; border: none; padding: 7px 18px; border-radius: 16px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
 
-        /* Bottom Nav - Modern Unified Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
@@ -100,14 +99,12 @@
 </head>
 <body>
 
-    <!-- Header Stats -->
     <div class="app-header">
         <div class="live-indicator"><div class="live-dot"></div> Live</div>
         <div>Bonus: <span id="hdr-bonus" style="color: #fdd835;">{{ bonus_balance | default('0.00') }}</span> Br</div>
         <div>Balance: <span id="hdr-balance" style="color: #fdd835;">{{ main_balance | default('0.00') }}</span> Br</div>
     </div>
 
-    <!-- BINGO GAMES SECTION HEADER -->
     <div class="section-header">🎮 BINGO ROOMS</div>
     <div class="table-headers">
         <div>Bet</div>
@@ -115,10 +112,8 @@
         <div style="text-align: right;">Status & Action</div>
     </div>
 
-    <!-- Dynamic Room List Container -->
     <div id="rooms-container" style="width: 100%; max-width: 440px;"></div>
 
-    <!-- FREE PRACTICE MODE -->
     <div class="demo-card">
         <div class="demo-info">
             <div>🎮 <span>Demo Mode</span></div>
@@ -130,7 +125,6 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <a href="/" class="nav-item active"><span>🎮</span> Game</a>
         <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>

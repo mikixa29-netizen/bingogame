@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Edil Bingo - Scores</title>
+    <title>Edil Bingo - Leaderboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
@@ -61,7 +61,7 @@
 
         .empty-card { text-align: center; padding: 25px; background: rgba(255,255,255,0.2); border-radius: 14px; font-weight: bold; font-size: 14px; }
 
-        /* Bottom Nav - Modern Unified Design */
+        /* Bottom Nav - Unified Modern Design */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
@@ -78,34 +78,32 @@
 </head>
 <body>
     <div class="header-container">
-        <div class="header-title">🏆 የውጤት ሰሌዳ (Scores)</div>
-        <button class="refresh-btn" onclick="loadScores('today')">🔄</button>
+        <div class="header-title">🏆 Leaderboard</div>
+        <button class="refresh-btn" onclick="loadScores(currentFilter)">🔄</button>
     </div>
 
     <!-- Tabs (Today, This Week, This Month) -->
     <div class="tabs-container">
-        <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">ዛሬ (Today)</button>
-        <button class="tab-btn" id="tab-week" onclick="switchTab('week')">ይህ ሳምንት</button>
-        <button class="tab-btn" id="tab-month" onclick="switchTab('month')">ይህ ወር</button>
+        <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">Today</button>
+        <button class="tab-btn" id="tab-week" onclick="switchTab('week')">This Week</button>
+        <button class="tab-btn" id="tab-month" onclick="switchTab('month')">This Month</button>
     </div>
 
     <!-- Top Winners Circles Row -->
-    <div class="top-circles-container" id="topCirclesContainer">
-        <!-- Dynamically loaded -->
-    </div>
+    <div class="top-circles-container" id="topCirclesContainer"></div>
     
     <!-- Leaderboard List -->
     <div class="scores-container" id="scoresContainer">
-        <div class="empty-card">መረጃ በመጫን ላይ...</div>
+        <div class="empty-card">Loading leaderboard...</div>
     </div>
 
-    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item"><span>🎮</span> ጨዋታ</a>
-        <a href="/scores" class="nav-item active"><span>🏆</span> ፉክክር</a>
-        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
-        <a href="/profile" class="nav-item"><span>👤</span> ප්‍රိုፋይል</a>
+        <a href="/" class="nav-item"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item active"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
     </div>
 
     <script>
@@ -131,7 +129,7 @@
                 circlesContainer.innerHTML = '';
 
                 if (scoresList.length === 0) {
-                    container.innerHTML = `<div class="empty-card">ለዚህ የጊዜ ገደብ የተመዘገበ አሸናፊ የለም።</div>`;
+                    container.innerHTML = `<div class="empty-card">No winners recorded for this timeframe yet.</div>`;
                     return;
                 }
 
@@ -144,8 +142,8 @@
                     circlesContainer.appendChild(circle);
                 });
 
-                // Render List (All players with >= 1 win)
-                scoresList.forEach((player, index) => {
+                // Render Leaderboard List
+                scoresList.forEach((player) => {
                     const initial = player.username ? player.username.charAt(0).toUpperCase() : 'P';
                     const card = document.createElement('div');
                     card.className = 'card-box';
@@ -153,17 +151,18 @@
                         <div class="player-left">
                             <div class="avatar-badge">${initial}</div>
                             <div class="player-details">
-                                <div class="player-name">${player.username}</div>
-                                <div class="player-phone">${player.phone}</div>
+                                <div class="player-name">${player.username || 'Player'}</div>
+                                <div class="player-phone">${player.phone || '25190***0000'}</div>
                             </div>
                         </div>
-                        <div class="score-val">${player.wins}</div>
+                        <div class="score-val">${player.wins} Wins</div>
                     `;
                     container.appendChild(card);
                 });
             })
             .catch(err => {
                 console.error('Error loading scores:', err);
+                document.getElementById('scoresContainer').innerHTML = `<div class="empty-card">Failed to load scores. Please try again.</div>`;
             });
         }
 

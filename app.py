@@ -43,7 +43,7 @@ with app.app_context():
 
 active_games = {}
 
-# Rooms Setup: 10, 20, 50, 100 ETB and Demo (999)
+# Rooms Setup: 10, 20, 50, 100 ETB and Demo (999) - max_cards_per_player set to 4
 def init_default_games():
     if not active_games:
         active_games[1] = BingoGame(1, entry_price=10, max_cards_per_player=4)
@@ -146,7 +146,6 @@ def history():
     if not user:
         return redirect(url_for('index'))
     
-    # ለተጠቃሚው የተደረጉ የጨዋታ ታሪኮች ሁሉ (አሸነፈም ተሸነፈም)
     game_history = GameHistory.query.filter_by(winner_id=user.id).order_by(GameHistory.id.desc()).limit(20).all()
     return render_template('history.html', game_history=game_history)
 
@@ -176,7 +175,6 @@ def list_games():
         if game.entry_price >= 0 and game.status in ["waiting", "countdown", "active", "playing"]:
             user_joined = user and (user.telegram_id in game.players)
             pool, _ = game.update_pool_and_bonus()
-            # ትክክለኛውን የደራሽ (derash) መጠን ከ game_logic ማምጣት
             derash_amount = game.get_derash_amount() if hasattr(game, 'get_derash_amount') else pool
             jackpot_current = game.get_current_jackpot() if hasattr(game, 'get_current_jackpot') else 0.0
 
@@ -272,6 +270,22 @@ def select_cartela(game_id):
         active_games[g_id] = BingoGame(g_id, entry_price=entry, max_cards_per_player=5 if entry == 0 else 4)
 
     game = active_games[g_id]
+    
+    # If the previous game finished, automatically route/create a fresh active waiting game for this entry price
+    if game.status == 'finished':
+        entry_price = game.entry_price
+        waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status in ['waiting', 'countdown']), None)
+        if waiting_game:
+            g_id = waiting_game.game_id
+            game = waiting_game
+        else:
+            new_game_id = max(active_games.keys(), default=0) + 1
+            if new_game_id == 999:
+                new_game_id = 1000
+            game = BingoGame(new_game_id, entry_price=entry_price, max_cards_per_player=5 if entry_price == 0 else 4)
+            active_games[new_game_id] = game
+            g_id = new_game_id
+
     user_id = request.args.get('user_id') or session.get('user_id')
     if not user_id:
         return redirect(url_for('index'))
@@ -338,30 +352,31 @@ def join_game(game_id):
 
     total_cost = game.entry_price * len(cartela_numbers)
 
-    if game.entry_price == 0 or game_id == 999:
-        username = user.username or "Player"
-        for c_num in cartela_numbers:
-            game.add_player_card(user.telegram_id, username=username, cartela_number=c_num)
-        session['active_game_id'] = game_id
-        return jsonify({'success': True, 'game_id': game_id})
-
-    total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
-    if total_user_balance < total_cost:
-        return jsonify({'error': 'Insufficient balance for selected cartelas!'}), 400
-
-    if user.balance >= total_cost:
-        user.balance -= total_cost
-    else:
-        remainder = total_cost - user.balance
-        user.balance = 0.0
-        user.bonus_balance -= remainder
-    db.session.commit()
+    if game.entry_price > 0:
+        total_user_balance = (user.balance or 0.0) + (user.bonus_balance or 0.0)
+        if total_user_balance < total_cost:
+            return jsonify({'error': 'Insufficient balance for selected cartelas!'}), 400
 
     username = user.username or "Player"
     for c_num in cartela_numbers:
         success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=c_num)
         if not success:
             return jsonify({'error': msg}), 400
+
+    # Balance deduction starts properly when 2 players join (game status transitions to countdown)
+    if game.status == 'countdown' and not getattr(game, 'balances_deducted', False):
+        game.balances_deducted = True
+        for p_tid, p_cards in game.players.items():
+            p_user = User.query.filter_by(telegram_id=p_tid).first()
+            if p_user and game.entry_price > 0:
+                p_cost = game.entry_price * len(p_cards)
+                if p_user.balance >= p_cost:
+                    p_user.balance -= p_cost
+                else:
+                    remainder = p_cost - p_user.balance
+                    p_user.balance = 0.0
+                    p_user.bonus_balance -= remainder
+        db.session.commit()
 
     session['active_game_id'] = game_id
     return jsonify({'success': True, 'game_id': game_id})
@@ -418,7 +433,6 @@ def game_status_api(game_id):
         
         winner_user_ids = [w.get('user_id') for w in game.winners]
 
-        # ለአሸናፊዎች እና ለተሸናፊዎች ታሪክን በትክክል መመዝገብ (is_win True/False)
         for p_tid in game.players.keys():
             p_user = User.query.filter_by(telegram_id=p_tid).first()
             if p_user:
@@ -430,7 +444,6 @@ def game_status_api(game_id):
                         p_user.balance += prize_per_winner
                     p_user.games_won = (p_user.games_won or 0) + 1
 
-                # የካርቴላ መረጃ ማግኘት
                 player_card_info = next((c for c in game.players.get(p_tid, []) if is_winner and c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
 
                 try:
@@ -518,7 +531,6 @@ def mark_number(game_id):
             'winners': game.winners
         })
 
-    # ተጫዋቹ በእጁ ቁጥር ማጥቆር ከፈለገ (Manual Mark)
     number = data.get('number')
     if number is not None:
         success = game.mark_number(user.telegram_id, card_index, int(number))

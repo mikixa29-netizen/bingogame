@@ -84,7 +84,7 @@ class Transaction(db.Model):
     completed_at = db.Column(db.DateTime)
 
     deposit_phone = db.Column(db.String(20))
-    transaction_id = db.Column(db.String(100))
+    transaction_id = db.Column(db.String(100), unique=True, index=True) # ድርብ ደረሰኝ እንዳይመዝገብ በዳታቤዝ ደረጃ ተቆልፏል
     sms_text = db.Column(db.Text)
 
     withdrawal_phone = db.Column(db.String(20))

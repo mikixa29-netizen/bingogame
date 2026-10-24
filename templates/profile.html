@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -50,7 +50,6 @@
         }
         .btn-transfer:active { transform: scale(0.98); }
 
-        /* Bottom Nav - Modern Unified Design (ለ 5ቱ ሜኑዎች ተመሳሳይ ዘመናዊ ዲዛይን - ጥያቄ ቁጥር 10) */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
@@ -67,58 +66,56 @@
 </head>
 <body>
     <div class="profile-avatar">👤</div>
-    <div class="profile-name">{{ username | default('የተጠቃሚ መገለጫ') }}</div>
+    <div class="profile-name">{{ username | default('Player Profile') }}</div>
 
     <div class="profile-container">
         <div class="profile-box">
-            <div>ዩዘር አይዲ (Telegram ID)</div>
+            <div>Telegram ID</div>
             <span>#{{ user_id | default(session.get('user_id', 'N/A')) }}</span>
         </div>
         <div class="profile-box">
-            <div>ስልክ ቁጥር (Phone)</div>
-            <span>{{ user.phone | default('አልተመዘገበም') }}</span>
+            <div>Phone Number</div>
+            <span>{{ user.phone | default('Not Registered') }}</span>
         </div>
         <div class="profile-box">
-            <div>ዋና ባላንስ (Main Balance)</div>
-            <span>{{ balance | default('0.00') }} ብር</span>
+            <div>Main Balance</div>
+            <span>{{ balance | default('0.00') }} Br</span>
         </div>
         <div class="profile-box">
-            <div>ቦነስ ባላንስ (Bonus Balance)</div>
-            <span>{{ bonus_balance | default('0.00') }} ብር</span>
+            <div>Bonus Balance</div>
+            <span>{{ bonus_balance | default('0.00') }} Br</span>
         </div>
         <div class="profile-box">
-            <div>የተጫወቷቸው ጨዋታዎች</div>
+            <div>Games Played</div>
             <span>{{ games_played | default(0) }}</span>
         </div>
         <div class="profile-box">
-            <div>ያሸነፏቸው ጨዋታዎች</div>
+            <div>Games Won</div>
             <span>{{ games_won | default(0) }}</span>
         </div>
 
-        <!-- Transfer Balance Section (በስልክ ቁጥር - ጥያቄ ቁጥር 7) -->
         <div class="transfer-card">
-            <div class="transfer-title">💸 ባላንስ ለጓደኛ ማስተላለፍ (Transfer)</div>
+            <div class="transfer-title">💸 Transfer Balance to Friend</div>
             <form id="transferForm" onsubmit="handleTransfer(event)">
                 <div class="form-group">
-                    <label>የተቀባዩ ስልክ ቁጥር (Recipient Phone Number)</label>
+                    <label>Recipient Phone Number</label>
                     <input type="text" id="recipientPhone" class="form-control" placeholder="09xxxxxxxx" required>
                 </div>
                 <div class="form-group">
-                    <label>የብር መጠን (ETB)</label>
-                    <input type="number" id="transferAmount" class="form-control" placeholder="ዝቅተኛ 10 ብር" min="10" required>
+                    <label>Amount (ETB)</label>
+                    <input type="number" id="transferAmount" class="form-control" placeholder="Minimum 10 Br" min="10" required>
                 </div>
-                <button type="submit" class="btn-transfer">ባላንስ አስተላልፍ</button>
+                <button type="submit" class="btn-transfer">Transfer Balance</button>
             </form>
         </div>
     </div>
 
-    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item"><span>🎮</span> ጨዋታ</a>
-        <a href="/scores" class="nav-item"><span>🏆</span> ፉክክር</a>
-        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
-        <a href="/profile" class="nav-item active"><span>👤</span> ප්‍රိုፋይል</a>
+        <a href="/" class="nav-item"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item active"><span>👤</span> Profile</a>
     </div>
 
     <script>
@@ -135,14 +132,14 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert('✅ ባላንሱ በተሳካ ሁኔታ ተላልፏል!');
+                    alert('✅ Balance transferred successfully!');
                     location.reload();
                 } else {
-                    alert(data.error || 'ማስተላለፍ አልተሳካም');
+                    alert(data.error || 'Transfer failed');
                 }
             })
             .catch(err => {
-                alert('⚠️ ስህተት አጋጥሟል፣ እባክዎ እንደገና ይሞክሩ።');
+                alert('⚠️ An error occurred, please try again.');
             });
         }
     </script>

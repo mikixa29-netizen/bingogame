@@ -427,9 +427,9 @@
     <!-- SELECTION SCREEN -->
     <div id="selection-screen">
         <div class="sel-top-stats" style="width: 100%; max-width: 440px;">
-            <div class="sel-stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }}</div></div>
+            <div class="sel-stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance }} Br</div></div>
             <div class="sel-stat-box"><div class="label">Room</div><div class="value">#{{ game_id }}</div></div>
-            <div class="sel-stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }}</div></div>
+            <div class="sel-stat-box"><div class="label">Stake</div><div class="value" id="stake-val">{{ entry_price }} Br</div></div>
             <div class="sel-stat-box"><div class="label">Selected</div><div class="value" id="selectedCountLbl">0/4</div></div>
         </div>
 
@@ -531,7 +531,7 @@
         let playerCards = JSON.parse(serverData.dataset.cards || '[]');
         let lastSpokenCall = '';
         let isGameOver = false;
-        let isModalOpened = false; // Prevents duplicate execution
+        let isModalOpened = false;
         let isSoundOn = true;
         let isAutoMarkOn = true;
 
@@ -564,7 +564,7 @@
             return 'badge-o';
         }
 
-        // --- AMHARIC VOICE SPEECH SYNTHESIS ---
+        // Voice speech synthesis
         function speakNumber(callStr) {
             if (!isSoundOn || !callStr) return;
             let parts = callStr.split('-');
@@ -572,27 +572,13 @@
             let letter = parts[0];
             let num = parts[1];
 
-            let amharicLetter = letter;
-            if (letter === 'B') amharicLetter = 'ቢ';
-            else if (letter === 'I') amharicLetter = 'አይ';
-            else if (letter === 'N') amharicLetter = 'ኤን';
-            else if (letter === 'G') amharicLetter = 'ጂ';
-            else if (letter === 'O') amharicLetter = 'ኦ';
-
-            let textToSpeak = `${amharicLetter} ${num}`;
+            let textToSpeak = `${letter} ${num}`;
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 let utterance = new SpeechSynthesisUtterance(textToSpeak);
-                utterance.lang = 'am-ET';
+                utterance.lang = 'en-US';
                 utterance.rate = 0.85;
-                
-                utterance.onerror = () => {
-                    let fallback = new SpeechSynthesisUtterance(`${letter} ${num}`);
-                    fallback.lang = 'en-US';
-                    window.speechSynthesis.speak(fallback);
-                };
-
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -775,7 +761,7 @@
             });
         }
 
-        // --- WINNER MODAL & 5 SECONDS REDIRECT ---
+        // WINNER MODAL & 5 SECONDS REDIRECT DIRECTLY TO SELECT CARTELA
         function showWinnerModal(data) {
             if (isModalOpened) return;
             isModalOpened = true;
@@ -788,15 +774,18 @@
             let titleText = 'GAME OVER';
             let nameText = 'No winner in this round.';
             let cartelaTagText = 'Game Finished';
-            let targetCartelaNum = null;
+            let winningBoardData = null;
+            let winningCartelaNum = null;
 
             if (winners.length > 0) {
                 titleText = isUserWinner ? 'CONGRATULATIONS YOU WON! 🎉' : 'BINGO WINNER!';
                 nameText = winners.map(w => `🏆 Winner: ${w.username}<br>Cartela #${w.cartela_number}`).join('<br><br>');
                 cartelaTagText = "Prize Amount: " + prize + " Br";
-                targetCartelaNum = winners[0].cartela_number;
+                winningCartelaNum = winners[0].cartela_number;
+                winningBoardData = winners[0];
             } else if (playerCards.length > 0) {
-                targetCartelaNum = playerCards[0].cartela_number;
+                winningCartelaNum = playerCards[0].cartela_number;
+                winningBoardData = playerCards[0];
             }
 
             document.getElementById('modalTitle').innerText = titleText;
@@ -805,14 +794,14 @@
             let boardPreview = document.getElementById('winningBoardPreview');
             boardPreview.innerHTML = '';
 
-            let matchedCard = playerCards.find(c => c.cartela_number === targetCartelaNum) || playerCards[0];
+            let matchedCard = winningBoardData || playerCards.find(c => c.cartela_number === winningCartelaNum) || playerCards[0];
 
-            if (matchedCard) {
-                document.getElementById('wCartelaTag').innerText = `Cartela #${matchedCard.cartela_number}`;
+            if (matchedCard && matchedCard.board) {
+                document.getElementById('wCartelaTag').innerText = `Cartela #${matchedCard.cartela_number || winningCartelaNum}`;
                 
                 matchedCard.board.forEach((num, idx) => {
                     let cell = document.createElement('div');
-                    let isMarked = matchedCard.marked.includes(num) || idx === 12;
+                    let isMarked = (matchedCard.marked && matchedCard.marked.includes(num)) || idx === 12;
                     cell.className = 'win-cell' + (isMarked ? ' marked' : '');
                     cell.innerText = idx === 12 ? '★' : num;
                     boardPreview.appendChild(cell);

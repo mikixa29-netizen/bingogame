@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, Tuple, Any
 
 class BingoGame:
-    # ለእያንዳንዱ የጨዋታ ዋጋ የተለያየ የጃክፖት ገቢ ማከማቻ (Class dictionaries)
+    # Jackpot pools and targets dictionary based on entry price
     jackpot_pools: Dict[int, float] = {10: 0.0, 20: 0.0, 50: 0.0, 100: 0.0}
     jackpot_targets: Dict[int, float] = {
         10: 500.0,
@@ -24,15 +24,15 @@ class BingoGame:
         self.winners: List[Dict[str, Any]] = []
         self.created_at = datetime.utcnow()
         self.finished_at = None
-        self.min_players =  2  
-        self.max_cards_per_player = max_cards_per_player
+        self.min_players = 2  # Game starts and balance deductions apply only when at least 2 players join
+        self.max_cards_per_player = max_cards_per_player  # Up to 4 cards allowed per player
         self.max_total_cards = 200
         self.last_call_time = None
         self.bonus_text = "Off"
         self.countdown_seconds = 30
         self.countdown_start_time = None
         
-        # የዚህ ጨዋታ ጃክፖት ተመታ/አልተመታ ለመከታተል
+        # Jackpot tracking for this game session
         self.jackpot_won_in_this_game = False
         self.jackpot_payout_amount = 0.0
 
@@ -55,7 +55,7 @@ class BingoGame:
             
         net_pool = total_collected * (1 - commission)
         
-        # ከኔት ፑሉ ላይ 5% ለተዛማጁ የentry_price ጃክፖት ማከማቻነት እንዲሄድ
+        # 5% of net pool goes to the corresponding jackpot pool
         jackpot_contribution = net_pool * 0.05
         self.pool = net_pool - jackpot_contribution
         
@@ -65,7 +65,7 @@ class BingoGame:
         if current_jp < target:
             BingoGame.jackpot_pools[self.entry_price] = min(target, current_jp + jackpot_contribution)
 
-        # የቦነስ ጽሁፍ ማስተካከያ
+        # Bonus text adjustment
         if self.pool >= 1500:
             self.bonus_text = "7%"
         elif self.pool >= 1000:
@@ -80,16 +80,15 @@ class BingoGame:
         return self.pool, self.bonus_text
 
     def get_current_jackpot(self) -> float:
-        """ለዚህ ጨዋታ ዋጋ የተመደበውን የአሁን ጃክፖት መጠን ይመልሳል"""
+        """Returns the current jackpot amount for this entry price"""
         return BingoGame.jackpot_pools.get(self.entry_price, 0.0)
 
     def get_derash_amount(self) -> float:
-        """በጨዋታው ውስጥ ያለውን ትክክለኛ የደራሽ (Prize) መጠን ያሰላል (ጃክፖትን ጨምሮ)"""
+        """Calculates the exact total prize (Derash) amount including jackpot if reached"""
         derash = self.pool
         target = BingoGame.jackpot_targets.get(self.entry_price, 500.0)
         current_jp = BingoGame.jackpot_pools.get(self.entry_price, 0.0)
         
-        # ጃክፖቱ ግቡን የሞላ ከሆነ በደራሽ ላይ ተመጣጣኙን ጃክፖት ይጨምራል
         if current_jp >= target:
             derash += target
         return round(derash, 2)
@@ -144,6 +143,7 @@ class BingoGame:
         
         self.update_pool_and_bonus()
 
+        # Start countdown only when at least 2 players have joined
         if len(self.players) >= self.min_players and self.status == "waiting":
             self.status = "countdown"
             self.countdown_start_time = datetime.utcnow()
@@ -162,7 +162,6 @@ class BingoGame:
 
     def update_active_game(self):
         if self.status == "active":
-            # ቁጥሮቹ 75 ከደረሱ ወይም አሸናፊ ካለ ጨዋታው መጠናቀቁን እናረጋግጣለን
             if len(self.called_numbers) >= 75 or self.winners:
                 self.status = "finished"
                 if not self.finished_at:
@@ -181,7 +180,7 @@ class BingoGame:
             return False, "Player not found in this game", False
 
         balance_deducted = False
-        if self.status in ["countdown", "active"]:
+        if self.status in ["countdown", "active"] and len(self.players) >= self.min_players:
             balance_deducted = True
 
         del self.players[user_id]
@@ -303,13 +302,14 @@ class BingoGame:
         target = BingoGame.jackpot_targets.get(self.entry_price, 500.0)
         current_jp = BingoGame.jackpot_pools.get(self.entry_price, 0.0)
 
+        # Jackpot hit logic: Deduct target but keep overflow remainder instead of dropping to 0.0 completely
         if current_jp >= target and not self.jackpot_won_in_this_game:
             self.jackpot_won_in_this_game = True
             self.jackpot_payout_amount = target
-            BingoGame.jackpot_pools[self.entry_price] = 0.0
+            BingoGame.jackpot_pools[self.entry_price] = max(0.0, current_jp - target)
 
     def claim_bingo(self, user_id: int, card_index: int) -> Tuple[bool, str, float]:
-        if self.status != "active" and self.status != "finished":
+        if self.status not in ["active", "finished"]:
             return False, "Game is not active", 0.0
 
         is_win, msg = self.check_winner(user_id, card_index)

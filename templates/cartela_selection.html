@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -114,18 +114,18 @@
 <body>
 
     <div class="top-stats">
-        <div class="stat-box"><div class="label">ዋሌት</div><div class="value" id="wallet-val">{{ balance | default('0.00') }} ብር</div></div>
-        <div class="stat-box"><div class="label">ቦነስ</div><div class="value">{{ bonus | default('0.00') }} ብር</div></div>
-        <div class="stat-box"><div class="label">ጌም ኮድ</div><div class="value">#{{ game_id }}</div></div>
-        <div class="stat-box"><div class="label">መደብ</div><div class="value" id="entry-price">{{ entry_price }} ብር</div></div>
+        <div class="stat-box"><div class="label">Wallet</div><div class="value" id="wallet-val">{{ balance | default('0.00') }} Br</div></div>
+        <div class="stat-box"><div class="label">Bonus</div><div class="value">{{ bonus | default('0.00') }} Br</div></div>
+        <div class="stat-box"><div class="label">Game ID</div><div class="value">#{{ game_id }}</div></div>
+        <div class="stat-box"><div class="label">Bet</div><div class="value" id="entry-price">{{ entry_price }} Br</div></div>
     </div>
 
     <div class="jackpot-banner">
-        <span>ጃክፖት (JACKPOT)</span>
-        <span style="color: #fdd835;">ንቁ / ቋሚ (Active)</span>
+        <span>JACKPOT</span>
+        <span style="color: #fdd835;">Active / Standard</span>
     </div>
 
-    <div class="select-subtitle">እስከ 4 ካርቴላዎች መምረጥ ይችላሉ (ከ 1 እስከ 200) [<span id="selected-count">0</span>/4]</div>
+    <div class="select-subtitle">Select up to 4 Cartelas (1 to 200) [<span id="selected-count">0</span>/4]</div>
 
     <div class="cartela-container">
         <div class="cartela-grid" id="cartelaGrid">
@@ -139,44 +139,44 @@
     </div>
 
     <div class="selected-list-box" id="selectedListLbl">
-        የተመረጡ ካርቴላዎች: የሉም
+        Selected Cartelas: None
     </div>
 
     <div class="bottom-preview-area">
         <div class="mini-card-preview">
-            <div id="previewTitle" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:#fdd835;">ቅድመ-ዕይታ</div>
+            <div id="previewTitle" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:#fdd835;">Preview</div>
             <div class="mini-card-grid" id="miniCartelaGrid"></div>
         </div>
 
         <div class="right-action-wrapper">
             <div class="btn-row">
-                <button class="btn-refresh" onclick="location.reload()">ማደስ</button>
-                <button class="btn-start" onclick="confirmJoin()">ጨዋታ ጀምር</button>
+                <button class="btn-refresh" onclick="location.reload()">Refresh</button>
+                <button class="btn-start" onclick="confirmJoin()">Start Game</button>
             </div>
 
             <!-- Fairness Hash Block with Dynamic Game ID and Static Room Hash -->
             <div class="fairness-box">
-                <div class="fairness-title">የጨዋታ እውነተኛነት (Fairness Hash)</div>
-                <div class="fairness-id">අአቁም: #{{ game_id }}</div>
+                <div class="fairness-title">Fairness Hash</div>
+                <div class="fairness-id">Room: #{{ game_id }}</div>
                 <div id="hashValue">{{ game_hash }}</div>
             </div>
         </div>
     </div>
 
-    <!-- 5ቱ ሜኑዎች በሞደርን ሲኤስኤስ ዲዛይን -->
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <a href="/" class="nav-item active"><span>🎮</span> ጨዋታ</a>
-        <a href="/scores" class="nav-item"><span>🏆</span> ፉክክር</a>
-        <a href="/history" class="nav-item"><span>📋</span> ታሪክ</a>
-        <a href="/wallet" class="nav-item"><span>💰</span> ዋሌት</a>
-        <a href="/profile" class="nav-item"><span>👤</span> ප්‍රိုፋይል</a>
+        <a href="/" class="nav-item active"><span>🎮</span> Game</a>
+        <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
+        <a href="/history" class="nav-item"><span>📋</span> History</a>
+        <a href="/wallet" class="nav-item"><span>💰</span> Wallet</a>
+        <a href="/profile" class="nav-item"><span>👤</span> Profile</a>
     </div>
 
     <div class="modal-overlay" id="topupModal">
         <div class="modal-box">
-            <h3 style="color:#fdd835; margin-top:0;">⚠️ ማስታወሻ</h3>
-            <p id="modal-error-text">ጨዋታው አስቀድሞ ተጀምሯል ወይም አልቋል!</p>
-            <button style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold; cursor:pointer;" onclick="closeModal()">እሺ</button>
+            <h3 style="color:#fdd835; margin-top:0;">⚠️ Notice</h3>
+            <p id="modal-error-text">Game has already started or finished!</p>
+            <button style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold; cursor:pointer;" onclick="closeModal()">OK</button>
         </div>
     </div>
 
@@ -203,7 +203,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'active' || data.status === 'finished') {
-                    document.getElementById('modal-error-text').innerText = "ጨዋታው አስቀድሞ ተጀምሯል ወይም አልቋል!";
+                    document.getElementById('modal-error-text').innerText = "Game has already started or finished!";
                     document.getElementById('topupModal').style.display = 'flex';
                     setTimeout(() => { window.location.href = `/game/${gameId}`; }, 2000);
                     return;
@@ -248,7 +248,7 @@
         function toggleCartela(number) {
             let target = document.getElementById('cartela-' + number);
             if (!target || target.classList.contains('unavailable')) {
-                alert('ይህ ካርቴላ ቁጥር ተይዟል ወይም መምረጥ አይቻልም።');
+                alert('This cartela number is already taken or unavailable.');
                 return;
             }
 
@@ -258,7 +258,7 @@
                 target.classList.remove('selected');
             } else {
                 if (selectedCartelas.length >= maxCards) {
-                    alert('ከ 4 ካርቴላ በላይ መምረጥ አይቻልም!');
+                    alert('You cannot select more than 4 cartelas!');
                     return;
                 }
                 selectedCartelas.push(number);
@@ -268,9 +268,9 @@
             document.getElementById('selected-count').innerText = selectedCartelas.length;
             
             if (selectedCartelas.length === 0) {
-                document.getElementById('selectedListLbl').innerText = "የተመረጡ ካርቴላዎች: የሉም";
+                document.getElementById('selectedListLbl').innerText = "Selected Cartelas: None";
             } else {
-                document.getElementById('selectedListLbl').innerText = "የተመረጡ: " + selectedCartelas.map(id => `#${id}`).join(', ');
+                document.getElementById('selectedListLbl').innerText = "Selected: " + selectedCartelas.map(id => `#${id}`).join(', ');
                 renderPreview(selectedCartelas[selectedCartelas.length - 1]);
             }
         }
@@ -279,7 +279,7 @@
             let grid = document.getElementById('miniCartelaGrid');
             if (!grid) return;
             grid.innerHTML = '';
-            document.getElementById('previewTitle').innerText = `#${cardId} ቅድመ-ዕይታ`;
+            document.getElementById('previewTitle').innerText = `#${cardId} Preview`;
 
             let numbers = generateCartelaNumbers(cardId);
             numbers.forEach((num, idx) => {
@@ -292,7 +292,7 @@
 
         function confirmJoin() {
             if (selectedCartelas.length === 0) {
-                alert('እባክዎ ቢያንስ 1 ካርቴላ ይምረጡ!');
+                alert('Please select at least 1 cartela!');
                 return;
             }
 
@@ -316,7 +316,7 @@
                 }
             })
             .catch(err => {
-                document.getElementById('modal-error-text').innerText = "የኔትወርክ ስህተት አጋጥሟል!";
+                document.getElementById('modal-error-text').innerText = "A network error occurred!";
                 document.getElementById('topupModal').style.display = 'flex';
             });
         }
