@@ -26,6 +26,14 @@ from models import User, Game, GameParticipant, Transaction, Transfer, GameHisto
 
 with app.app_context():
     db.create_all()
+    # Safe migration check for Render PostgreSQL is_win column
+    try:
+        db.session.execute(db.text("ALTER TABLE game_history ADD COLUMN IF NOT EXISTS is_win BOOLEAN DEFAULT FALSE;"))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.info(f"Migration note: {e}")
+
     try:
         if not Admin.query.filter_by(username=ADMIN_USERNAME).first():
             default_admin = Admin(
@@ -210,6 +218,16 @@ def create_game():
         if not user.phone:
             return jsonify({'error': 'Please register your phone number before playing.'}), 400
 
+        # Check if user already joined an active/countdown game for this entry price
+        for ag_id, ag in active_games.items():
+            if ag.entry_price == entry_price and ag.status in ['countdown', 'active'] and user.telegram_id in ag.players and len(ag.players[user.telegram_id]) > 0:
+                return jsonify({
+                    'success': True,
+                    'game_id': ag_id,
+                    'entry_price': entry_price,
+                    'has_cartela': True
+                })
+
         waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status in ['waiting', 'countdown']), None)
         if waiting_game:
             has_cartela = user.telegram_id in waiting_game.players and len(waiting_game.players[user.telegram_id]) > 0
@@ -251,7 +269,25 @@ def select_cartela(game_id):
         active_games[g_id] = BingoGame(g_id, entry_price=entry, max_cards_per_player=5 if entry == 0 else 4)
 
     game = active_games[g_id]
+    user_id = request.args.get('user_id') or session.get('user_id')
+    if not user_id:
+        return redirect(url_for('index'))
+        
+    user_id = int(user_id)
+    session['user_id'] = user_id
     
+    user = User.query.filter_by(telegram_id=user_id).first()
+    if not user or user.is_blocked:
+        return "Access denied.", 403
+
+    # Rejoin active game check: If user already has cards in this game or an active game of same entry price, redirect directly to play_game
+    if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
+        return redirect(url_for('play_game', game_id=g_id))
+
+    for ag_id, ag in active_games.items():
+        if ag.entry_price == game.entry_price and ag.status in ['countdown', 'active'] and user.telegram_id in ag.players and len(ag.players[user.telegram_id]) > 0:
+            return redirect(url_for('play_game', game_id=ag_id))
+
     if game.status == 'finished':
         entry_price = game.entry_price
         waiting_game = next((g for g in active_games.values() if g.entry_price == entry_price and g.status in ['waiting', 'countdown']), None)
@@ -265,20 +301,6 @@ def select_cartela(game_id):
             game = BingoGame(new_game_id, entry_price=entry_price, max_cards_per_player=5 if entry_price == 0 else 4)
             active_games[new_game_id] = game
             g_id = new_game_id
-
-    user_id = request.args.get('user_id') or session.get('user_id')
-    if not user_id:
-        return redirect(url_for('index'))
-        
-    user_id = int(user_id)
-    session['user_id'] = user_id
-    
-    user = User.query.filter_by(telegram_id=user_id).first()
-    if not user or user.is_blocked:
-        return "Access denied.", 403
-
-    if user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
-        return redirect(url_for('play_game', game_id=g_id))
 
     used_cartelas = set()
     for cards in game.players.values():
@@ -603,10 +625,9 @@ def transfer_balance():
     raw_phone = str(data.get('phone', '')).strip()
     amount = float(data.get('amount', 0))
 
-    if amount < 10 or sender.balance < amount:
-        return jsonify({'error': 'Invalid amount or insufficient main balance.'}), 400
+    if amount < 10 or sender.bonus_balance < amount:
+        return jsonify({'error': 'Invalid amount or insufficient bonus balance.'}), 400
 
-    # Clean and match phone number formats robustly (09..., 2519..., +2519...)
     clean_phone = raw_phone.replace('+', '').replace(' ', '')
     recipient = User.query.filter(
         (User.phone == clean_phone) | 
@@ -617,17 +638,18 @@ def transfer_balance():
     if not recipient or recipient.id == sender.id:
         return jsonify({'error': 'Recipient not found with this phone number.'}), 404
 
-    sender.balance -= amount
-    recipient.balance += amount
+    # Transfer from bonus_balance to bonus_balance
+    sender.bonus_balance -= amount
+    recipient.bonus_balance += amount
 
     transfer_record = Transfer(sender_id=sender.id, receiver_id=recipient.id, amount=amount)
-    tx_sender = Transaction(user_id=sender.id, type='transfer', amount=amount, payment_method='wallet', status='completed')
-    tx_receiver = Transaction(user_id=recipient.id, type='transfer', amount=amount, payment_method='wallet', status='completed')
+    tx_sender = Transaction(user_id=sender.id, type='transfer_out', amount=amount, payment_method='wallet', status='completed')
+    tx_receiver = Transaction(user_id=recipient.id, type='transfer_in', amount=amount, payment_method='wallet', status='completed')
     
     db.session.add_all([transfer_record, tx_sender, tx_receiver])
     db.session.commit()
 
-    return jsonify({'success': True, 'message': 'Balance transferred successfully!'})
+    return jsonify({'success': True, 'message': 'Balance transferred successfully from/to bonus balance!'})
 
 @app.route('/wallet/transactions', methods=['GET'])
 def get_user_transactions():
@@ -656,7 +678,10 @@ def get_user_transactions():
         query = query.filter(Transaction.created_at >= start_date)
 
     if tx_type != 'all':
-        query = query.filter(Transaction.type == tx_type)
+        if tx_type == 'transfer':
+            query = query.filter(Transaction.type.in_(['transfer_in', 'transfer_out']))
+        else:
+            query = query.filter(Transaction.type == tx_type)
 
     results = query.order_by(Transaction.id.desc()).all()
     

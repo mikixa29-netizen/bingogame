@@ -33,12 +33,14 @@ class BingoGame:
         
         self.jackpot_won_in_this_game = False
         self.jackpot_payout_amount = 0.0
+        self._cards_counted_for_jackpot = 0
 
     def get_total_cards(self) -> int:
         return sum(len(cards) for cards in self.players.values())
 
     def update_pool_and_bonus(self):
-        total_collected = self.get_total_cards() * self.entry_price
+        total_cards = self.get_total_cards()
+        total_collected = total_cards * self.entry_price
         
         if self.entry_price == 10:
             commission = 0.15
@@ -55,11 +57,13 @@ class BingoGame:
         jackpot_contribution = net_pool * 0.05
         self.pool = net_pool - jackpot_contribution
         
-        target = BingoGame.jackpot_targets.get(self.entry_price, 500.0)
-        current_jp = BingoGame.jackpot_pools.get(self.entry_price, 0.0)
-        
-        # Accumulate Jackpot without resetting to 0 completely (Overflow retained)
-        BingoGame.jackpot_pools[self.entry_price] = current_jp + jackpot_contribution
+        # Accumulate Jackpot strictly based on newly added cards once, avoiding poll inflation bug
+        if total_cards > self._cards_counted_for_jackpot:
+            new_cards = total_cards - self._cards_counted_for_jackpot
+            single_net = self.entry_price * (1 - commission)
+            single_jp_contrib = single_net * 0.05 * new_cards
+            BingoGame.jackpot_pools[self.entry_price] = BingoGame.jackpot_pools.get(self.entry_price, 0.0) + single_jp_contrib
+            self._cards_counted_for_jackpot = total_cards
 
         if self.pool >= 1500:
             self.bonus_text = "7%"
@@ -296,7 +300,6 @@ class BingoGame:
         if current_jp >= target and not self.jackpot_won_in_this_game:
             self.jackpot_won_in_this_game = True
             self.jackpot_payout_amount = target
-            # Retain overflow remainder
             BingoGame.jackpot_pools[self.entry_price] = current_jp - target
 
     def claim_bingo(self, user_id: int, card_index: int) -> Tuple[bool, str, float]:

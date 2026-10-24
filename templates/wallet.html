@@ -12,9 +12,7 @@
             display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 80px;
         }
         .header-title { font-size: 24px; font-weight: bold; margin: 15px 0; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
-        
         .wallet-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; }
-        
         .wallet-card {
             background: rgba(255, 255, 255, 0.25); border-radius: 16px; padding: 20px; text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 6px 15px rgba(0,0,0,0.15);
@@ -31,7 +29,6 @@
             backdrop-filter: blur(5px);
         }
         .section-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: #fff; }
-        
         .payment-methods { display: flex; gap: 10px; margin-bottom: 12px; }
         .pay-method-option {
             flex: 1; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3);
@@ -57,7 +54,6 @@
         .btn-transfer { background: #2980b9; }
         .rules-text { font-size: 11px; opacity: 0.9; margin-top: 8px; line-height: 1.4; color: #fffee0; }
 
-        /* Filter Controls & Transaction History */
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .filter-select {
             background: #ffffff; color: #222; font-weight: bold; border-radius: 8px; padding: 8px; border: none; font-size: 12px;
@@ -67,26 +63,22 @@
             background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px 12px;
             display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #27ae60;
         }
-        .tx-item.withdraw { border-left-color: #e74c3c; }
-        .tx-item.transfer { border-left-color: #2980b9; }
-        .tx-type { font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .tx-item.income { border-left-color: #27ae60; }
+        .tx-item.outcome { border-left-color: #e74c3c; }
+        .tx-type { font-size: 12px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
         .tx-date { font-size: 10px; opacity: 0.8; margin-top: 2px; }
         .tx-amount { font-size: 14px; font-weight: bold; color: #fdd835; }
         .tx-status { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
         .tx-status.completed { background: #27ae60; color: #fff; }
         .tx-status.pending { background: #e67e22; color: #fff; }
 
-        /* Bottom Nav */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
             display: flex; justify-content: space-around; padding: 10px 0;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
             border-top-left-radius: 16px; border-top-right-radius: 16px;
         }
-        .nav-item { 
-            display: flex; flex-direction: column; align-items: center; text-decoration: none; 
-            color: #777; font-size: 11px; font-weight: bold; transition: 0.2s ease;
-        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #777; font-size: 11px; font-weight: bold; }
         .nav-item span { font-size: 18px; margin-bottom: 2px; }
         .nav-item.active { color: #27ae60; transform: translateY(-2px); }
     </style>
@@ -95,7 +87,6 @@
     <div class="header-title">💰 Wallet</div>
 
     <div class="wallet-container">
-        <!-- Balance Summary Card -->
         <div class="wallet-card">
             <div style="font-size: 15px; font-weight: bold;">Account Balances</div>
             <div class="balance-grid">
@@ -110,7 +101,6 @@
             </div>
         </div>
 
-        <!-- Deposit Section -->
         <div class="action-section">
             <div class="section-title">📥 Deposit Funds</div>
             <form onsubmit="handleDeposit(event)">
@@ -138,7 +128,6 @@
             </form>
         </div>
 
-        <!-- Withdraw Section -->
         <div class="action-section">
             <div class="section-title">📤 Withdraw Funds</div>
             <form onsubmit="handleWithdraw(event)">
@@ -166,24 +155,22 @@
             </form>
         </div>
 
-        <!-- Transfer Section -->
         <div class="action-section">
-            <div class="section-title">💸 Transfer Balance to Player</div>
+            <div class="section-title">💸 Transfer Bonus Balance</div>
             <form onsubmit="handleTransfer(event)">
                 <div class="form-group">
                     <label>Recipient Phone Number</label>
-                    <input type="text" id="transferReceiverPhone" class="form-control" placeholder="09xxxxxxxx or 2519xxxxxxxx" required>
+                    <input type="text" id="transferReceiverPhone" class="form-control" placeholder="09xxxxxxxx" required>
                 </div>
                 <div class="form-group">
                     <label>Amount (ETB)</label>
                     <input type="number" id="transferAmount" class="form-control" placeholder="Enter amount" min="10" required>
                 </div>
-                <button type="submit" class="btn-action btn-transfer">Transfer Balance</button>
-                <div class="rules-text">💡 Note: You can transfer main balance directly using registered phone numbers.</div>
+                <button type="submit" class="btn-action btn-transfer">Transfer Bonus</button>
+                <div class="rules-text">💡 Note: Transfers are deducted from and added to your Bonus Balance.</div>
             </form>
         </div>
 
-        <!-- Recent Transaction History Section -->
         <div class="action-section">
             <div class="section-title">🕒 Transaction History</div>
             <div class="filter-grid">
@@ -206,7 +193,6 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <a href="/" class="nav-item"><span>🎮</span> Game</a>
         <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
@@ -247,7 +233,7 @@
                     alert('✅ Deposit submitted successfully!'); 
                     location.reload(); 
                 } else { 
-                    alert('⚠️ ' + (data.error || 'Deposit failed. Check your transaction reference.')); 
+                    alert('⚠️ ' + (data.error || 'Deposit failed.')); 
                 }
             });
         }
@@ -265,7 +251,7 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) { 
-                    alert('✅ Withdrawal request submitted! Awaiting admin approval.'); 
+                    alert('✅ Withdrawal request submitted!'); 
                     location.reload(); 
                 } else { 
                     alert('⚠️ ' + (data.error || 'Withdrawal request failed.')); 
@@ -286,10 +272,10 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) { 
-                    alert('✅ Balance transferred successfully!'); 
+                    alert('✅ Bonus balance transferred successfully!'); 
                     location.reload(); 
                 } else { 
-                    alert('⚠️ ' + (data.error || 'Transfer failed. Please check the recipient phone number.')); 
+                    alert('⚠️ ' + (data.error || 'Transfer failed.')); 
                 }
             });
         }
@@ -306,20 +292,25 @@
                 container.innerHTML = '';
 
                 if (list.length === 0) {
-                    container.innerHTML = `<div style="text-align: center; font-size: 12px; opacity: 0.8; padding: 15px;">No transactions found for the selected filter.</div>`;
+                    container.innerHTML = `<div style="text-align: center; font-size: 12px; opacity: 0.8; padding: 15px;">No transactions found.</div>`;
                     return;
                 }
 
                 list.forEach(tx => {
+                    const isIncome = (tx.type === 'deposit' || tx.type === 'win' || tx.type === 'transfer_in');
+                    const arrowIcon = isIncome ? '⬇️🟢' : '⬆️🔴';
+                    const cssClass = isIncome ? 'income' : 'outcome';
+                    const displayType = tx.type === 'transfer_in' ? 'Received Transfer' : (tx.type === 'transfer_out' ? 'Sent Transfer' : tx.type);
+
                     const div = document.createElement('div');
-                    div.className = `tx-item ${tx.type}`;
+                    div.className = `tx-item ${cssClass}`;
                     div.innerHTML = `
                         <div>
-                            <div class="tx-type">${tx.type} (${tx.method})</div>
+                            <div class="tx-type">${arrowIcon} ${displayType} (${tx.method})</div>
                             <div class="tx-date">${tx.date}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div class="tx-amount">${tx.amount} Br</div>
+                            <div class="tx-amount">${isIncome ? '+' : '-'}${tx.amount} Br</div>
                             <span class="tx-status ${tx.status}">${tx.status}</span>
                         </div>
                     `;

@@ -60,10 +60,11 @@ def init_db(app):
                 except Exception:
                     pass
 
-            # GameHistory table missing columns (ለአሸናፊ ቦርድ እና ሄክሳዴሲማል ጌም ኮድ)
+            # GameHistory table missing columns (is_win ተጨምሯል!)
             history_columns_to_add = [
                 ('game_unique_code', 'VARCHAR(16)'),
-                ('winning_board_data', 'TEXT')
+                ('winning_board_data', 'TEXT'),
+                ('is_win', 'BOOLEAN DEFAULT FALSE')
             ]
 
             for col_name, col_type in history_columns_to_add:
@@ -72,9 +73,15 @@ def init_db(app):
                 except Exception:
                     pass
 
-            # Transaction table missing columns (ለቴሌብር እና ሲቢኢ ብር ክፍያ ዘዴ)
+            # Transaction table missing columns
             transaction_columns_to_add = [
-                ('payment_method', 'VARCHAR(32)')
+                ('payment_method', 'VARCHAR(32)'),
+                ('transaction_id', 'VARCHAR(100)'),
+                ('deposit_phone', 'VARCHAR(20)'),
+                ('sms_text', 'TEXT'),
+                ('withdrawal_phone', 'VARCHAR(20)'),
+                ('withdrawal_status', 'VARCHAR(20)'),
+                ('admin_note', 'TEXT')
             ]
 
             for col_name, col_type in transaction_columns_to_add:
