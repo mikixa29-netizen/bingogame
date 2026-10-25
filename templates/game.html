@@ -564,22 +564,19 @@
             return 'badge-o';
         }
 
+        // እዚህጋ የድምፅ ማጫወቻው ተስተካክሏል (ከ static/audio/amharic-X.aac ፋይሎች ጋር ይሰራቃል)
         function speakNumber(callStr) {
             if (!isSoundOn || !callStr) return;
             let parts = callStr.split('-');
             if (parts.length < 2) return;
-            let letter = parts[0];
-            let num = parts[1];
+            let num = parts[1]; // ቁጥሩን ብቻ እንወስዳለን (ለምሳሌ: 1, 2, ..., 75)
 
-            let textToSpeak = `${letter} ${num}`;
+            let audioPath = `/static/audio/amharic-${num}.aac`;
+            let audio = new Audio(audioPath);
 
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                let utterance = new SpeechSynthesisUtterance(textToSpeak);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.85;
-                window.speechSynthesis.speak(utterance);
-            }
+            audio.play().catch(error => {
+                console.log("ድምፁን ማጫወት አልተቻለም (User interaction ሊፈልግ ይችላል):", error);
+            });
         }
 
         function generateCartelaNumbers(id) {
