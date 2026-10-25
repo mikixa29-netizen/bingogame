@@ -2,7 +2,7 @@ from datetime import datetime
 from database import db
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True)
     telegram_id = db.Column(db.BigInteger, unique=True, nullable=False)
     username = db.Column(db.String(64))
     phone = db.Column(db.String(20))
@@ -37,7 +37,7 @@ class Game(db.Model):
     pool = db.Column(db.Float, default=0.0)
     jackpot_pool = db.Column(db.Float, default=0.0)
     called_numbers = db.Column(db.String, default='')
-    winner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    winner_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     finished_at = db.Column(db.DateTime)
 
@@ -47,7 +47,7 @@ class Game(db.Model):
 class GameParticipant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
     cartela_number = db.Column(db.Integer, nullable=False)
     marked_numbers = db.Column(db.String, default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -60,8 +60,8 @@ class GameHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, nullable=False)
     game_unique_code = db.Column(db.String(16))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # ታሪኩ የየትኛው ተጠቃሚ እንደሆነ ለመለየት
-    winner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=True)
+    winner_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=True)
     winner_name = db.Column(db.String(64))
     winning_cartela = db.Column(db.Integer)
     winning_board_data = db.Column(db.Text)
@@ -73,7 +73,7 @@ class GameHistory(db.Model):
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
     type = db.Column(db.String(20))
     amount = db.Column(db.Float, nullable=False)
     payment_method = db.Column(db.String(32))
@@ -91,7 +91,7 @@ class Transaction(db.Model):
 
 class Transfer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

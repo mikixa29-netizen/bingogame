@@ -29,6 +29,36 @@ def init_db(app):
         with db.engine.connect() as connection:
             connection = connection.execution_options(isolation_level="AUTOCOMMIT")
             
+            # 1. መጀመሪያ የ Foreign Key አምዶችን ወደ BIGINT መቀየር (የጥገኝነት ስህተት እንዳይፈጠር)
+            foreign_key_alterations = [
+                'ALTER TABLE "game_participant" ALTER COLUMN user_id TYPE BIGINT;',
+                'ALTER TABLE "transaction" ALTER COLUMN user_id TYPE BIGINT;',
+                'ALTER TABLE "transfer" ALTER COLUMN sender_id TYPE BIGINT;',
+                'ALTER TABLE "transfer" ALTER COLUMN receiver_id TYPE BIGINT;',
+                'ALTER TABLE "game" ALTER COLUMN winner_id TYPE BIGINT;',
+                'ALTER TABLE "game_history" ALTER COLUMN user_id TYPE BIGINT;',
+                'ALTER TABLE "game_history" ALTER COLUMN winner_id TYPE BIGINT;'
+            ]
+            
+            for sql in foreign_key_alterations:
+                try:
+                    connection.execute(text(sql))
+                except Exception:
+                    pass
+
+            # 2. በመቀጠል የ user ሰንጠረዥ ዋና ቁልፎችን እና ቴሌግራም ID ወደ BIGINT መቀየር
+            primary_key_alterations = [
+                'ALTER TABLE "user" ALTER COLUMN telegram_id TYPE BIGINT;',
+                'ALTER TABLE "user" ALTER COLUMN id TYPE BIGINT;'
+            ]
+            
+            for sql in primary_key_alterations:
+                try:
+                    connection.execute(text(sql))
+                except Exception:
+                    pass
+
+            # 3. ሌሎች አዲስ አምዶች (Columns) ካሉ መፈተሽና መጨመር
             user_columns_to_add = [
                 ('is_blocked', 'BOOLEAN DEFAULT FALSE'),
                 ('bonus_balance', 'DOUBLE PRECISION DEFAULT 20.0'),
@@ -59,7 +89,7 @@ def init_db(app):
                 ('game_unique_code', 'VARCHAR(16)'),
                 ('winning_board_data', 'TEXT'),
                 ('is_win', 'BOOLEAN DEFAULT FALSE'),
-                ('user_id', 'INTEGER')
+                ('user_id', 'BIGINT')
             ]
             for col_name, col_type in history_columns_to_add:
                 try:
