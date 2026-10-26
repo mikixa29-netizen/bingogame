@@ -18,10 +18,10 @@
         .app-header {
             width: 100%; max-width: 440px; display: flex; justify-content: space-between; align-items: center;
             padding: 8px 12px; font-size: 13.5px; font-weight: bold; margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.2); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.9); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #111;
         }
-        .live-indicator { display: flex; align-items: center; gap: 6px; color: #fff; }
+        .live-indicator { display: flex; align-items: center; gap: 6px; color: #111; }
         .live-dot { width: 9px; height: 9px; background-color: #2ecc71; border-radius: 50%; box-shadow: 0 0 8px #2ecc71; }
 
         .section-header {
@@ -32,7 +32,7 @@
         
         .table-headers {
             width: 100%; max-width: 440px; display: grid; grid-template-columns: 1fr 1.5fr 1fr;
-            padding: 6px 10px; font-size: 11px; font-weight: bold; opacity: 0.95; text-transform: uppercase;
+            padding: 6px 10px; font-size: 11px; font-weight: bold; opacity: 0.95; text-transform: uppercase; color: #111;
         }
         .table-headers div:nth-child(2) { text-align: center; }
         .table-headers div:nth-child(3) { text-align: right; }
@@ -47,8 +47,9 @@
         .room-bet span { font-size: 11px; display: block; opacity: 0.9; }
         
         .room-win-info { text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .win-amount { font-size: 18px; font-weight: bold; color: #fdd835; display: flex; align-items: center; gap: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .win-players { font-size: 11px; opacity: 0.95; margin-top: 2px; }
+        /* የሽልማት መጠን (Win Amount) ወደ ጥቁር ተቀይሯል */
+        .win-amount { font-size: 18px; font-weight: bold; color: #111; display: flex; align-items: center; gap: 4px; }
+        .win-players { font-size: 11px; opacity: 0.95; margin-top: 2px; color: #222; }
 
         .room-action-area { display: flex; flex-direction: column; align-items: flex-end; position: relative; }
         
@@ -58,7 +59,7 @@
         .status-badge.ready { background: rgba(46, 204, 113, 0.85); color: white; }
         .starts-timer-box { 
             background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255,255,255,0.5); 
-            border-radius: 6px; padding: 2px 8px; text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 4px; 
+            border-radius: 6px; padding: 2px 8px; text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #111;
         }
 
         .btn-join {
@@ -70,7 +71,7 @@
 
         .jackpot-bar-container { width: 100%; background: rgba(0,0,0,0.3); height: 14px; position: relative; margin-top: 6px; display: flex; align-items: center; }
         .jackpot-text { position: absolute; width: 100%; text-align: center; font-size: 9px; font-weight: bold; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2; }
-        .jackpot-fill { height: 100%; background: #fdd835; transition: width 0.4s ease; z-index: 1; }
+        .jackpot-fill { height: 100%; background: #27ae60; transition: width 0.4s ease; z-index: 1; }
 
         .demo-card {
             background: rgba(255, 255, 255, 0.25); border-radius: 16px; width: 100%; max-width: 440px;
@@ -78,7 +79,7 @@
             border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 6px 15px rgba(0,0,0,0.15); backdrop-filter: blur(5px);
         }
         .demo-info div:first-child { font-size: 16px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .demo-info div:last-child { font-size: 11px; opacity: 0.9; margin-top: 3px; }
+        .demo-info div:last-child { font-size: 11px; opacity: 0.9; margin-top: 3px; color: #111; }
         .demo-buttons { display: flex; gap: 8px; }
         .btn-open { background: rgba(255,255,255,0.3); color: white; border: none; padding: 7px 14px; border-radius: 16px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-try { background: #34495e; color: white; border: none; padding: 7px 18px; border-radius: 16px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
@@ -101,8 +102,8 @@
 
     <div class="app-header">
         <div class="live-indicator"><div class="live-dot"></div> Live</div>
-        <div>Bonus: <span id="hdr-bonus" style="color: #fdd835;">{{ bonus_balance | default('0.00') }}</span> Br</div>
-        <div>Balance: <span id="hdr-balance" style="color: #fdd835;">{{ main_balance | default('0.00') }}</span> Br</div>
+        <div>Bonus: <span id="hdr-bonus" style="color: #111; font-weight: bold;">{{ bonus_balance | default('0.00') }}</span> Br</div>
+        <div>Balance: <span id="hdr-balance" style="color: #111; font-weight: bold;">{{ main_balance | default('0.00') }}</span> Br</div>
     </div>
 
     <div class="section-header">🎮 BINGO ROOMS</div>

@@ -173,16 +173,16 @@ class BingoGame:
         if user_id not in self.players:
             return False, "Player not found in this game", False
 
-        balance_deducted = False
-        if self.status in ["countdown", "active"] and len(self.players) >= self.min_players:
-            balance_deducted = True
+        # Waiting ወይም Countdown ላይ ከወጣ ገንዘቡ ይመለሳል (Refund = True)
+        refund_allowed = self.status in ["waiting", "countdown"]
 
         del self.players[user_id]
         self.update_pool_and_bonus()
 
-        # ሰርቨር-ሳይድ ሎጂክ፡ ጨዋታው ጀምሮ (active) እያለ አንድ ተጫዋች ከወጣ፣ የቀረው ተጫዋች አሸናፊ ሆኖ ድርሻውን ሙሉ በሙሉ ይወስዳል
+        # Active ከጀመረ በኋላ ከወጣ
         if self.status == "active":
             remaining_user_ids = list(self.players.keys())
+            # የቀሩት ተጫዋቾች ብዛት 1 ብቻ ከሆነ ያ ሰው አሸናፊ ሆኖ ጨዋታው ይጠናቀቃል
             if len(remaining_user_ids) == 1:
                 winner_tg_id = remaining_user_ids[0]
                 if self.players[winner_tg_id]:
@@ -197,11 +197,18 @@ class BingoGame:
                     }
                     if not any(w['user_id'] == winner_tg_id for w in self.winners):
                         self.winners.append(winner_entry)
-            self.status = "finished"
-            if not self.finished_at:
-                self.finished_at = datetime.utcnow()
+                self.status = "finished"
+                if not self.finished_at:
+                    self.finished_at = datetime.utcnow()
+            elif len(remaining_user_ids) >= 2:
+                # ከ 2 በላይ ተጫዋቾች ካሉ ጨዋታው ይቀጥላል (አይዘጋም)
+                pass
+            else:
+                self.status = "finished"
+                if not self.finished_at:
+                    self.finished_at = datetime.utcnow()
 
-        return True, "Player left successfully", balance_deducted
+        return True, "Player left successfully", refund_allowed
 
     def call_number(self) -> Optional[str]:
         if self.status != "active":

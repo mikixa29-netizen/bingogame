@@ -42,15 +42,15 @@
         }
         .sel-stat-box {
             background: #ffffff;
-            color: #333;
+            color: #111;
             border-radius: 12px;
             padding: 8px 4px;
             text-align: center;
             flex: 1;
             box-shadow: 0 3px 6px rgba(0,0,0,0.12);
         }
-        .sel-stat-box .label { font-size: 10px; color: #666; text-transform: uppercase; font-weight: bold; }
-        .sel-stat-box .value { font-size: 14px; font-weight: bold; color: #111; margin-top: 2px; }
+        .sel-stat-box .label { font-size: 10px; color: #441; text-transform: uppercase; font-weight: bold; }
+        .sel-stat-box .value { font-size: 14px; font-weight: bold; color: #111 !important; margin-top: 2px; }
 
         .select-subtitle {
             font-size: 18px;
@@ -99,7 +99,7 @@
         }
         .selected-info-box {
             background: #ffffff;
-            color: #222;
+            color: #111;
             width: 100%;
             padding: 10px;
             border-radius: 12px;
@@ -175,7 +175,7 @@
             margin-bottom: 8px;
         }
         .game-stat-box {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             color: #111;
             border-radius: 8px;
             padding: 6px 2px;
@@ -184,8 +184,7 @@
             cursor: pointer;
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .game-stat-box .label { font-size: 8px; text-transform: uppercase; font-weight: bold; color: #555; }
-        /* የላይኛው ሜኑ ዋጋዎች በጥቁር ቀለም እንዲታዩ ተደርጓል */
+        .game-stat-box .label { font-size: 8px; text-transform: uppercase; font-weight: bold; color: #333; }
         .game-stat-box .value { font-size: 10px; font-weight: bold; margin-top: 2px; color: #111 !important; }
 
         .game-main-area {
@@ -210,7 +209,6 @@
             font-size: 16px;
             margin-bottom: 6px;
         }
-        /* BINGO ፊደላት ያሉት የላይኛው ረድፍ ከፍ እንዲልና ጎልቶ እንዲታይ ተደርጓል */
         .bingo-header-row div {
             width: 26px;
             height: 26px;
@@ -242,8 +240,9 @@
             padding: 4px 0;
             border-radius: 4px;
         }
+        /* Current Call ብቻ አረንጓዴ፣ ቀደም ሲል የተጠሩት ደግሞ ብርቱካናማ (Orange) */
         .board-item.current-green { background-color: #27ae60 !important; color: #FFFEFE !important; border-radius: 6px !important; font-size: 16px; box-shadow: 0 0 6px rgba(0,255,0,0.5); }
-        .board-item.called-orange { background-color: #27ae60 !important; color: #FFFEFE !important; border-radius: 6px !important; }
+        .board-item.called-orange { background-color: #e67e22 !important; color: #FFFEFE !important; border-radius: 6px !important; }
 
         .call-side-area {
             width: 58%;
@@ -329,7 +328,6 @@
             margin-top: 4px;
         }
         
-        /* የተመረጠው ካርቴላ መጠን አነስ እንዲል (Compact size) ተደርጓል */
         .ucell {
             background: #f4f6f8;
             color: #000000;
@@ -344,7 +342,6 @@
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        /* ካርቴላው ላይ የተጠሩት ቁጥሮች አራት ማዕዘን አረንጓዴ እንዲሆኑ ተደርጓል */
         .ucell.marked { 
             background: #27ae60 !important; 
             color: #FFFEFE !important; 
@@ -451,7 +448,7 @@
         </div>
 
         <div class="cartela-preview-container" id="previewContainer" style="display:none;">
-            <div style="font-size: 12px; color:#444; text-align:center; font-weight:bold; margin-bottom:6px;" id="previewTitleLbl">Cartela Preview</div>
+            <div style="font-size: 12px; color:#111; text-align:center; font-weight:bold; margin-bottom:6px;" id="previewTitleLbl">Cartela Preview</div>
             <div class="mini-cartela-grid" id="miniCartela"></div>
         </div>
 
@@ -544,6 +541,11 @@
         let isModalOpened = false;
         let isSoundOn = true;
         let isAutoMarkOn = true;
+        let currentCountdown = null;
+
+        // Audio Queue for equal & lag-free pattern
+        let audioQueue = [];
+        let isPlayingAudio = false;
 
         function toggleSound() {
             isSoundOn = !isSoundOn;
@@ -579,14 +581,37 @@
             let parts = callStr.split('-');
             if (parts.length < 2) return;
             let num = parts[1];
+            audioQueue.push(num);
+            processAudioQueue();
+        }
 
-            let audioPath = `/static/audio/amharic-${num}.aac`;
-            let audio = new Audio(audioPath);
-
-            audio.play().catch(error => {
-                console.log("ድምፁን ማጫወት አልተቻለም:", error);
+        function processAudioQueue() {
+            if (isPlayingAudio || audioQueue.length === 0) return;
+            isPlayingAudio = true;
+            let num = audioQueue.shift();
+            let audio = new Audio(`/static/audio/amharic-${num}.aac`);
+            audio.play().then(() => {
+                audio.onended = () => {
+                    isPlayingAudio = false;
+                    processAudioQueue();
+                };
+            }).catch(error => {
+                console.log("Audio play error:", error);
+                isPlayingAudio = false;
+                processAudioQueue();
             });
         }
+
+        // Local 1-second interval to prevent countdown skipping/jumping
+        setInterval(() => {
+            if (currentCountdown !== null && currentCountdown > 0) {
+                currentCountdown--;
+                let timerEl = document.getElementById('countdownTimer');
+                if (timerEl) {
+                    timerEl.innerText = currentCountdown + 's';
+                }
+            }
+        }, 1000);
 
         function generateCartelaNumbers(id) {
             let numbers = [];
@@ -726,7 +751,7 @@
                 cartelaDiv.appendChild(gridDiv);
                 
                 let lbl = document.createElement('div');
-                lbl.style.textAlign = 'center'; lbl.style.fontSize = '11px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '4px'; lbl.style.color = '#333'; lbl.innerText = `Cartela #${card.cartela_number}`;
+                lbl.style.textAlign = 'center'; lbl.style.fontSize = '11px'; lbl.style.fontWeight = 'bold'; lbl.style.marginTop = '4px'; lbl.style.color = '#111'; lbl.innerText = `Cartela #${card.cartela_number}`;
                 cartelaDiv.appendChild(lbl);
                 container.appendChild(cartelaDiv);
             });
@@ -839,6 +864,16 @@
                 document.getElementById('playersVal').innerText = data.active_players || '--';
                 document.getElementById('callCountVal').innerText = data.called_numbers ? data.called_numbers.length : '--';
 
+                if (data.status === 'countdown' && data.countdown_remaining !== undefined) {
+                    if (currentCountdown === null || Math.abs(currentCountdown - data.countdown_remaining) > 2) {
+                        currentCountdown = data.countdown_remaining;
+                    }
+                    document.getElementById('countdownTimer').innerText = currentCountdown + 's';
+                } else {
+                    currentCountdown = null;
+                    document.getElementById('countdownTimer').innerText = data.status === 'active' ? 'Playing' : '--';
+                }
+
                 if (data.current_call && data.current_call !== '---') {
                     let parts = data.current_call.split('-');
                     let letter = parts[0];
@@ -851,8 +886,6 @@
                         speakNumber(data.current_call);
                     }
                 }
-
-                document.getElementById('countdownTimer').innerText = data.countdown_remaining ? data.countdown_remaining + 's' : '--';
 
                 if (data.taken_cartelas) {
                     data.taken_cartelas.forEach(cNum => {
@@ -871,8 +904,11 @@
                         calledRawNumbers.push(num);
                         let el = document.getElementById('bnum-' + num);
                         if (el) {
-                            if (num === currentCallNum) el.classList.add('current-green');
-                            else el.classList.add('called-orange');
+                            if (num === currentCallNum) {
+                                el.classList.add('current-green');
+                            } else {
+                                el.classList.add('called-orange');
+                            }
                         }
                     });
                 }

@@ -350,7 +350,7 @@ def join_game(game_id):
         if total_user_balance < total_cost:
             return jsonify({'error': 'Insufficient balance for selected cartelas!'}), 400
 
-        # --- እዚህ ጋር የቦነስ ባላንስ ቅድሚያ እንዲቀነስ ተደርጓል (Bonus Balance First) ---
+        # ቦነስ ባላንስ ቅድሚያ እንዲቀነስ ተደርጓል
         bonus_bal = user.bonus_balance or 0.0
         main_bal = user.balance or 0.0
 
@@ -366,10 +366,6 @@ def join_game(game_id):
         success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=c_num)
         if not success:
             return jsonify({'error': msg}), 400
-
-    # Countdown ሲጀምር ተጨማሪ የሂሳብ ቅናሾች እንዳይባዙ መቆጣጠር
-    if game.status == 'countdown' and not getattr(game, 'balances_deducted', False):
-        game.balances_deducted = True
 
     db.session.commit()
     session['active_game_id'] = game_id
@@ -533,7 +529,15 @@ def leave_game(game_id):
             game = active_games[game_id]
             user_id = session.get('user_id')
             if user_id:
-                game.player_leave(user_id)
+                user = User.query.filter_by(telegram_id=user_id).first()
+                card_count = len(game.players.get(user_id, []))
+                total_cost = game.entry_price * card_count
+
+                success, msg, refund_allowed = game.player_leave(user_id)
+                if success and refund_allowed and user and total_cost > 0:
+                    user.balance += total_cost
+                    db.session.commit()
+
         session.pop('active_game_id', None)
         return jsonify({'success': True})
     except Exception as e:
