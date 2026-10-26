@@ -57,7 +57,6 @@ class BingoGame:
         jackpot_contribution = net_pool * 0.05
         self.pool = net_pool - jackpot_contribution
         
-        # Accumulate Jackpot strictly based on newly added cards once, avoiding poll inflation bug
         if total_cards > self._cards_counted_for_jackpot:
             new_cards = total_cards - self._cards_counted_for_jackpot
             single_net = self.entry_price * (1 - commission)
@@ -181,9 +180,26 @@ class BingoGame:
         del self.players[user_id]
         self.update_pool_and_bonus()
 
-        if self.status == "active" and len(self.players) < self.min_players:
+        # ሰርቨር-ሳይድ ሎጂክ፡ ጨዋታው ጀምሮ (active) እያለ አንድ ተጫዋች ከወጣ፣ የቀረው ተጫዋች አሸናፊ ሆኖ ድርሻውን ሙሉ በሙሉ ይወስዳል
+        if self.status == "active":
+            remaining_user_ids = list(self.players.keys())
+            if len(remaining_user_ids) == 1:
+                winner_tg_id = remaining_user_ids[0]
+                if self.players[winner_tg_id]:
+                    card = self.players[winner_tg_id][0]
+                    winner_entry = {
+                        'user_id': winner_tg_id,
+                        'card_index': 0,
+                        'username': card.get('username', 'Player'),
+                        'cartela_number': card['cartela_number'],
+                        'board': card['board'],
+                        'marked': card['marked']
+                    }
+                    if not any(w['user_id'] == winner_tg_id for w in self.winners):
+                        self.winners.append(winner_entry)
             self.status = "finished"
-            self.finished_at = datetime.utcnow()
+            if not self.finished_at:
+                self.finished_at = datetime.utcnow()
 
         return True, "Player left successfully", balance_deducted
 

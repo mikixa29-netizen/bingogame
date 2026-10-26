@@ -62,17 +62,17 @@ init_default_games()
 def index():
     user_id = request.args.get('user_id') or session.get('user_id')
     if not user_id:
-        return "Please open this game through the Telegram Bot (@EdilBingoBot).", 403
+        return "Please open this game through the Telegram Bot (@EdilBingoBot).[cite: 3]", 403
     
     user_id = int(user_id)
     session['user_id'] = user_id
     
     user = User.query.filter_by(telegram_id=user_id).first()
     if not user:
-        return "User not registered. Please start the Telegram bot first.", 403
+        return "User not registered. Please start the Telegram bot first.[cite: 3]", 403
         
     if user.is_blocked:
-        return "Your account has been blocked by the administrator.", 403
+        return "Your account has been blocked by the administrator.[cite: 3]", 403
 
     return render_template('game_lobby.html', balance=user.balance, bonus_balance=user.bonus_balance, coin=user.coin)
 
@@ -279,7 +279,6 @@ def select_cartela(game_id):
     if not user or user.is_blocked:
         return "Access denied.", 403
 
-    # ጌሙ ገና active/playing ካልሆነ በስተቀር (ማለትም waiting ወይም countdown ላይ ከሆነ) ተጫዋቹ ተጨማሪ ካርቴላ ለመጨመር እንዲገባ ይፈቀድለታል
     if game.status in ['active', 'playing'] and user.telegram_id in game.players and len(game.players[user.telegram_id]) > 0:
         return redirect(url_for('play_game', game_id=g_id))
 
@@ -351,26 +350,28 @@ def join_game(game_id):
         if total_user_balance < total_cost:
             return jsonify({'error': 'Insufficient balance for selected cartelas!'}), 400
 
+        # --- እዚህ ጋር የቦነስ ባላንስ ቅድሚያ እንዲቀነስ ተደርጓል (Bonus Balance First) ---
+        bonus_bal = user.bonus_balance or 0.0
+        main_bal = user.balance or 0.0
+
+        if bonus_bal >= total_cost:
+            user.bonus_balance -= total_cost
+        else:
+            remainder = total_cost - bonus_bal
+            user.bonus_balance = 0.0
+            user.balance = main_bal - remainder
+
     username = user.username or "Player"
     for c_num in cartela_numbers:
         success, msg, board = game.add_player_card(user.telegram_id, username=username, cartela_number=c_num)
         if not success:
             return jsonify({'error': msg}), 400
 
+    # Countdown ሲጀምር ተጨማሪ የሂሳብ ቅናሾች እንዳይባዙ መቆጣጠር
     if game.status == 'countdown' and not getattr(game, 'balances_deducted', False):
         game.balances_deducted = True
-        for p_tid, p_cards in game.players.items():
-            p_user = User.query.filter_by(telegram_id=p_tid).first()
-            if p_user and game.entry_price > 0:
-                p_cost = game.entry_price * len(p_cards)
-                if p_user.balance >= p_cost:
-                    p_user.balance -= p_cost
-                else:
-                    remainder = p_cost - p_user.balance
-                    p_user.balance = 0.0
-                    p_user.bonus_balance -= remainder
-        db.session.commit()
 
+    db.session.commit()
     session['active_game_id'] = game_id
     return jsonify({'success': True, 'game_id': game_id})
 
@@ -427,7 +428,6 @@ def game_status_api(game_id):
         winner_user_ids = [w.get('user_id') for w in game.winners]
         winner_names_str = ", ".join([w.get('username', 'Player') for w in game.winners]) if game.winners else "No Winner"
 
-        # ትክክለኛውን የአሸናፊ ዳታቤዝ ዩዘር ID ማግኘት (ለ Foreign Key ትክክለኛነት)
         winner_db_id = None
         if game.winners:
             w_tg_id = game.winners[0].get('user_id')
@@ -443,7 +443,7 @@ def game_status_api(game_id):
                 
                 if is_winner:
                     if game.entry_price > 0:
-                        p_user.balance += prize_per_winner  # ዋሌቱ ለአሸናፊው በትክክል ይጨመራል
+                        p_user.balance += prize_per_winner
                     p_user.games_won = (p_user.games_won or 0) + 1
 
                 player_card_info = next((c for c in game.players.get(p_tid, []) if c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
@@ -453,7 +453,7 @@ def game_status_api(game_id):
                         game_id=game_id,
                         game_unique_code=getattr(game, 'unique_code', str(game_id)),
                         user_id=p_user.id,
-                        winner_id=winner_db_id, # የዳታቤዝ ዩዘር ID በትክክል ተቀምጧል
+                        winner_id=winner_db_id,
                         winner_name=winner_names_str,
                         winning_cartela=player_card_info.get('cartela_number', 1),
                         winning_board_data=json.dumps(player_card_info),
