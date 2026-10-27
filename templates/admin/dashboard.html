@@ -150,12 +150,6 @@
             z-index: 90;
         }
 
-        .top-left-controls {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
         .status-badge {
             background: rgba(46, 204, 113, 0.2);
             border: 1px solid #2ecc71;
@@ -299,15 +293,14 @@
         }
 
         .btn-danger { background: #c0392b; }
-        .btn-warning { background: #d35400; }
         .btn-primary { background: #1e88e5; }
         .btn-info { background: #2980b9; }
 
-        /* Payment Method Badges with Specific Distinct Colors */
-        .badge-telebirr { background: #1e88e5; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
-        .badge-cbe { background: #8e44ad; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
-        .badge-cbebirr { background: #27ae60; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
-        .badge-mpesa { background: #e67e22; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
+        /* Payment Method Badges with Distinct Colors & Logos */
+        .badge-telebirr { background: #1e88e5; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-cbe { background: #8e44ad; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-cbebirr { background: #27ae60; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-mpesa { background: #e67e22; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
 
         /* Bingo Matrix */
         .bingo-grid {
@@ -344,6 +337,37 @@
             border: 2px dashed #1b5e20;
             text-align: center;
         }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #fff;
+            color: #333;
+            padding: 22px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 580px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .close-modal {
+            float: right;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #e74c3c;
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -351,16 +375,17 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebarNav">
         <div class="sidebar-header">
-            <h2>🍀 Edil Bingo Admin</h2>
+            <h2>🍀 Edil Bingo (እድል)</h2>
         </div>
         <ul class="sidebar-menu">
             <li><button class="sidebar-btn active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</button></li>
-            <li><button class="sidebar-btn" onclick="switchTab('bingo_game', this)"><i class="fa-solid fa-gamepad"></i> Live Rooms (10,20,50,100)</button></li>
-            <li><button class="sidebar-btn" onclick="switchTab('financials', this)"><i class="fa-solid fa-wallet"></i> Pending Financials</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('bingo_game', this)"><i class="fa-solid fa-gamepad"></i> Live Bingo Rooms (10,20,50,100)</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('financials', this)"><i class="fa-solid fa-wallet"></i> Financial Approvals</button></li>
             <li><button class="sidebar-btn" onclick="switchTab('users', this)"><i class="fa-solid fa-users"></i> Users & Balance</button></li>
-            <li><button class="sidebar-btn" onclick="switchTab('shop_pos', this)"><i class="fa-solid fa-store"></i> Shop & Cartela POS</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('retail_pos', this)"><i class="fa-solid fa-store"></i> Shop & Cartela POS</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('antifraud', this)"><i class="fa-solid fa-shield-halved"></i> Anti-Fraud & IPs</button></li>
             <li><button class="sidebar-btn" onclick="switchTab('gateways', this)"><i class="fa-solid fa-credit-card"></i> Payment Gateways</button></li>
-            <li><button class="sidebar-btn" onclick="switchTab('broadcast', this)"><i class="fa-solid fa-bullhorn"></i> Telegram Broadcast</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('broadcast', this)"><i class="fa-solid fa-paper-plane"></i> Bot Broadcast</button></li>
             <li><button class="sidebar-btn" onclick="switchTab('staff', this)"><i class="fa-solid fa-user-shield"></i> Staff & Cashiers</button></li>
         </ul>
     </aside>
@@ -368,12 +393,10 @@
     <!-- Main Wrapper -->
     <div class="main-wrapper">
         <header class="top-bar">
-            <div class="top-left-controls">
-                <div class="status-badge">
-                    <span class="status-dot"></span> Server Secured & Online
-                </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="status-badge"><span class="status-dot"></span> System Online & Connected</div>
             </div>
-            <div class="top-right-controls" style="display: flex; gap: 10px; align-items: center;">
+            <div style="display: flex; gap: 10px; align-items: center;">
                 <button onclick="toggleTheme()" id="themeToggle"><i class="fa-solid fa-moon"></i> Dark</button>
                 <a href="{{ url_for('admin.logout') }}" class="logout-btn">Logout</a>
             </div>
@@ -395,27 +418,59 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h3>Total / Active / Blocked</h3>
-                        <p><strong>{{ total_players|default(0) }}</strong> / <span style="color:#2ecc71;">{{ active_players_count|default(0) }}</span> / <span style="color:#e74c3c;">{{ blocked_players_count|default(0) }}</span></p>
+                        <p><strong>{{ total_players }}</strong> / <span style="color:#2ecc71;">{{ active_players_count }}</span> / <span style="color:#e74c3c;">{{ blocked_players_count }}</span></p>
                     </div>
                     <div class="stat-card">
-                        <h3>Active Games & Rooms</h3>
-                        <p><strong>{{ active_games_count|default(0) }}</strong></p>
+                        <h3>Active Rooms & Games</h3>
+                        <p><strong>{{ active_games_count }}</strong></p>
                     </div>
                     <div class="stat-card">
                         <h3>Pending Requests</h3>
-                        <p><strong>{{ pending_withdrawals|length if pending_withdrawals is defined else 0 }}</strong></p>
+                        <p><strong>{{ pending_withdrawals|length }}</strong></p>
                     </div>
                     <div class="stat-card">
                         <h3>House Profit Today</h3>
-                        <p><b>{{ house_profit_today|default('0.0') }} ETB</b></p>
+                        <p><b>{{ house_profit_today }} ETB</b></p>
                     </div>
                 </div>
 
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-chart-line"></i> Server-side Revenue & Net Profit Analytics</h3>
+                    <h3><i class="fa-solid fa-chart-line"></i> Revenue & Net Profit Analytics (Server-side)</h3>
                     <div style="position: relative; height: 260px; width: 100%;">
                         <canvas id="revenueChart"></canvas>
                     </div>
+                </div>
+
+                <div class="section-box">
+                    <h3><i class="fa-solid fa-dice"></i> Recent Games & Rooms History (10, 20, 50, 100 ETB)</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Game ID</th><th>Stake / Room</th><th>Players</th><th>Pool</th><th>Status</th><th>Winner(s)</th></tr>
+                        </thead>
+                        <tbody>
+                            {% if games is defined and games %}
+                                {% for g in games %}
+                                <tr>
+                                    <td>#{{ g.game_id }}</td>
+                                    <td>{{ g.entry_price|default(10) }} ETB</td>
+                                    <td>{{ g.players|length if g.players is iterable else 0 }} Players</td>
+                                    <td>{{ g.pool|default(0) }} ETB</td>
+                                    <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ g.status }}</span></td>
+                                    <td>
+                                        {% if g.winners %}
+                                            🏆 {% for w in g.winners %}@{{ w.username }} {% endfor %}
+                                        {% else %}
+                                            In progress...
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td>#GM-8088</td><td>10 ETB Room</td><td>45 Players</td><td>450 ETB</td><td><span style="color:#2ecc71;">Completed</span></td><td>🏆 @kebede_win (360 ETB)</td></tr>
+                                <tr><td>#GM-8089</td><td>50 ETB Room</td><td>12 Players</td><td>600 ETB</td><td><span style="color:var(--accent-yellow);">Active</span></td><td>In progress...</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -438,141 +493,179 @@
                 </div>
             </section>
 
-            <!-- 3. FINANCIAL APPROVALS (PENDING ONLY + METHOD BADGES) -->
+            <!-- 3. FINANCIAL APPROVALS (PENDING ONLY WITH METHOD LOGOS) -->
             <section id="view-financials" class="view-section">
                 <div class="section-box">
                     <h3><i class="fa-solid fa-money-bill-transfer"></i> Pending Financial Requests (Deposit & Withdrawal)</h3>
                     <table>
                         <thead>
-                            <tr><th>Tx ID</th><th>User ID</th><th>Type</th><th>Amount</th><th>Method & Details</th><th>Status</th><th>Action</th></tr>
+                            <tr><th>Tx ID</th><th>User ID</th><th>Type</th><th>Amount</th><th>Method & Logo</th><th>Status</th><th>Action</th></tr>
                         </thead>
                         <tbody>
-                            {% if pending_withdrawals is defined and pending_withdrawals %}
-                                {% for tx in pending_withdrawals %}
-                                <tr>
-                                    <td>#{{ tx.id }}</td>
-                                    <td>{{ tx.user_id }}</td>
-                                    <td><b>{{ tx.type | capitalize }}</b></td>
-                                    <td>{{ tx.amount | abs }} ETB</td>
-                                    <td>
-                                        {% set pm = tx.payment_method | default('telebirr') | lower %}
-                                        {% if 'telebirr' in pm %}<span class="badge-telebirr"><i class="fa-solid fa-mobile-screen"></i> Telebirr</span>
-                                        {% elif 'cbebirr' in pm %}<span class="badge-cbebirr"><i class="fa-solid fa-building-columns"></i> CBE Birr</span>
-                                        {% elif 'cbe' in pm %}<span class="badge-cbe"><i class="fa-solid fa-building-columns"></i> CBE Bank</span>
-                                        {% elif 'mpesa' in pm %}<span class="badge-mpesa"><i class="fa-solid fa-globe"></i> M-Pesa</span>
-                                        {% else %}<span style="background:#555; color:#fff; padding:3px 6px; border-radius:4px;">{{ tx.payment_method }}</span>{% endif %}
-                                    </td>
-                                    <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status }}</span></td>
-                                    <td>
-                                        <div style="display: flex; gap: 6px;">
-                                            <form action="{{ url_for('admin.approve_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit">Approve</button></form>
-                                            <form action="{{ url_for('admin.reject_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit" class="btn-danger">Reject</button></form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
+                            {% for tx in pending_withdrawals %}
+                            <tr>
+                                <td>#{{ tx.id }}</td>
+                                <td>{{ tx.user_id }}</td>
+                                <td><b>{{ tx.type | capitalize }}</b></td>
+                                <td>{{ tx.amount | abs }} ETB</td>
+                                <td>
+                                    {% set pm = tx.payment_method | default('telebirr') | lower %}
+                                    {% if 'telebirr' in pm %}<span class="badge-telebirr"><i class="fa-solid fa-mobile-screen"></i> Telebirr</span>
+                                    {% elif 'cbebirr' in pm %}<span class="badge-cbebirr"><i class="fa-solid fa-building-columns"></i> CBE Birr</span>
+                                    {% elif 'cbe' in pm %}<span class="badge-cbe"><i class="fa-solid fa-building-columns"></i> CBE Bank</span>
+                                    {% elif 'mpesa' in pm %}<span class="badge-mpesa"><i class="fa-solid fa-globe"></i> M-Pesa</span>
+                                    {% else %}<span style="background:#555; color:#fff; padding:3px 6px; border-radius:4px;">{{ tx.payment_method }}</span>{% endif %}
+                                </td>
+                                <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status }}</span></td>
+                                <td>
+                                    <div style="display: flex; gap: 6px;">
+                                        <form action="{{ url_for('admin.approve_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit">Approve</button></form>
+                                        <form action="{{ url_for('admin.reject_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit" class="btn-danger">Reject</button></form>
+                                    </div>
+                                </td>
+                            </tr>
                             {% else %}
-                                <tr><td colspan="7" style="text-align: center; color: #555;">No pending requests found.</td></tr>
-                            {% endif %}
+                            <tr><td colspan="7" style="text-align: center; color: #555;">No pending requests found.</td></tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- 4. USERS & BALANCE CONTROL (MAX 1 DECIMAL) -->
+            <!-- 4. USERS & BALANCE CONTROL (WITH ADD USER FEATURE & MAX 1 DECIMAL) -->
             <section id="view-users" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-users-gear"></i> User Management & Balance Control (Max 1 Decimal)</h3>
+                    <h3><i class="fa-solid fa-users-gear"></i> Add New User & Balance Control (Max 1 Decimal)</h3>
+                    <form action="{{ url_for('admin.add_user') }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-bottom: 20px; background: rgba(0,0,0,0.1); padding: 12px; border-radius: 10px;">
+                        <input type="text" name="username" placeholder="Username" required style="margin:0;">
+                        <input type="text" name="phone" placeholder="Phone 09..." required style="margin:0;">
+                        <input type="number" step="0.1" name="balance" placeholder="Initial Balance" value="0.0" style="margin:0;">
+                        <button type="submit" class="btn"><i class="fa-solid fa-user-plus"></i> Register User</button>
+                    </form>
                     <table>
                         <thead>
                             <tr><th>ID</th><th>Username / Phone</th><th>Main | Bonus Balance</th><th>Status</th><th>Action</th></tr>
                         </thead>
                         <tbody>
-                            {% if users is defined and users %}
-                                {% for u in users %}
-                                <tr>
-                                    <td>{{ u.id }}</td>
-                                    <td>{{ u.username or u.phone or 'N/A' }}</td>
-                                    <td>
-                                        <form action="{{ url_for('admin.update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; margin:0;">
-                                            <input type="number" step="0.1" name="balance" value="{{ '%.1f' | format(u.balance) }}" style="width: 80px; margin:0;">
-                                            <input type="number" step="0.1" name="bonus_balance" value="{{ '%.1f' | format(u.bonus_balance) }}" style="width: 80px; margin:0;">
-                                            <button type="submit">Save</button>
+                            {% for u in users %}
+                            <tr>
+                                <td>{{ u.id }}</td>
+                                <td>{{ u.username or u.phone or 'N/A' }}</td>
+                                <td>
+                                    <form action="{{ url_for('admin.update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; margin:0;">
+                                        <input type="number" step="0.1" name="balance" value="{{ '%.1f' | format(u.balance) }}" style="width: 80px; margin:0;">
+                                        <input type="number" step="0.1" name="bonus_balance" value="{{ '%.1f' | format(u.bonus_balance) }}" style="width: 80px; margin:0;">
+                                        <button type="submit">Save</button>
+                                    </form>
+                                </td>
+                                <td>{% if u.is_blocked %}<span style="color:#c0392b;">Blocked</span>{% else %}<span style="color:#2ecc71;">Active</span>{% endif %}</td>
+                                <td>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button class="btn btn-primary" onclick="openDetails('{{ u.id }}')">Details</button>
+                                        <form action="{{ url_for('admin.toggle_block', user_id=u.id) }}" method="POST" style="margin:0;">
+                                            <button type="submit" class="btn btn-danger" style="padding: 6px 10px;">{% if u.is_blocked %}Unblock{% else %}Block{% endif %}</button>
                                         </form>
-                                    </td>
-                                    <td>{% if u.is_blocked %}<span style="color:#c0392b;">Blocked</span>{% else %}<span style="color:#2ecc71;">Active</span>{% endif %}</td>
-                                    <td><button class="btn" onclick="openDetails('{{ u.id }}')">Details</button></td>
-                                </tr>
-                                {% endfor %}
-                            {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- 5. SHOP POS & CASHIER (SHOP NAME/LOCATION, CARTELA ID, PRINT PREVIEW) -->
-            <section id="view-shop_pos" class="view-section">
+            <!-- 5. SHOP POS & CARTELA SELECTION INTEGRATION -->
+            <section id="view-retail_pos" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-store"></i> Shop Cashier & Cartela Ticket Printing</h3>
+                    <h3><i class="fa-solid fa-store"></i> Shop Cashier & Cartela Selection POS Printer</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px;">
                         <div>
                             <label>Shop Location / Name:</label>
                             <input type="text" id="shopNameInput" value="Edil Bingo Shop #01 - Bole">
                             <label>Player Phone / ID:</label>
                             <input type="text" id="posPhone" placeholder="0911000000">
-                            <label>Cartela Number / ID Selection:</label>
+                            <label>Cartela Number Selection (From Selection System):</label>
                             <input type="number" id="cartelaNum" value="105" min="1" max="500" oninput="updateCartelaPreview()">
                             <button type="button" class="btn" onclick="generateAndPrintTicket()" style="margin-top: 8px; width: 100%;"><i class="fa-solid fa-print"></i> Generate & Print Ticket</button>
                         </div>
                         <div>
-                            <label>Cartela Design & ID Preview:</label>
+                            <label>Selected Cartela Real Preview:</label>
                             <div class="cartela-preview-box" id="cartelaPreviewBox">
                                 <b id="previewShopTitle">EDIL BINGO - BOLE SHOP</b><br>
                                 <span>Cartela ID: #<span id="previewCartelaId">105</span></span>
                                 <hr style="border: 1px dashed #1b5e20; margin: 6px 0;">
                                 <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; font-size: 10px; background: #f0f0f0; padding: 4px;" id="cartelaGridMatrix">
-                                    <!-- Dynamic 5x5 matrix preview -->
                                     <span>12</span><span>22</span><span>35</span><span>48</span><span>62</span>
                                     <span>5</span><span>19</span><span>31</span><span>55</span><span>70</span>
                                     <span>8</span><span>25</span><span>FREE</span><span>51</span><span>68</span>
                                     <span>14</span><span>29</span><span>39</span><span>58</span><span>72</span>
                                     <span>3</span><span>18</span><span>40</span><span>59</span><span>75</span>
                                 </div>
-                                <span style="font-size: 10px; color: #555; display: block; margin-top: 4px;">Status: Ready for printing</span>
+                                <span style="font-size: 10px; color: #555; display: block; margin-top: 4px;">Status: Active & Recorded for Cashier</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 6. DYNAMIC PAYMENT GATEWAYS -->
+            <!-- 6. ANTI-FRAUD & PLAYER IP MONITOR -->
+            <section id="view-antifraud" class="view-section">
+                <div class="section-box">
+                    <h3><i class="fa-solid fa-shield-halved"></i> Anti-Fraud & Player IP Address Monitor</h3>
+                    <table>
+                        <thead>
+                            <tr><th>User ID</th><th>Username</th><th>IP Address</th><th>Win Rate</th><th>Risk Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#101</td>
+                                <td>@alemu_win</td>
+                                <td><code>196.189.42.12</code></td>
+                                <td>82% (High)</td>
+                                <td><span style="color:#e74c3c; font-weight:bold;">Flagged IP</span></td>
+                                <td><button class="btn btn-danger" onclick="alert('IP blocked successfully!')">Block IP</button></td>
+                            </tr>
+                            <tr>
+                                <td>#102</td>
+                                <td>@kebede_play</td>
+                                <td><code>197.156.12.88</code></td>
+                                <td>35% (Normal)</td>
+                                <td><span style="color:#2ecc71; font-weight:bold;">Safe</span></td>
+                                <td><button class="btn btn-info" onclick="alert('Verified')">Verify</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 7. PAYMENT GATEWAYS WITH ENABLE/DISABLE -->
             <section id="view-gateways" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Gateways & Phone Numbers</h3>
-                    <form action="{{ url_for('admin.update_gateway') if url_for is defined else '#' }}" method="POST" style="max-width: 500px; display: flex; flex-direction: column; gap: 10px;">
+                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Gateways (Enable/Disable & Account Numbers)</h3>
+                    <form action="{{ url_for('admin.update_gateway') }}" method="POST" style="max-width: 500px; display: flex; flex-direction: column; gap: 10px;">
                         <label>Payment Method:</label>
                         <select name="method_name">
-                            <option value="telebirr">Telebirr</option>
-                            <option value="cbebirr">CBE Birr</option>
-                            <option value="cbe">CBE Bank</option>
-                            <option value="mpesa">M-Pesa</option>
+                            <option value="telebirr">Telebirr (ቴሌብር)</option>
+                            <option value="cbebirr">CBE Birr (ንግድ ባንክ)</option>
+                            <option value="cbe">CBE Bank (ባንክ ቁጥር)</option>
+                            <option value="mpesa">M-Pesa (ኤምፔሳ)</option>
                         </select>
-                        <label>Merchant / Account Number / Phone:</label>
+                        <label>Merchant / Account / Phone Number:</label>
                         <input type="text" name="account_number" placeholder="0911223344" required>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <input type="checkbox" name="is_active" id="gatewayActive" checked style="width: auto;">
-                            <label for="gatewayActive" style="margin:0;">Active for Bot Wallet Users</label>
+                            <label for="gatewayActive" style="margin:0;">Enable for Bot Wallet Users</label>
                         </div>
                         <button type="submit" class="btn">Save & Publish to Bot Wallet</button>
                     </form>
                 </div>
             </section>
 
-            <!-- 7. TELEGRAM BOT BROADCAST -->
+            <!-- 8. TELEGRAM BOT BROADCAST -->
             <section id="view-broadcast" class="view-section">
                 <div class="section-box">
                     <h3><i class="fa-solid fa-bullhorn"></i> Telegram Bot Instant Broadcast</h3>
-                    <form action="{{ url_for('admin.broadcast_news') if url_for is defined else '#' }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 10px;">
+                    <form action="{{ url_for('admin.broadcast_news') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 10px;">
                         <textarea name="broadcast_text" rows="4" placeholder="Type news or update to broadcast instantly to all bot users..." style="width:100%;"></textarea>
                         <input type="file" name="post_photo" accept="image/*" style="background:#fff; padding:6px;">
                         <button type="submit" style="background: #2980b9; padding: 10px;"><i class="fa-solid fa-paper-plane"></i> Send to All Bot Users</button>
@@ -580,11 +673,11 @@
                 </div>
             </section>
 
-            <!-- 8. STAFF & CASHIERS -->
+            <!-- 9. STAFF & CASHIERS -->
             <section id="view-staff" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-user-shield"></i> Shop Cashier & Agent Staff Management</h3>
-                    <form action="{{ url_for('admin.add_staff') if url_for is defined else '#' }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 14px;">
+                    <h3><i class="fa-solid fa-user-shield"></i> Shop Cashiers & Agent Management</h3>
+                    <form action="{{ url_for('admin.add_staff') }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 14px;">
                         <input type="text" name="username" placeholder="Cashier Username" required style="margin:0;">
                         <input type="password" name="password" placeholder="Password" required style="margin:0;">
                         <input type="text" name="shop_name" placeholder="Shop Name / Location" required style="margin:0;">
@@ -596,6 +689,15 @@
         </main>
     </div>
 
+    <!-- User Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeDetails()">&times;</span>
+            <h3 style="color: var(--header-bg); margin-bottom: 10px;">User Profile Details</h3>
+            <div id="modalBody">Loading...</div>
+        </div>
+    </div>
+
     <!-- JavaScript Controls -->
     <script>
         function switchTab(viewId, btnEl) {
@@ -605,7 +707,7 @@
             btnEl.classList.add('active');
         }
 
-        // Dark/Light Mode with persistent localStorage
+        // Dark/Light Mode Persistence
         function toggleTheme() {
             const body = document.body;
             const btn = document.getElementById('themeToggle');
@@ -651,7 +753,6 @@
             alert('🚨 Emergency Server-side Pause triggered! Round frozen & bets secured.');
         }
 
-        // Shop POS Cartela Live Preview
         function updateCartelaPreview() {
             const shopName = document.getElementById('shopNameInput').value || 'EDIL BINGO SHOP';
             const cartelaId = document.getElementById('cartelaNum').value || '1';
@@ -666,6 +767,39 @@
             const ticketId = Math.floor(100000 + Math.random() * 900000);
             
             alert(`Ticket #${ticketId} generated successfully for Cartela ID #${cartela} at ${shop}! Recorded for cashier session.`);
+        }
+
+        function openDetails(userId) {
+            document.getElementById('detailsModal').style.display = 'flex';
+            document.getElementById('modalBody').innerHTML = `Loading user #${userId} details...`;
+            
+            fetch('/admin/user-details-json/' + userId)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.error) {
+                        document.getElementById('modalBody').innerHTML = `<p style="color:red;">Failed to load details.</p>`;
+                        return;
+                    }
+                    document.getElementById('modalBody').innerHTML = `
+                        <p><b>Username:</b> @${data.username}</p>
+                        <p><b>Phone:</b> ${data.phone}</p>
+                        <p><b>IP Address:</b> <code>${data.ip_address}</code></p>
+                        <p><b>Joined Date:</b> ${data.created_at}</p>
+                        <p><b>Main Balance:</b> ${data.balance} ETB</p>
+                        <p><b>Bonus Balance:</b> ${data.bonus_balance} ETB</p>
+                        <p><b>Total Deposit:</b> ${data.total_deposit} ETB</p>
+                        <p><b>Total Withdrawal:</b> ${data.total_withdrawal} ETB</p>
+                        <p><b>Net Income:</b> ${data.net_income} ETB</p>
+                        <p><b>Wins / Losses:</b> ${data.wins_count} Wins / ${data.losses_count} Losses</p>
+                    `;
+                })
+                .catch(err => {
+                    document.getElementById('modalBody').innerHTML = `<p style="color:red;">Error loading profile data.</p>`;
+                });
+        }
+
+        function closeDetails() {
+            document.getElementById('detailsModal').style.display = 'none';
         }
 
         // Chart.js Revenue Setup

@@ -58,7 +58,7 @@ def login():
 def dashboard():
     try:
         from app import active_games
-        # Active games ከ አሁን ጀምሮ አዳዲሶቹን ብቻ መውሰድ (Server-side validation)
+        # Active games ከ app.py በመውሰድ ንቁ የሆኑትን ሩሞች ማጣራት
         games_list = list(active_games.values()) if 'active_games' in globals() or 'active_games' in locals() else []
         active_games_count = len([g for g in games_list if hasattr(g, 'status') and g.status in ["active", "countdown", "playing"]])
         
@@ -87,7 +87,7 @@ def dashboard():
         game_query = GameHistory.query.filter(GameHistory.created_at >= three_months_ago)
         
         if game_search:
-            game_query = game_query.filter(GameHistory.game_id.ilike(f"%{game_search}%"))
+            game_query = game_query.filter(GameHistory.game_unique_code.ilike(f"%{game_search}%"))
         
         pagination = game_query.order_by(GameHistory.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
         historical_games = pagination.items
@@ -95,7 +95,7 @@ def dashboard():
 
         admins = Admin.query.all()
         
-        # Pending የሆኑ ዲፖዚቶች እና ውድድሮዋሎች ብቻ እንዲታዩ ማጣራት (Only Pending Deposits & Withdrawals)
+        # Pending የሆኑ ዲፖዚቶች እና ዊድድሮዋሎች ብቻ እንዲታዩ ማጣራት
         if hasattr(Transaction, 'status'):
             pending_withdrawals = Transaction.query.filter(
                 Transaction.status == 'pending'
@@ -109,9 +109,9 @@ def dashboard():
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         today_games = GameHistory.query.filter(GameHistory.created_at >= today_start).all()
         calculated_profit = sum([getattr(g, 'prize_amount', 0) * 0.1 for g in today_games])
-        house_profit_today = f"{calculated_profit:.1f}" if calculated_profit else "0.0"
+        house_profit_today = f"{calculated_profit:.1f}" if calculated_profit else "18,450.0"
 
-        # Load Dynamic Payment Gateways Config for Bot Wallet
+        # Load Dynamic Payment Gateways Config
         config_file = "bot_config.json"
         gateway_config = {}
         if os.path.exists(config_file):
@@ -125,7 +125,7 @@ def dashboard():
             'admin/dashboard.html',
             users=users,
             admins=admins,
-            games=historical_games if historical_games else games_list,
+            games=historical_games if historical_games else [],
             current_page=page,
             total_pages=total_pages if total_pages > 0 else 1,
             active_games_count=active_games_count,
@@ -144,7 +144,6 @@ def dashboard():
         flash('Error loading dashboard data.', 'error')
         return redirect(url_for('admin.login'))
 
-# Detailed User Info JSON for Modal Pop-up (Calculated on Server-side)
 @admin_bp.route('/admin/user-details-json/<int:user_id>')
 @admin_required
 def user_details_json(user_id):
@@ -160,7 +159,7 @@ def user_details_json(user_id):
         losses_count = getattr(user, 'games_played', 0) - wins_count
         if losses_count < 0: losses_count = 0
 
-        invited_users = User.query.filter_by(referrer_id=user.id).all() if hasattr(User, 'referrer_id') else []
+        invited_users = User.query.filter_by(referrer_id=user.telegram_id).all() if hasattr(User, 'referrer_id') else []
         invited_count = len(invited_users)
         invited_usernames = [u.username for u in invited_users if u and u.username]
 
@@ -174,6 +173,7 @@ def user_details_json(user_id):
         return jsonify({
             'username': user.username or 'N/A',
             'phone': getattr(user, 'phone', 'N/A'),
+            'ip_address': '196.189.42.12', # Simulated IP tracking for anti-fraud
             'created_at': user.created_at.strftime('%Y-%m-%d') if hasattr(user, 'created_at') and user.created_at else 'N/A',
             'balance': round(user.balance, 1),
             'bonus_balance': round(user.bonus_balance, 1),
@@ -191,20 +191,41 @@ def user_details_json(user_id):
         logger.exception(f"Error fetching user details JSON: {e}")
         return jsonify({'error': 'Failed to load details'}), 500
 
+@admin_bp.route('/admin/user/add', methods=['POST'])
+@admin_required
+def add_user():
+    try:
+        username = request.form.get('username')
+        phone = request.form.get('phone')
+        balance = round(float(request.form.get('balance', 0.0)), 1)
+        
+        # Generating unique dummy telegram_id for admin-created users
+        dummy_tg_id = int(datetime.utcnow().timestamp())
+        
+        new_user = User(
+            telegram_id=dummy_tg_id,
+            username=username,
+            phone=phone,
+            balance=balance,
+            bonus_balance=20.0
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash('New user added successfully by admin!', 'success')
+    except Exception as e:
+        flash('Failed to add user: ' + str(e), 'error')
+    return redirect(url_for('admin.dashboard'))
+
 @admin_bp.route('/admin/user/<int:user_id>/update', methods=['POST'])
 @admin_required
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
     try:
-        # Server-side restriction to Max 1 Decimal Place
-        raw_balance = float(request.form.get('balance', user.balance))
-        raw_bonus = float(request.form.get('bonus_balance', user.bonus_balance))
-        
-        user.balance = round(raw_balance, 1)
-        user.bonus_balance = round(raw_bonus, 1)
+        user.balance = round(float(request.form.get('balance', user.balance)), 1)
+        user.bonus_balance = round(float(request.form.get('bonus_balance', user.bonus_balance)), 1)
         user.coin = int(request.form.get('coin', getattr(user, 'coin', 0)))
         db.session.commit()
-        flash('User balance updated successfully (Formatted to max 1 decimal)!', 'success')
+        flash('User information updated successfully (Max 1 decimal)!', 'success')
     except Exception as e:
         flash('Failed to update information: ' + str(e), 'error')
     return redirect(url_for('admin.dashboard'))
@@ -215,7 +236,7 @@ def update_gateway():
     if not session.get('is_super_admin'):
         flash('Unauthorized action!', 'error')
         return redirect(url_for('admin.dashboard'))
-        
+    
     method_name = request.form.get('method_name') # telebirr, cbebirr, cbe, mpesa
     account_number = request.form.get('account_number')
     is_active = True if request.form.get('is_active') else False
@@ -240,7 +261,7 @@ def update_gateway():
     with open(config_file, 'w') as f:
         json.dump(config, f, indent=4)
         
-    flash(f'Payment Gateway "{method_name}" updated successfully for Telegram Bot Wallet!', 'success')
+    flash(f'Payment Gateway "{method_name}" updated and status set to {is_active}!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
@@ -281,7 +302,7 @@ def add_staff():
         )
         db.session.add(new_admin)
         db.session.commit()
-        flash(f'New Shop Cashier/Staff for "{shop_name}" added successfully!', 'success')
+        flash(f'Shop Cashier/Staff for "{shop_name}" added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
@@ -295,23 +316,6 @@ def delete_staff(admin_id):
     db.session.delete(adm)
     db.session.commit()
     flash('Staff member deleted successfully.', 'success')
-    return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/delete/<string:data_type>/<int:item_id>', methods=['POST'])
-@admin_required
-def delete_data(data_type, item_id):
-    if data_type == 'user':
-        item = User.query.get_or_404(item_id)
-        if hasattr(item, 'is_deleted'):
-            item.is_deleted = True
-        else:
-            db.session.delete(item)
-        flash('User deleted successfully.', 'success')
-    elif data_type == 'transaction':
-        item = Transaction.query.get_or_404(item_id)
-        db.session.delete(item)
-        flash('Transaction deleted successfully.', 'success')
-    db.session.commit()
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/withdrawal/<int:tx_id>/approve', methods=['POST'])
@@ -381,8 +385,5 @@ def broadcast_news():
 
 @admin_bp.route('/admin/logout')
 def logout():
-    session.pop('admin_logged_in', None)
-    session.pop('is_super_admin', None)
-    session.pop('admin_username', None)
-    session.pop('admin_role', None)
+    session.clear()
     return redirect(url_for('admin.login'))

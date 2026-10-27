@@ -23,13 +23,10 @@ from aiogram.fsm.state import State, StatesGroup
 from flask import Flask
 from database import db, init_db
 from models import User, Transaction
-import aiohttp
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Bot Configuration
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
@@ -43,18 +40,20 @@ router = Router()
 app = Flask(__name__)
 init_db(app)
 
-GAME_PRICES = [10, 20, 50, 100]
 CONFIG_FILE = "bot_config.json"
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except:
+                pass
     return {}
 
 def save_config(config):
     with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f)
+        json.dump(config, f, indent=4)
 
 def get_welcome_photo():
     config = load_config()
@@ -69,7 +68,7 @@ def get_or_create_user(telegram_id, username, referrer_id=None):
             telegram_id=telegram_id,
             username=username or f"Player_{telegram_id}",
             balance=0.0,
-            bonus_balance=20.0, # 20 Birr registration bonus
+            bonus_balance=20.0,
             coin=0,
             is_blocked=False,
             referrer_id=referrer_id
@@ -79,7 +78,6 @@ def get_or_create_user(telegram_id, username, referrer_id=None):
         logger.info(f"New user registered via Telegram bot: {telegram_id} ({username})")
     return user
 
-# States
 class UserState(StatesGroup):
     waiting_for_deposit_method = State()
     waiting_for_deposit_amount = State()
@@ -88,15 +86,9 @@ class UserState(StatesGroup):
     waiting_for_withdraw_amount = State()
     waiting_for_withdraw_phone = State()
 
-class AdminState(StatesGroup):
-    waiting_for_news = State()
-    waiting_for_welcome_image = State()
-
 def get_main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Play Bingo 🎮", callback_data="menu_play_bingo")
-        ],
+        [InlineKeyboardButton(text="Play Bingo 🎮", callback_data="menu_play_bingo")],
         [
             InlineKeyboardButton(text="Register 📝", callback_data="menu_register"),
             InlineKeyboardButton(text="Deposit 💵", callback_data="menu_deposit")
@@ -109,9 +101,7 @@ def get_main_menu():
             InlineKeyboardButton(text="Contact support 📞", url="https://t.me/EdilBingoSupport"),
             InlineKeyboardButton(text="Instruction 📖", callback_data="menu_instruction")
         ],
-        [
-            InlineKeyboardButton(text="Invite ✉️", callback_data="menu_invite")
-        ]
+        [InlineKeyboardButton(text="Invite ✉️", callback_data="menu_invite")]
     ])
 
 async def set_bot_commands(bot: Bot):
@@ -134,7 +124,7 @@ async def cmd_start(message: Message, state: FSMContext):
         username = message.from_user.username or message.from_user.first_name
         
         args = message.text.split()[1:] if len(message.text.split()) > 1 else []
-        referrer_id = int(args[0]) if args else None
+        referrer_id = int(args[0]) if args and args[0].isdigit() else None
 
         with app.app_context():
             get_or_create_user(user_id, username, referrer_id)
@@ -273,12 +263,8 @@ async def process_play_bingo_command_or_callback(event, state: FSMContext = None
     webapp_lobby_url = f"{WEBAPP_URL}/?user_id={user_id}"
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="🎮 Open Edil Bingo Lobby", web_app=WebAppInfo(url=webapp_lobby_url))
-        ],
-        [
-            InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")
-        ]
+        [InlineKeyboardButton(text="🎮 Open Edil Bingo Lobby", web_app=WebAppInfo(url=webapp_lobby_url))],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")]
     ])
     
     caption = "🍀 Click below to open the Edil Bingo Lobby and choose your game room! 🎮"
@@ -305,7 +291,7 @@ async def process_menu_instruction(callback_query: CallbackQuery, state: FSMCont
     text = (
         "📖 <b>Edil Bingo Instructions</b>:\n\n"
         "1. Select a room according to your stake (10, 20, 50, 100 Birr).\n"
-        "2. Choose up to 4 Cartelas (1-200).\n"
+        "2. Choose up to 4 Cartelas.\n"
         "3. Wait for the countdown and game to start.\n"
         "4. Mark called numbers and claim Bingo to win the prize pool!\n"
     )
@@ -333,11 +319,6 @@ async def process_menu_invite(callback_query: CallbackQuery, state: FSMContext):
         await callback_query.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
     await callback_query.answer()
 
-
-# ==========================================
-#   TELEBIRR & CBE BIRR DEPOSIT LOGIC (ጥያቄ ቁጥር 7)
-# ==========================================
-
 @router.message(Command("deposit"))
 @router.callback_query(F.data == "menu_deposit")
 async def process_deposit_command_or_callback(event, state: FSMContext = None):
@@ -349,17 +330,25 @@ async def process_deposit_command_or_callback(event, state: FSMContext = None):
     with app.app_context():
         get_or_create_user(user_id, username)
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="📱 Telebirr", callback_data="dep_method_telebirr"),
-            InlineKeyboardButton(text="🏦 CBE Birr", callback_data="dep_method_cbe")
-        ],
-        [
-            InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")
+    config = load_config()
+    gateways = config.get('gateways', {})
+    
+    keyboard_buttons = []
+    for method_key, gw in gateways.items():
+        if gw.get('is_active', True):
+            display_name = method_key.capitalize()
+            keyboard_buttons.append([InlineKeyboardButton(text=f"📱 {display_name}", callback_data=f"dep_method_{method_key}")])
+    
+    if not keyboard_buttons:
+        keyboard_buttons = [
+            [InlineKeyboardButton(text="📱 Telebirr", callback_data="dep_method_telebirr")],
+            [InlineKeyboardButton(text="🏦 CBE Birr", callback_data="dep_method_cbe")]
         ]
-    ])
+    
+    keyboard_buttons.append([InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
 
-    caption = "💳 <b>Deposit Funds (ዲፖዚት)</b>\n\nChoose your preferred payment method (Telebirr or CBE Birr):"
+    caption = "💳 <b>Deposit Funds (ዲፖዚት)</b>\n\nChoose your preferred payment method:"
     if isinstance(event, CallbackQuery):
         try:
             await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
@@ -377,8 +366,13 @@ async def process_deposit_command_or_callback(event, state: FSMContext = None):
 
 @router.callback_query(UserState.waiting_for_deposit_method, F.data.startswith("dep_method_"))
 async def process_deposit_method_selection(callback_query: CallbackQuery, state: FSMContext):
-    method = "Telebirr" if "telebirr" in callback_query.data else "CBE Birr"
-    await state.update_data(deposit_method=method)
+    method_key = callback_query.data.replace("dep_method_", "")
+    config = load_config()
+    gateways = config.get('gateways', {})
+    gw_info = gateways.get(method_key, {})
+    account_num = gw_info.get('account_number', '0911000000')
+    
+    await state.update_data(deposit_method=method_key, account_number=account_num)
     await state.set_state(UserState.waiting_for_deposit_amount)
     
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -387,7 +381,7 @@ async def process_deposit_method_selection(callback_query: CallbackQuery, state:
     
     try:
         await callback_query.message.edit_caption(
-            caption=f"Selected Method: <b>{method}</b>\n\n"
+            caption=f"Selected Method: <b>{method_key.capitalize()}</b>\nAccount: <code>{account_num}</code>\n\n"
                     "💰 Enter the amount you want to deposit (in birr):",
             reply_markup=keyboard,
             parse_mode="HTML"
@@ -407,15 +401,15 @@ async def process_deposit_amount(message: Message, state: FSMContext):
         await state.update_data(deposit_amount=amount)
         data = await state.get_data()
         method = data.get("deposit_method")
+        account_num = data.get("account_number")
 
         await state.set_state(UserState.waiting_for_deposit_reference)
-        account_info = "0911111111 (Telebirr Merchant)" if method == "Telebirr" else "1000123456 - Edil Bingo (CBE Birr)"
         
         await message.answer(
-            f"✅ Amount: <b>{amount} birr</b> via <b>{method}</b> confirmed.\n\n"
-            f"1. Transfer the money to our merchant account:\n"
-            f"   👉 <b>{account_info}</b>\n\n"
-            f"2. Send your transaction reference number:",
+            f"✅ Amount: <b>{amount} birr</b> via <b>{method.capitalize()}</b> confirmed.\n\n"
+            f"1. Transfer the money to our account:\n"
+            f"   👉 <b>{account_num}</b>\n\n"
+            f"2. Send your transaction reference number / receipt ID:",
             parse_mode="HTML"
         )
     except ValueError:
@@ -423,40 +417,55 @@ async def process_deposit_amount(message: Message, state: FSMContext):
 
 @router.message(UserState.waiting_for_deposit_reference)
 async def process_deposit_reference(message: Message, state: FSMContext):
-    ref_text = message.text
+    ref_text = message.text.strip()
     data = await state.get_data()
     amount = data.get("deposit_amount")
     method = data.get("deposit_method")
     user_id = message.from_user.id
+    username = message.from_user.username or message.from_user.first_name
     await state.clear()
 
+    tx_id = None
     with app.app_context():
         user = User.query.filter_by(telegram_id=user_id).first()
-        user.balance += amount
         transaction = Transaction(
             user_id=user.id,
             type='deposit',
             amount=amount,
             payment_method=method,
             transaction_id=ref_text,
-            status='completed',
-            completed_at=datetime.utcnow()
+            status='pending'
         )
         db.session.add(transaction)
         db.session.commit()
+        tx_id = transaction.id
 
-        await message.answer(
-            f"✅ <b>Deposit Successful & Credited!</b>\n\n"
-            f"Method: {method}\n"
-            f"Amount: {amount:.2f} birr\n"
-            f"New Balance: {user.balance:.2f} birr",
-            parse_mode="HTML"
-        )
+    await message.answer(
+        f"✅ <b>Deposit Request Submitted!</b>\n\n"
+        f"Method: {method.capitalize()}\n"
+        f"Amount: {amount:.2f} birr\n"
+        f"Ref ID: {ref_text}\n\n"
+        f"Waiting for admin approval...",
+        parse_mode="HTML"
+    )
 
+    admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅ Approve", callback_data=f"admin_dep_approve_{tx_id}"),
+            InlineKeyboardButton(text="❌ Reject", callback_data=f"admin_dep_reject_{tx_id}")
+        ]
+    ])
 
-# ==========================================
-#         TELEBIRR & CBE BIRR WITHDRAWAL LOGIC (ጥያቄ ቁጥር 7)
-# ==========================================
+    for admin_id in ADMIN_IDS:
+        try:
+            await message.bot.send_message(
+                chat_id=admin_id,
+                text=f"🔔 <b>New Deposit Request!</b>\n\n👤 User: @{username} (ID: {user_id})\n💰 Amount: <b>{amount} birr</b>\n📱 Method: <b>{method.capitalize()}</b>\n🔑 Ref: <code>{ref_text}</code>",
+                parse_mode="HTML",
+                reply_markup=admin_keyboard
+            )
+        except Exception:
+            pass
 
 @router.message(Command("withdraw"))
 @router.callback_query(F.data == "menu_withdraw")
@@ -472,24 +481,23 @@ async def process_withdraw_command_or_callback(event, state: FSMContext = None):
             user = get_or_create_user(user_id, event.from_user.username)
         
         if user.balance < 50:
-            text = f"⚠️ Insufficient Main Balance for withdrawal. Your Balance is {user.balance:.2f} birr."
+            text = f"⚠️ Insufficient Main Balance for withdrawal. Your Balance is {user.balance:.2f} birr (Minimum 50 Birr)."
             if isinstance(event, CallbackQuery):
                 await event.answer(text, show_alert=True)
             else:
                 await message.answer(text)
             return
+        balance = user.balance
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📱 Telebirr", callback_data="withdraw_method_telebirr"),
             InlineKeyboardButton(text="🏦 CBE Birr", callback_data="withdraw_method_cbe")
         ],
-        [
-            InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")
-        ]
+        [InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")]
     ])
 
-    caption = f"💳 <b>Withdraw Funds (ዊዝድራው)</b>\n\nYour Main Balance: <b>{user.balance:.2f} Birr</b>\nSelect your payout method:"
+    caption = f"💳 <b>Withdraw Funds (ዊዝድራው)</b>\n\nYour Main Balance: <b>{balance:.2f} Birr</b>\nSelect your payout method:"
     if isinstance(event, CallbackQuery):
         try:
             await message.edit_caption(caption=caption, reply_markup=keyboard, parse_mode="HTML")
@@ -553,7 +561,7 @@ async def process_withdraw_amount(message: Message, state: FSMContext):
 
 @router.message(UserState.waiting_for_withdraw_phone)
 async def process_withdraw_phone(message: Message, state: FSMContext):
-    payout_account = message.text
+    payout_account = message.text.strip()
     data = await state.get_data()
     amount = data.get("withdraw_amount")
     method = data.get("withdraw_method")
@@ -564,10 +572,13 @@ async def process_withdraw_phone(message: Message, state: FSMContext):
     tx_id = None
     with app.app_context():
         user = User.query.filter_by(telegram_id=user_id).first()
+        if user.balance < amount:
+            await message.answer("⚠️ Insufficient balance.")
+            return
         user.balance -= amount
         transaction = Transaction(
             user_id=user.id,
-            type='withdraw',
+            type='withdrawal',
             amount=-amount,
             payment_method=method,
             status='pending',
@@ -597,11 +608,6 @@ async def process_withdraw_phone(message: Message, state: FSMContext):
         except Exception:
             pass
 
-
-# ==========================================
-#         ADMIN REPORT & ACTION HANDLERS
-# ==========================================
-
 @router.message(Command("adminreport"))
 async def cmd_admin_report(message: Message):
     if message.from_user.id not in ADMIN_IDS:
@@ -609,11 +615,48 @@ async def cmd_admin_report(message: Message):
 
     with app.app_context():
         users = User.query.all()
-        report_text = "📊 <b>Edil Bingo Admin Report</b>\n\n"
-        for u in users:
+        report_text = f"📊 <b>Edil Bingo Admin Report</b>\nTotal Users: {len(users)}\n\n"
+        for u in users[:20]:
             report_text += f"👤 {u.username} | 📱 {u.phone} | 💰 Main: {u.balance:.2f}\n"
 
     await message.answer(report_text, parse_mode="HTML")
+
+@router.callback_query(F.data.startswith("admin_dep_"))
+async def handle_admin_deposit_action(callback_query: CallbackQuery):
+    if callback_query.from_user.id not in ADMIN_IDS:
+        await callback_query.answer("Unauthorized.", show_alert=True)
+        return
+
+    data_parts = callback_query.data.split("_")
+    action = data_parts[2]
+    tx_id = int(data_parts[3])
+
+    with app.app_context():
+        tx = Transaction.query.get(tx_id)
+        if not tx or tx.status != 'pending':
+            await callback_query.answer("Already processed.", show_alert=True)
+            return
+
+        user = User.query.get(tx.user_id)
+        if action == "approve":
+            tx.status = 'completed'
+            tx.completed_at = datetime.utcnow()
+            user.balance += tx.amount
+            db.session.commit()
+            try:
+                await callback_query.bot.send_message(user.telegram_id, f"✅ Your deposit of {tx.amount:.2f} birr has been approved and credited!")
+            except:
+                pass
+            await callback_query.message.edit_text(f"✅ Deposit Approved for user {user.telegram_id} ({tx.amount} birr).")
+        else:
+            tx.status = 'rejected'
+            db.session.commit()
+            try:
+                await callback_query.bot.send_message(user.telegram_id, f"❌ Your deposit request of {tx.amount:.2f} birr was rejected.")
+            except:
+                pass
+            await callback_query.message.edit_text(f"❌ Deposit Rejected.")
+    await callback_query.answer()
 
 @router.callback_query(F.data.startswith("admin_wd_"))
 async def handle_admin_withdrawal_action(callback_query: CallbackQuery):
@@ -636,14 +679,21 @@ async def handle_admin_withdrawal_action(callback_query: CallbackQuery):
             tx.status = 'completed'
             tx.completed_at = datetime.utcnow()
             db.session.commit()
+            try:
+                await callback_query.bot.send_message(user.telegram_id, f"✅ Your withdrawal request of {abs(tx.amount):.2f} birr has been approved!")
+            except:
+                pass
             await callback_query.message.edit_text(f"✅ Withdrawal Approved for user {user.telegram_id}.")
         else:
             tx.status = 'rejected'
             user.balance += abs(tx.amount)
             db.session.commit()
+            try:
+                await callback_query.bot.send_message(user.telegram_id, f"❌ Your withdrawal request of {abs(tx.amount):.2f} birr was rejected and refunded.")
+            except:
+                pass
             await callback_query.message.edit_text(f"❌ Withdrawal Rejected & Refunded.")
     await callback_query.answer()
-
 
 @router.callback_query(F.data == "menu_main")
 async def process_back_to_main(callback_query: CallbackQuery, state: FSMContext):
@@ -658,11 +708,6 @@ async def process_back_to_main(callback_query: CallbackQuery, state: FSMContext)
     except Exception:
         pass
     await callback_query.answer()
-
-
-# ==========================================
-#             BOT ENTRYPOINT
-# ==========================================
 
 async def main():
     bot = Bot(token=TOKEN)
