@@ -29,7 +29,7 @@ def init_db(app):
         with db.engine.connect() as connection:
             connection = connection.execution_options(isolation_level="AUTOCOMMIT")
             
-            # 1. መጀመሪያ የ Foreign Key አምዶችን ወደ BIGINT መቀየር (የጥገኝነት ስህተት እንዳይፈጠር)
+            # 1. Foreign Key አምዶችን ወደ BIGINT መቀየር
             foreign_key_alterations = [
                 'ALTER TABLE "game_participant" ALTER COLUMN user_id TYPE BIGINT;',
                 'ALTER TABLE "transaction" ALTER COLUMN user_id TYPE BIGINT;',
@@ -39,28 +39,27 @@ def init_db(app):
                 'ALTER TABLE "game_history" ALTER COLUMN user_id TYPE BIGINT;',
                 'ALTER TABLE "game_history" ALTER COLUMN winner_id TYPE BIGINT;'
             ]
-            
             for sql in foreign_key_alterations:
                 try:
                     connection.execute(text(sql))
                 except Exception:
                     pass
 
-            # 2. በመቀጠል የ user ሰንጠረዥ ዋና ቁልፎችን እና ቴሌግራም ID ወደ BIGINT መቀየር
+            # 2. የ user ሰንጠረዥ ቁልፎችን ወደ BIGINT መቀየር
             primary_key_alterations = [
                 'ALTER TABLE "user" ALTER COLUMN telegram_id TYPE BIGINT;',
                 'ALTER TABLE "user" ALTER COLUMN id TYPE BIGINT;'
             ]
-            
             for sql in primary_key_alterations:
                 try:
                     connection.execute(text(sql))
                 except Exception:
                     pass
 
-            # 3. ሌሎች አዲስ አምዶች (Columns) ካሉ መፈተሽና መጨመር
+            # 3. አዳዲስ አምዶች (Columns) በራስ-ሰር መጨመር (migration እንዳያስፈልግ)
             user_columns_to_add = [
                 ('is_blocked', 'BOOLEAN DEFAULT FALSE'),
+                ('is_deleted', 'BOOLEAN DEFAULT FALSE'),
                 ('bonus_balance', 'DOUBLE PRECISION DEFAULT 20.0'),
                 ('coin', 'INTEGER DEFAULT 0'),
                 ('games_played', 'INTEGER DEFAULT 0'),
@@ -71,6 +70,16 @@ def init_db(app):
             for col_name, col_type in user_columns_to_add:
                 try:
                     connection.execute(text(f'ALTER TABLE "user" ADD COLUMN {col_name} {col_type};'))
+                except Exception:
+                    pass
+
+            admin_columns_to_add = [
+                ('role', "VARCHAR(20) DEFAULT 'admin'"),
+                ('can_edit_balance', 'BOOLEAN DEFAULT TRUE')
+            ]
+            for col_name, col_type in admin_columns_to_add:
+                try:
+                    connection.execute(text(f'ALTER TABLE "admin" ADD COLUMN {col_name} {col_type};'))
                 except Exception:
                     pass
 
@@ -89,7 +98,8 @@ def init_db(app):
                 ('game_unique_code', 'VARCHAR(16)'),
                 ('winning_board_data', 'TEXT'),
                 ('is_win', 'BOOLEAN DEFAULT FALSE'),
-                ('user_id', 'BIGINT')
+                ('user_id', 'BIGINT'),
+                ('created_at', 'TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP')
             ]
             for col_name, col_type in history_columns_to_add:
                 try:

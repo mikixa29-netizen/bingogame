@@ -16,6 +16,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     referrer_id = db.Column(db.BigInteger, nullable=True)
     is_blocked = db.Column(db.Boolean, default=False)
+    is_deleted = db.Column(db.Boolean, default=False)  # ለ Soft Delete የተጨመረ
     
     transactions = db.relationship('Transaction', backref='user', lazy=True)
     transfers_sent = db.relationship('Transfer', foreign_keys='Transfer.sender_id', backref='sender', lazy=True)
@@ -26,6 +27,8 @@ class Admin(db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_super = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String(20), default='admin')          # 'admin' ወይም 'agent'
+    can_edit_balance = db.Column(db.Boolean, default=True)   # ለአጀንት የሚሰጥ ፈቃድ
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Game(db.Model):
@@ -69,6 +72,7 @@ class GameHistory(db.Model):
     called_numbers_str = db.Column(db.Text)
     prize_amount = db.Column(db.Float)
     is_win = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) # ለ 3 ወር ርዕስ ማጣሪያ የሚያገለግል
     finished_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Transaction(db.Model):

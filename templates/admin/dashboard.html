@@ -9,200 +9,67 @@
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0;
-            padding: 12px;
-            background-color: #89C149;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            margin: 0; padding: 12px; background-color: #89C149; color: #fff;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        .container {
-            width: 100%;
-            max-width: 1100px;
-        }
+        .container { width: 100%; max-width: 1100px; }
         .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(5px);
-            padding: 14px 18px;
-            border-radius: 16px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.4);
-            flex-wrap: wrap;
-            gap: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(5px); padding: 14px 18px; border-radius: 16px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.4);
+            flex-wrap: wrap; gap: 10px;
         }
-        h2, h3 {
-            margin: 0;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-        .header-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+        h2, h3 { margin: 0; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .logout-btn {
-            background: #e74c3c;
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-            transition: 0.2s;
+            background: #e74c3c; color: white; text-decoration: none; padding: 8px 16px;
+            border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.2);
         }
-        .logout-btn:active { transform: scale(0.95); }
-        
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin-bottom: 15px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; margin-bottom: 15px;
         }
         .stat-card {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(5px);
-            color: #fff;
-            padding: 16px;
-            border-radius: 16px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.4);
+            background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(5px); color: #fff;
+            padding: 16px; border-radius: 16px; box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            text-align: center; border: 1px solid rgba(255,255,255,0.4);
         }
-        .stat-card h3 {
-            color: #fdd835;
-            font-size: 12px;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-        .stat-card p {
-            margin: 4px 0;
-            font-size: 13px;
-            color: #f0f0f0;
-        }
-        .stat-card strong {
-            font-size: 22px;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-        
+        .stat-card h3 { color: #fdd835; font-size: 12px; text-transform: uppercase; margin-bottom: 6px; }
+        .stat-card strong { font-size: 22px; color: #fff; }
         .section-box {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(5px);
-            padding: 16px;
-            border-radius: 16px;
-            margin-bottom: 15px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.4);
-            overflow-x: auto;
+            background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(5px); padding: 16px;
+            border-radius: 16px; margin-bottom: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.4); overflow-x: auto;
         }
-        .section-box h3 {
-            font-size: 16px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-            padding-bottom: 8px;
-            color: #fdd835;
-        }
-        
+        .section-box h3 { font-size: 16px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 8px; color: #fdd835; }
         table {
-            width: 100%;
-            border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.95);
-            color: #333;
-            border-radius: 12px;
-            overflow: hidden;
-            font-size: 13px;
-            margin-bottom: 5px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            min-width: 600px;
+            width: 100%; border-collapse: collapse; background: rgba(255, 255, 255, 0.95);
+            color: #333; border-radius: 12px; overflow: hidden; font-size: 13px; margin-bottom: 10px; min-width: 600px;
         }
-        th, td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #1b5e20;
-            color: white;
-            font-size: 12px;
-            text-transform: uppercase;
-        }
-        
-        input[type="number"], input[type="text"], input[type="password"], input[type="file"], select, textarea {
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            background: #fff;
-            color: #333;
-            font-size: 13px;
-            font-weight: bold;
-            box-sizing: border-box;
-            margin-bottom: 6px;
-            outline: none;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #1b5e20; color: white; font-size: 12px; text-transform: uppercase; }
+        input, select, textarea {
+            padding: 9px; border-radius: 8px; border: none; background: #fff; color: #333; font-size: 13px; font-weight: bold; margin-bottom: 6px; outline: none;
         }
         button, .btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            text-decoration: none;
-            display: inline-block;
-            transition: 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            background: #27ae60; color: white; border: none; padding: 7px 12px; border-radius: 8px;
+            cursor: pointer; font-weight: bold; font-size: 12px; text-decoration: none; display: inline-block;
         }
-        button:active, .btn:active { transform: scale(0.96); }
         .btn-danger { background: #c0392b; }
         .btn-warning { background: #d35400; }
         .btn-primary { background: #1e88e5; }
-        
-        .form-group {
-            margin-bottom: 10px;
+        .pagination { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
+        .pagination a { padding: 5px 10px; background: #1b5e20; color: #fff; border-radius: 5px; text-decoration: none; font-size: 12px; }
+        .pagination a.active { background: #fdd835; color: #333; font-weight: bold; }
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #fff;
+        .modal-content {
+            background: #fff; color: #333; padding: 20px; border-radius: 12px; width: 90%; max-width: 600px;
+            max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
-        .flashes {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 15px;
-            width: 100%;
-        }
-        .flashes li {
-            background: #27ae60;
-            color: white;
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            font-size: 13px;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        }
-        .form-inline {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .form-inline input, .form-inline select {
-            flex: 1;
-            min-width: 130px;
-        }
+        .close-modal { float: right; font-size: 20px; font-weight: bold; cursor: pointer; color: #e74c3c; }
     </style>
 </head>
 <body>
@@ -216,27 +83,27 @@
 
         {% with messages = get_flashed_messages() %}
           {% if messages %}
-            <ul class="flashes">
+            <ul style="list-style:none; padding:0;">
               {% for message in messages %}
-                <li>{{ message }}</li>
+                <li style="background:#27ae60; color:white; padding:10px; border-radius:8px; margin-bottom:5px; text-align:center;">{{ message }}</li>
               {% endfor %}
             </ul>
           {% endif %}
         {% endwith %}
 
-        <!-- Statistics Section -->
+        <!-- Statistics Grid -->
         <div class="stats-grid">
             <div class="stat-card">
-                <h3>Total Players</h3>
-                <p><strong>{{ total_players if total_players is defined else users|length }}</strong></p>
+                <h3>Total / Active / Blocked</h3>
+                <p><strong>{{ total_players }}</strong> / <span style="color:#2ecc71;">{{ active_players_count }}</span> / <span style="color:#e74c3c;">{{ blocked_players_count }}</span></p>
             </div>
             <div class="stat-card">
                 <h3>Active Games</h3>
-                <p><strong>{{ active_games if active_games is defined else 0 }}</strong></p>
+                <p><strong>{{ active_games_count|default(0) }}</strong></p>
             </div>
             <div class="stat-card">
                 <h3>Pending Withdrawals</h3>
-                <p><strong>{{ pending_withdrawals|length if pending_withdrawals is defined else 0 }}</strong></p>
+                <p><strong>{{ pending_withdrawals|length }}</strong></p>
             </div>
         </div>
 
@@ -245,100 +112,97 @@
             <h3>Withdrawal Requests</h3>
             <table>
                 <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>User ID</th>
-                        <th>Amount</th>
-                        <th>Phone</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
+                    <tr><th>ID</th><th>User ID</th><th>Amount</th><th>Phone</th><th>Status</th><th>Action</th></tr>
                 </thead>
                 <tbody>
-                    {% if pending_withdrawals %}
-                        {% for tx in pending_withdrawals %}
-                        <tr>
-                            <td>#{{ tx.id }}</td>
-                            <td>{{ tx.user_id }}</td>
-                            <td>{{ tx.amount | abs }} ETB</td>
-                            <td>{{ tx.withdrawal_phone }}</td>
-                            <td><span style="color: #fdd835; font-weight: bold;">{{ tx.status }}</span></td>
-                            <td>
-                                <div style="display: flex; gap: 6px;">
-                                    <form action="{{ url_for('admin.approve_withdrawal', tx_id=tx.id) }}" method="POST">
-                                        <button type="submit" style="background: #27ae60;">Approve</button>
-                                    </form>
-                                    <form action="{{ url_for('admin.reject_withdrawal', tx_id=tx.id) }}" method="POST">
-                                        <button type="submit" class="btn-danger">Reject</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% else %}
+                    {% for tx in pending_withdrawals %}
                     <tr>
-                        <td colspan="6" style="text-align: center; color: #555;">No pending withdrawal requests.</td>
+                        <td>#{{ tx.id }}</td>
+                        <td>{{ tx.user_id }}</td>
+                        <td>{{ tx.amount | abs }} ETB</td>
+                        <td>{{ tx.withdrawal_phone|default('N/A') }}</td>
+                        <td><span style="color: #fdd835; font-weight: bold;">{{ tx.status }}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 6px;">
+                                <form action="{{ url_for('admin.approve_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit">Approve</button></form>
+                                <form action="{{ url_for('admin.reject_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit" class="btn-danger">Reject</button></form>
+                            </div>
+                        </td>
                     </tr>
-                    {% endif %}
+                    {% else %}
+                    <tr><td colspan="6" style="text-align: center; color: #555;">No pending requests.</td></tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Active Games Rooms Section -->
+        <!-- Game Rooms & 3-Month History -->
         <div class="section-box">
-            <h3>Active Game Rooms & Pool</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <h3 style="margin:0; border:none;">Game Rooms & 3-Month History</h3>
+                <form method="GET" style="display: flex; gap: 5px; margin:0;">
+                    <input type="text" name="game_search" placeholder="Search Game ID..." value="{{ request.args.get('game_search', '') }}" style="margin:0; padding:6px 10px;">
+                    <button type="submit" style="padding:6px 10px;">Search</button>
+                </form>
+            </div>
             <table>
                 <thead>
                     <tr>
                         <th>Game ID</th>
                         <th>Stake</th>
-                        <th>Players</th>
-                        <th>Cards</th>
+                        <th>Players / Cards</th>
                         <th>Pool</th>
                         <th>Status</th>
-                        <th>Winner / Prize</th>
+                        <th>Winner(s) / Prize</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% if games %}
-                        {% for g in games %}
-                        <tr>
-                            <td>#{{ g.game_id }}</td>
-                            <td>{{ g.entry_price }} ETB</td>
-                            <td>{{ g.players|length }}</td>
-                            <td>{{ g.get_total_cards() if g.get_total_cards else '-' }}</td>
-                            <td>{{ g.pool if g.pool is defined else 0.0 }} ETB</td>
-                            <td><span style="color: #fdd835; font-weight: bold;">{{ g.status }}</span></td>
-                            <td>
-                                {% if g.winners %}
-                                    🏆 {{ g.winners[0].username }} ({{ g.prize_per_winner if g.prize_per_winner is defined else 0 }} ETB)
-                                {% else %}
-                                    In progress...
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% else %}
+                    {% for g in games %}
                     <tr>
-                        <td colspan="7" style="text-align: center; color: #555;">No active games.</td>
+                        <td>#{{ g.game_id }}</td>
+                        <td>{{ g.entry_price|default(0) }} ETB</td>
+                        <td>{{ g.players|length if g.players is iterable else 0 }} Players</td>
+                        <td>{{ g.pool|default(0) }} ETB</td>
+                        <td><span style="color: #fdd835; font-weight: bold;">{{ g.status }}</span></td>
+                        <td>
+                            {% if g.winners %}
+                                🏆 
+                                {% for w in g.winners %}
+                                    @{{ w.username }} ({{ g.prize_per_winner|default(0) }} ETB){% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                In progress...
+                            {% endif %}
+                        </td>
                     </tr>
-                    {% endif %}
+                    {% else %}
+                    <tr><td colspan="6" style="text-align: center; color: #555;">No games found.</td></tr>
+                    {% endfor %}
                 </tbody>
             </table>
+            {% if total_pages and total_pages > 1 %}
+            <div class="pagination">
+                {% for p in range(1, total_pages + 1) %}
+                    <a href="{{ url_for('admin.dashboard', page=p, game_search=request.args.get('game_search', '')) }}" class="{% if current_page == p %}active{% endif %}">{{ p }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
 
-        <!-- User Management -->
+        <!-- User Management & Balance Control -->
         <div class="section-box">
-            <h3>User Management & Balance Control</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <h3 style="margin:0; border:none;">User Management & Balance Control</h3>
+                <div>
+                    <a href="{{ url_for('admin.dashboard', user_filter='all') }}" class="btn" style="background: {% if user_filter=='all' %}#1e88e5{% else %}#555{% endif %};">All</a>
+                    <a href="{{ url_for('admin.dashboard', user_filter='active') }}" class="btn" style="background: {{ '#1e88e5' if user_filter == 'active' else '#555' }};">Active</a>
+                    <a href="{{ url_for('admin.dashboard', user_filter='blocked') }}" class="btn" style="background: {% if user_filter=='blocked' %}#1e88e5{% else %}#555{% endif %};">Blocked</a>
+                    <a href="{{ url_for('admin.dashboard', user_filter='deleted') }}" class="btn" style="background: {% if user_filter=='deleted' %}#1e88e5{% else %}#555{% endif %};">Deleted</a>
+                </div>
+            </div>
             <table>
                 <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Username / Phone</th>
-                        <th>Main | Bonus | Coin</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
+                    <tr><th>ID</th><th>Username / Phone</th><th>Main | Bonus | Coin</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     {% for u in users %}
@@ -347,74 +211,136 @@
                         <td>{{ u.username or u.phone or 'N/A' }}</td>
                         <td>
                             <form action="{{ url_for('admin.update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; align-items: center;">
-                                <input type="number" step="0.01" name="balance" value="{{ u.balance }}" placeholder="Main" style="width: 70px;">
-                                <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" placeholder="Bonus" style="width: 70px;">
-                                <input type="number" name="coin" value="{{ u.coin }}" placeholder="Coin" style="width: 50px;">
-                                <button type="submit" style="padding: 6px 8px; font-size: 11px;">Save</button>
+                                <input type="number" step="0.01" name="balance" value="{{ u.balance }}" style="width: 65px; margin:0;">
+                                <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" style="width: 65px; margin:0;">
+                                <input type="number" name="coin" value="{{ u.coin|default(0) }}" style="width: 45px; margin:0;">
+                                <button type="submit" style="padding: 6px 8px;">Save</button>
                             </form>
                         </td>
                         <td>
-                            {% if u.is_blocked %}
-                                <span style="color: #c0392b; font-weight: bold;">Blocked</span>
+                            {% if u.is_deleted %}
+                                <span style="color:#777;">Deleted</span>
+                            {% elif u.is_blocked %}
+                                <span style="color: #c0392b;">Blocked</span>
                             {% else %}
-                                <span style="color: #2ecc71; font-weight: bold;">Active</span>
+                                <span style="color: #2ecc71;">Active</span>
                             {% endif %}
                         </td>
                         <td>
-                            <div style="display:flex; gap:6px; align-items: center;">
-                                <a href="{{ url_for('admin.user_details', user_id=u.id) }}" class="btn btn-primary" style="padding: 6px 8px; font-size: 11px;">Details</a>
+                            <div style="display:flex; gap:5px; align-items: center;">
+                                <button type="button" class="btn btn-primary" onclick="openDetails({{ u.id }})" style="padding: 5px 8px;">Details</button>
                                 <form action="{{ url_for('admin.toggle_block', user_id=u.id) }}" method="POST" style="display:inline;">
-                                    {% if u.is_blocked %}
-                                        <button type="submit" class="btn-warning" style="padding: 6px 8px; font-size: 11px;">Unblock</button>
-                                    {% else %}
-                                        <button type="submit" class="btn-danger" style="padding: 6px 8px; font-size: 11px;">Block</button>
-                                    {% endif %}
+                                    <button type="submit" class="btn {% if u.is_blocked %}btn-warning{% else %}btn-danger{% endif %}" style="padding: 5px 8px;">
+                                        {% if u.is_blocked %}Unblock{% else %}Block{% endif %}
+                                    </button>
                                 </form>
-                                <form action="{{ url_for('admin.delete_data', data_type='user', item_id=u.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user completely?');">
-                                    <button type="submit" class="btn-danger" style="padding: 6px 8px; font-size: 11px;"><i class="fa fa-trash"></i></button>
+                                <form action="{{ url_for('admin.delete_data', data_type='user', item_id=u.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete user completely?');">
+                                    <button type="submit" class="btn btn-danger" style="padding: 5px 8px;"><i class="fa fa-trash"></i></button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                     {% else %}
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #555;">No registered users.</td>
-                    </tr>
+                    <tr><td colspan="5" style="text-align: center; color: #555;">No users found.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Add Staff Section -->
+        <!-- Superadmin & Staff Control Panel -->
+        {% if is_super_admin %}
         <div class="section-box">
-            <h3>Add New Admin or Agent (Superadmin Only)</h3>
-            <form action="{{ url_for('admin.add_staff') }}" method="POST" class="form-inline">
-                <input type="text" name="username" placeholder="Username" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <select name="role" required>
+            <h3>Superadmin: Staff & Agent Control Panel</h3>
+            <form action="{{ url_for('admin.add_staff') }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px;">
+                <input type="text" name="username" placeholder="Staff Username" required style="margin:0;">
+                <input type="password" name="password" placeholder="Password" required style="margin:0;">
+                <select name="role" required style="margin:0;">
                     <option value="admin">Admin</option>
-                    <option value="agent">Agent</option>
+                    <option value="agent">Agent (View Only)</option>
                 </select>
-                <button type="submit" style="background: #1b5e20;">Add Staff</button>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" name="can_edit_balance" id="edit_bal">
+                    <label for="edit_bal" style="font-size:12px; margin:0;">Allow Balance Edit</label>
+                </div>
+                <button type="submit" style="background: #1b5e20; margin:0;">Add Staff</button>
             </form>
+            <table>
+                <thead><tr><th>Username</th><th>Role</th><th>Permissions</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for staff in admins %}
+                    <tr>
+                        <td>{{ staff.username }}</td>
+                        <td>
+                            <span style="font-weight: bold; color: {% if staff.is_super or staff.role=='admin' %}#1b5e20{% else %}#1e88e5{% endif %};">
+                                {{ 'ADMIN' if (staff.is_super or staff.role=='admin') else 'AGENT' }}
+                            </span>
+                        </td>
+                        <td>Balance Edit: Allowed</td>
+                        <td>
+                            <form action="{{ url_for('admin.delete_staff', admin_id=staff.id) }}" method="POST" onsubmit="return confirm('Remove staff?');">
+                                <button type="submit" class="btn-danger" style="padding: 4px 8px;">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align: center; color: #555;">No staff members found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% endif %}
 
-        <!-- Broadcast News & Welcome Photo Section -->
+        <!-- Bot Auto-Broadcast & Photo Post -->
         <div class="section-box">
-            <h3>Bot Broadcast News & Welcome Image Settings</h3>
-            <form action="{{ url_for('admin.broadcast_news') }}" method="POST" class="form-group">
-                <label>Broadcast News Message:</label>
-                <textarea name="broadcast_text" rows="3" placeholder="Enter broadcast message for users..." required style="width: 100%;"></textarea>
-                <button type="submit">Send Broadcast</button>
-            </form>
-
-            <form action="{{ url_for('admin.update_welcome_image') }}" method="POST" enctype="multipart/form-data" class="form-group" style="margin-top: 15px;">
-                <label>Welcome Image (URL or File):</label>
-                <input type="text" name="image_url" placeholder="Enter image URL" style="width: 100%;">
-                <input type="file" name="welcome_image" accept="image/*" style="width: 100%; background: #fff; padding: 6px;">
-                <button type="submit" style="background: #2980b9; margin-top: 5px;">Update Image</button>
+            <h3>Bot Auto-Broadcast & Photo Post (All Users)</h3>
+            <form action="{{ url_for('admin.broadcast_news') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 8px;">
+                <textarea name="broadcast_text" rows="3" placeholder="Type message to post automatically to all bot users..." style="width:100%; margin:0;"></textarea>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="file" name="post_photo" accept="image/*" style="background:#fff; padding:6px; margin:0; flex:1;">
+                    <button type="submit" style="background: #2980b9; padding: 10px 20px; margin:0;">Post to All Users</button>
+                </div>
             </form>
         </div>
     </div>
+
+    <!-- User Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeDetails()">&times;</span>
+            <h3 style="color: #1b5e20; margin-bottom: 10px;">User Profile & Financial Details</h3>
+            <div id="modalBody">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        function openDetails(userId) {
+            document.getElementById('detailsModal').style.display = 'flex';
+            document.getElementById('modalBody').innerHTML = 'Loading user data...';
+            fetch('/admin/user-details-json/' + userId)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('modalBody').innerHTML = `
+                        <p><b>Username:</b> @${data.username || 'N/A'}</p>
+                        <p><b>Phone:</b> ${data.phone || 'N/A'}</p>
+                        <p><b>Registration Date:</b> ${data.created_at}</p>
+                        <p><b>Balances:</b> Main: ${data.balance} ETB | Bonus: ${data.bonus_balance} ETB | Coin: ${data.coin}</p>
+                        <p><b>Total Deposits:</b> ${data.total_deposit} ETB</p>
+                        <p><b>Total Withdrawals:</b> ${data.total_withdrawal} ETB</p>
+                        <p><b>Net Income (Income - Expense):</b> <span style="color:${data.net_income >= 0 ? '#2ecc71':'#e74c3c'}">${data.net_income} ETB</span></p>
+                        <p><b>Game Stats:</b> Wins: ${data.wins_count} | Losses: ${data.losses_count}</p>
+                        <p><b>Invite Info:</b> Invited Users Count: ${data.invited_count} (${data.invited_usernames.join(', ')})</p>
+                        <h4 style="margin-top:10px; border-bottom:1px solid #ddd;">Recent Transactions:</h4>
+                        <ul style="padding-left:15px; font-size:12px;">
+                            ${data.transactions.map(t => `<li>${t.date}: ${t.type} - ${t.amount} ETB (${t.status})</li>`).join('')}
+                        </ul>
+                    `;
+                }).catch(err => {
+                    document.getElementById('modalBody').innerHTML = '<p style="color:red;">Failed to load user details.</p>';
+                });
+        }
+        function closeDetails() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
