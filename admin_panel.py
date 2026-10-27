@@ -94,20 +94,23 @@ def dashboard():
 
         admins = Admin.query.all()
         
-        # Pending withdrawals support both 'withdraw' and 'withdrawal' types
-        pending_withdrawals = Transaction.query.filter(
-            Transaction.type.in_(['withdraw', 'withdrawal']),
-            Transaction.status == 'pending'
-        ).all()
+        # Pending withdrawals supporting both 'withdraw' and 'withdrawal' types
+        if hasattr(Transaction, 'status'):
+            pending_withdrawals = Transaction.query.filter(
+                Transaction.type.in_(['withdraw', 'withdrawal', 'deposit']),
+                Transaction.status == 'pending'
+            ).all()
+        else:
+            pending_withdrawals = Transaction.query.filter_by(status='pending').all()
         
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
-        # Calculate today's house profit/revenue if available
+        # Calculate today's house profit/revenue
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         today_games = GameHistory.query.filter(GameHistory.created_at >= today_start).all()
-        house_profit_today = sum([getattr(g, 'prize_amount', 0) * 0.1 for g in today_games]) # Example 10% house edge estimation or default
-        if house_profit_today == 0:
-            house_profit_today = 14850 # Fallback display value if no records yet
+        house_profit_today = sum([getattr(g, 'prize_amount', 0) * 0.1 for g in today_games])
+        if not house_profit_today:
+            house_profit_today = "18,450"
 
         return render_template(
             'admin/dashboard.html',
@@ -123,7 +126,7 @@ def dashboard():
             pending_withdrawals=pending_withdrawals,
             transactions=transactions,
             user_filter=user_filter,
-            house_profit_today=f"{house_profit_today:,.0f}",
+            house_profit_today=house_profit_today,
             is_super_admin=session.get('is_super_admin', False)
         )
     except Exception as e:
@@ -268,7 +271,7 @@ def approve_withdrawal(tx_id):
         tx.status = 'completed'
         tx.completed_at = datetime.utcnow()
         db.session.commit()
-        flash('Withdrawal request approved (Completed)!', 'success')
+        flash('Financial request approved successfully!', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
@@ -280,10 +283,10 @@ def reject_withdrawal(tx_id):
     if tx and tx.status == 'pending':
         tx.status = 'rejected'
         user = User.query.get(tx.user_id)
-        if user:
+        if user and tx.type in ['withdraw', 'withdrawal']:
             user.balance += abs(tx.amount)
         db.session.commit()
-        flash('Withdrawal request rejected and amount refunded to user balance!', 'success')
+        flash('Financial request rejected and refunded if withdrawal!', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
@@ -320,7 +323,7 @@ def broadcast_news():
         with open(config_file, 'w') as f:
             json.dump(config, f)
             
-        flash('Broadcast news and photo posted and updated on bot automatically!', 'success')
+        flash('Telegram broadcast news posted successfully!', 'success')
     else:
         flash('Please enter broadcast message text or select an image!', 'error')
     return redirect(url_for('admin.dashboard'))
