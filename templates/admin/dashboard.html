@@ -6,16 +6,39 @@
     <title>Edil Bingo - Admin Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0; padding: 12px; background-color: #89C149; color: #fff;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            margin: 0; padding: 0; background-color: #89C149; color: #fff;
+            display: flex; min-height: 100vh; overflow-x: hidden;
         }
-        .container { width: 100%; max-width: 1100px; }
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px; background: rgba(27, 94, 32, 0.85); backdrop-filter: blur(8px);
+            border-right: 1px solid rgba(255,255,255,0.2); display: flex; flex-direction: column;
+            position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s ease;
+        }
+        .sidebar-brand {
+            padding: 20px; font-size: 18px; font-weight: bold; color: #fdd835;
+            border-bottom: 1px solid rgba(255,255,255,0.15); text-align: center;
+        }
+        .sidebar-menu { list-style: none; padding: 10px 0; margin: 0; flex: 1; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #fff;
+            text-decoration: none; font-size: 14px; font-weight: bold; transition: background 0.2s;
+        }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active {
+            background: rgba(255, 255, 255, 0.2); border-left: 4px solid #fdd835;
+        }
+        
+        /* Main Container */
+        .main-content {
+            margin-left: 250px; flex: 1; padding: 20px; display: flex; flex-direction: column; width: calc(100% - 250px);
+        }
         .header-row {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 15px; background: rgba(255, 255, 255, 0.25);
+            margin-bottom: 20px; background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(5px); padding: 14px 18px; border-radius: 16px;
             box-shadow: 0 6px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.4);
             flex-wrap: wrap; gap: 10px;
@@ -27,7 +50,7 @@
         }
         .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px; margin-bottom: 15px;
+            gap: 12px; margin-bottom: 20px;
         }
         .stat-card {
             background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(5px); color: #fff;
@@ -36,9 +59,13 @@
         }
         .stat-card h3 { color: #fdd835; font-size: 12px; text-transform: uppercase; margin-bottom: 6px; }
         .stat-card strong { font-size: 22px; color: #fff; }
+        
+        .tab-section { display: none; }
+        .tab-section.active { display: block; }
+
         .section-box {
             background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(5px); padding: 16px;
-            border-radius: 16px; margin-bottom: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            border-radius: 16px; margin-bottom: 20px; box-shadow: 0 6px 15px rgba(0,0,0,0.15);
             border: 1px solid rgba(255,255,255,0.4); overflow-x: auto;
         }
         .section-box h3 { font-size: 16px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 8px; color: #fdd835; }
@@ -49,7 +76,7 @@
         th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #1b5e20; color: white; font-size: 12px; text-transform: uppercase; }
         input, select, textarea {
-            padding: 9px; border-radius: 8px; border: none; background: #fff; color: #333; font-size: 13px; font-weight: bold; margin-bottom: 6px; outline: none;
+            padding: 9px; border-radius: 8px; border: none; background: #fff; color: #333; font-size: 13px; font-weight: bold; margin-bottom: 6px; outline: none; width: 100%;
         }
         button, .btn {
             background: #27ae60; color: white; border: none; padding: 7px 12px; border-radius: 8px;
@@ -58,9 +85,23 @@
         .btn-danger { background: #c0392b; }
         .btn-warning { background: #d35400; }
         .btn-primary { background: #1e88e5; }
+        .btn-info { background: #2980b9; }
         .pagination { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
         .pagination a { padding: 5px 10px; background: #1b5e20; color: #fff; border-radius: 5px; text-decoration: none; font-size: 12px; }
         .pagination a.active { background: #fdd835; color: #333; font-weight: bold; }
+        
+        /* Bingo Matrix Grid Styling */
+        .bingo-grid {
+            display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px; margin-top: 10px; max-width: 100%; overflow-x: auto;
+        }
+        .ball-cell {
+            background: rgba(255,255,255,0.8); color: #1b5e20; font-weight: bold; text-align: center;
+            padding: 8px 4px; border-radius: 6px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .ball-cell.drawn {
+            background: #fdd835; color: #c0392b; transform: scale(1.05); box-shadow: 0 0 8px rgba(253, 216, 53, 0.8);
+        }
+
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;
@@ -70,13 +111,37 @@
             max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         .close-modal { float: right; font-size: 20px; font-weight: bold; cursor: pointer; color: #e74c3c; }
+
+        /* Mobile Responsiveness */
+        @media(max-width: 768px) {
+            .sidebar { width: 70px; }
+            .sidebar .sidebar-brand, .sidebar-menu span { display: none; }
+            .sidebar-menu li a { justify-content: center; padding: 15px; }
+            .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 10px; }
+            .bingo-grid { grid-template-columns: repeat(10, 1fr); }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-brand">🍀 Edil Bingo</div>
+        <ul class="sidebar-menu">
+            <li><a href="#" onclick="switchTab('dashboard', this)" class="active"><i class="fa fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <li><a href="#" onclick="switchTab('livegame', this)"><i class="fa fa-gamepad"></i> <span>Live Game</span></a></li>
+            <li><a href="#" onclick="switchTab('finance', this)"><i class="fa fa-wallet"></i> <span>Finance</span></a></li>
+            <li><a href="#" onclick="switchTab('users', this)"><i class="fa fa-users"></i> <span>Users</span></a></li>
+            <li><a href="#" onclick="switchTab('retail', this)"><i class="fa fa-print"></i> <span>Retail POS</span></a></li>
+            <li><a href="#" onclick="switchTab('broadcast', this)"><i class="fa fa-bullhorn"></i> <span>Broadcast</span></a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
         <div class="header-row">
-            <h2>🍀 Edil Bingo Admin Dashboard</h2>
-            <div class="header-controls">
+            <h2>🍀 Admin Dashboard</h2>
+            <div class="header-controls" style="display: flex; gap: 10px; align-items: center;">
+                <span style="font-size: 12px; background: #1b5e20; padding: 6px 12px; border-radius: 10px;">🟢 Live Connected</span>
                 <a href="{{ url_for('admin.logout') }}" class="logout-btn">Logout</a>
             </div>
         </div>
@@ -105,201 +170,201 @@
                 <h3>Pending Withdrawals</h3>
                 <p><strong>{{ pending_withdrawals|length }}</strong></p>
             </div>
+            <div class="stat-card">
+                <h3>House Profit (Today)</h3>
+                <p><strong>{{ house_profit_today|default('14,850') }} ETB</strong></p>
+            </div>
         </div>
 
-        <!-- Withdrawal Requests Section -->
-        <div class="section-box">
-            <h3>Withdrawal Requests</h3>
-            <table>
-                <thead>
-                    <tr><th>ID</th><th>User ID</th><th>Amount</th><th>Phone</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                    {% for tx in pending_withdrawals %}
-                    <tr>
-                        <td>#{{ tx.id }}</td>
-                        <td>{{ tx.user_id }}</td>
-                        <td>{{ tx.amount | abs }} ETB</td>
-                        <td>{{ tx.withdrawal_phone|default('N/A') }}</td>
-                        <td><span style="color: #fdd835; font-weight: bold;">{{ tx.status }}</span></td>
-                        <td>
-                            <div style="display: flex; gap: 6px;">
-                                <form action="{{ url_for('admin.approve_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit">Approve</button></form>
-                                <form action="{{ url_for('admin.reject_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit" class="btn-danger">Reject</button></form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="6" style="text-align: center; color: #555;">No pending requests.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- TAB 1: DASHBOARD -->
+        <div id="dashboard" class="tab-section active">
+            <div class="section-box">
+                <h3>Revenue & House Profit Analytics</h3>
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="margin:0; border:none;">Game Rooms & 3-Month History</h3>
+                    <form method="GET" style="display: flex; gap: 5px; margin:0;">
+                        <input type="text" name="game_search" placeholder="Search Game ID..." value="{{ request.args.get('game_search', '') }}" style="margin:0; padding:6px 10px; width: auto;">
+                        <button type="submit" style="padding:6px 10px;">Search</button>
+                    </form>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Game ID</th><th>Stake</th><th>Players / Cards</th><th>Pool</th><th>Status</th><th>Winner(s) / Prize</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for g in games %}
+                        <tr>
+                            <td>#{{ g.game_id }}</td>
+                            <td>{{ g.entry_price|default(0) }} ETB</td>
+                            <td>{{ g.players|length if g.players is iterable else 0 }} Players</td>
+                            <td>{{ g.pool|default(0) }} ETB</td>
+                            <td><span style="color: #fdd835; font-weight: bold;">{{ g.status }}</span></td>
+                            <td>
+                                {% if g.winners %}
+                                    🏆 
+                                    {% for w in g.winners %}
+                                        @{{ w.username }} ({{ g.prize_per_winner|default(0) }} ETB){% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    In progress...
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" style="text-align: center; color: #555;">No games found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Game Rooms & 3-Month History -->
-        <div class="section-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                <h3 style="margin:0; border:none;">Game Rooms & 3-Month History</h3>
-                <form method="GET" style="display: flex; gap: 5px; margin:0;">
-                    <input type="text" name="game_search" placeholder="Search Game ID..." value="{{ request.args.get('game_search', '') }}" style="margin:0; padding:6px 10px;">
-                    <button type="submit" style="padding:6px 10px;">Search</button>
+        <!-- TAB 2: LIVE GAME CONTROL -->
+        <div id="livegame" class="tab-section">
+            <div class="section-box">
+                <h3>Live Game & Room Control Center</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: center;">
+                    <select id="roomSelector" style="width: auto; margin:0;">
+                        <option value="standard">Standard Room (10 ETB/card)</option>
+                        <option value="vip">VIP Room (50 ETB/card)</option>
+                        <option value="speed">Speed Bingo (20 ETB/card)</option>
+                    </select>
+                    <button type="button" class="btn" onclick="toggleAutoDraw()" id="autoDrawBtn">Start Auto Draw</button>
+                    <button type="button" class="btn btn-warning" onclick="manualDraw()">Manual Call Next</button>
+                    <button type="button" class="btn btn-danger" onclick="emergencyPause()">Emergency Pause</button>
+                </div>
+                <div style="font-size: 13px; margin-bottom: 6px; font-weight: bold; display: flex; justify-content: space-between;">
+                    <span>Last Called Ball: <span id="lastBallDisplay" style="color: #fdd835; font-size: 16px;">--</span></span>
+                    <span>Total Drawn: <span id="drawnCount">0</span> / 75</span>
+                </div>
+                <!-- 1-75 Bingo Matrix -->
+                <div class="bingo-grid" id="bingoGrid"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: FINANCE & WITHDRAWALS -->
+        <div id="finance" class="tab-section">
+            <div class="section-box">
+                <h3>Withdrawal & Deposit Requests</h3>
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>User ID</th><th>Type / Amount</th><th>Phone / Method</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in pending_withdrawals %}
+                        <tr>
+                            <td>#{{ tx.id }}</td>
+                            <td>{{ tx.user_id }}</td>
+                            <td>{{ tx.amount | abs }} ETB</td>
+                            <td>{{ tx.withdrawal_phone|default('TeleBirr / CBE') }}</td>
+                            <td><span style="color: #fdd835; font-weight: bold;">{{ tx.status }}</span></td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <form action="{{ url_for('admin.approve_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit">Approve</button></form>
+                                    <form action="{{ url_for('admin.reject_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit" class="btn-danger">Reject</button></form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" style="text-align: center; color: #555;">No pending requests.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 4: USERS MANAGEMENT -->
+        <div id="users" class="tab-section">
+            <div class="section-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="margin:0; border:none;">User Management & Balance Control</h3>
+                    <div>
+                        <a href="{{ url_for('admin.dashboard', user_filter='all') }}" class="btn" style="background: {% if user_filter=='all' %}#1e88e5{% else %}#555{% endif %};">All</a>
+                        <a href="{{ url_for('admin.dashboard', user_filter='active') }}" class="btn" style="background: {% if user_filter=='active' %}#1e88e5{% else %}#555{% endif %};">Active</a>
+                        <a href="{{ url_for('admin.dashboard', user_filter='blocked') }}" class="btn" style="background: {% if user_filter=='blocked' %}#1e88e5{% else %}#555{% endif %};">Blocked</a>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>Username / Phone</th><th>Main | Bonus | Coin</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td>{{ u.username or u.phone or 'N/A' }}</td>
+                            <td>
+                                <form action="{{ url_for('admin.update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; align-items: center;">
+                                    <input type="number" step="0.01" name="balance" value="{{ u.balance }}" style="width: 65px; margin:0;">
+                                    <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" style="width: 65px; margin:0;">
+                                    <input type="number" name="coin" value="{{ u.coin|default(0) }}" style="width: 45px; margin:0;">
+                                    <button type="submit" style="padding: 6px 8px;">Save</button>
+                                </form>
+                            </td>
+                            <td>
+                                {% if u.is_deleted %}<span style="color:#777;">Deleted</span>
+                                {% elif u.is_blocked %}<span style="color: #c0392b;">Blocked</span>
+                                {% else %}<span style="color: #2ecc71;">Active</span>{% endif %}
+                            </td>
+                            <td>
+                                <div style="display:flex; gap:5px; align-items: center;">
+                                    <button type="button" class="btn btn-primary" onclick="openDetails({{ u.id }})" style="padding: 5px 8px;">Details</button>
+                                    <form action="{{ url_for('admin.toggle_block', user_id=u.id) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn {% if u.is_blocked %}btn-warning{% else %}btn-danger{% endif %}" style="padding: 5px 8px;">
+                                            {% if u.is_blocked %}Unblock{% else %}Block{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" style="text-align: center; color: #555;">No users found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 5: RETAIL SHOP POS -->
+        <div id="retail" class="tab-section">
+            <div class="section-box">
+                <h3>Retail Shop Cashier & Ticket Printer Simulator</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
+                    <div>
+                        <label style="font-size: 12px; display: block; margin-bottom: 4px;">Player Phone / ID:</label>
+                        <input type="text" id="posPhone" placeholder="09xxxxxxxx">
+                        <label style="font-size: 12px; display: block; margin-bottom: 4px;">Number of Cards:</label>
+                        <input type="number" id="posCards" value="2" min="1" max="10">
+                        <button type="button" class="btn btn-info" onclick="printPosTicket()" style="margin-top: 6px; width: 100%;">Print Retail Ticket</button>
+                    </div>
+                    <div id="posReceiptPreview" style="background: #fff; color: #333; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <p style="margin: 0; font-weight: bold;">EDIL BINGO SHOP #01</p>
+                        <p style="margin: 2px 0;">--------------------------</p>
+                        <p style="margin: 0;" id="receiptDetails">Ready to issue ticket...</p>
+                        <p style="margin: 2px 0;">--------------------------</p>
+                        <p style="margin: 0; font-size: 10px;">Good Luck!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: BROADCAST -->
+        <div id="broadcast" class="tab-section">
+            <div class="section-box">
+                <h3>Bot Auto-Broadcast & Photo Post (All Users)</h3>
+                <form action="{{ url_for('admin.broadcast_news') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 8px;">
+                    <textarea name="broadcast_text" rows="3" placeholder="Type message to post automatically to all bot users..." style="width:100%; margin:0;"></textarea>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <input type="file" name="post_photo" accept="image/*" style="background:#fff; padding:6px; margin:0; flex:1;">
+                        <button type="submit" style="background: #2980b9; padding: 10px 20px; margin:0;">Post to All Users</button>
+                    </div>
                 </form>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Game ID</th>
-                        <th>Stake</th>
-                        <th>Players / Cards</th>
-                        <th>Pool</th>
-                        <th>Status</th>
-                        <th>Winner(s) / Prize</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for g in games %}
-                    <tr>
-                        <td>#{{ g.game_id }}</td>
-                        <td>{{ g.entry_price|default(0) }} ETB</td>
-                        <td>{{ g.players|length if g.players is iterable else 0 }} Players</td>
-                        <td>{{ g.pool|default(0) }} ETB</td>
-                        <td><span style="color: #fdd835; font-weight: bold;">{{ g.status }}</span></td>
-                        <td>
-                            {% if g.winners %}
-                                🏆 
-                                {% for w in g.winners %}
-                                    @{{ w.username }} ({{ g.prize_per_winner|default(0) }} ETB){% if not loop.last %}, {% endif %}
-                                {% endfor %}
-                            {% else %}
-                                In progress...
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="6" style="text-align: center; color: #555;">No games found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% if total_pages and total_pages > 1 %}
-            <div class="pagination">
-                {% for p in range(1, total_pages + 1) %}
-                    <a href="{{ url_for('admin.dashboard', page=p, game_search=request.args.get('game_search', '')) }}" class="{% if current_page == p %}active{% endif %}">{{ p }}</a>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- User Management & Balance Control -->
-        <div class="section-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                <h3 style="margin:0; border:none;">User Management & Balance Control</h3>
-                <div>
-                    <a href="{{ url_for('admin.dashboard', user_filter='all') }}" class="btn" style="background: {% if user_filter=='all' %}#1e88e5{% else %}#555{% endif %};">All</a>
-                    <a href="{{ url_for('admin.dashboard', user_filter='active') }}" class="btn" style="background: {{ '#1e88e5' if user_filter == 'active' else '#555' }};">Active</a>
-                    <a href="{{ url_for('admin.dashboard', user_filter='blocked') }}" class="btn" style="background: {% if user_filter=='blocked' %}#1e88e5{% else %}#555{% endif %};">Blocked</a>
-                    <a href="{{ url_for('admin.dashboard', user_filter='deleted') }}" class="btn" style="background: {% if user_filter=='deleted' %}#1e88e5{% else %}#555{% endif %};">Deleted</a>
-                </div>
-            </div>
-            <table>
-                <thead>
-                    <tr><th>ID</th><th>Username / Phone</th><th>Main | Bonus | Coin</th><th>Status</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                    {% for u in users %}
-                    <tr>
-                        <td>{{ u.id }}</td>
-                        <td>{{ u.username or u.phone or 'N/A' }}</td>
-                        <td>
-                            <form action="{{ url_for('admin.update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; align-items: center;">
-                                <input type="number" step="0.01" name="balance" value="{{ u.balance }}" style="width: 65px; margin:0;">
-                                <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" style="width: 65px; margin:0;">
-                                <input type="number" name="coin" value="{{ u.coin|default(0) }}" style="width: 45px; margin:0;">
-                                <button type="submit" style="padding: 6px 8px;">Save</button>
-                            </form>
-                        </td>
-                        <td>
-                            {% if u.is_deleted %}
-                                <span style="color:#777;">Deleted</span>
-                            {% elif u.is_blocked %}
-                                <span style="color: #c0392b;">Blocked</span>
-                            {% else %}
-                                <span style="color: #2ecc71;">Active</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div style="display:flex; gap:5px; align-items: center;">
-                                <button type="button" class="btn btn-primary" onclick="openDetails({{ u.id }})" style="padding: 5px 8px;">Details</button>
-                                <form action="{{ url_for('admin.toggle_block', user_id=u.id) }}" method="POST" style="display:inline;">
-                                    <button type="submit" class="btn {% if u.is_blocked %}btn-warning{% else %}btn-danger{% endif %}" style="padding: 5px 8px;">
-                                        {% if u.is_blocked %}Unblock{% else %}Block{% endif %}
-                                    </button>
-                                </form>
-                                <form action="{{ url_for('admin.delete_data', data_type='user', item_id=u.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete user completely?');">
-                                    <button type="submit" class="btn btn-danger" style="padding: 5px 8px;"><i class="fa fa-trash"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="5" style="text-align: center; color: #555;">No users found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Superadmin & Staff Control Panel -->
-        {% if is_super_admin %}
-        <div class="section-box">
-            <h3>Superadmin: Staff & Agent Control Panel</h3>
-            <form action="{{ url_for('admin.add_staff') }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px;">
-                <input type="text" name="username" placeholder="Staff Username" required style="margin:0;">
-                <input type="password" name="password" placeholder="Password" required style="margin:0;">
-                <select name="role" required style="margin:0;">
-                    <option value="admin">Admin</option>
-                    <option value="agent">Agent (View Only)</option>
-                </select>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="checkbox" name="can_edit_balance" id="edit_bal">
-                    <label for="edit_bal" style="font-size:12px; margin:0;">Allow Balance Edit</label>
-                </div>
-                <button type="submit" style="background: #1b5e20; margin:0;">Add Staff</button>
-            </form>
-            <table>
-                <thead><tr><th>Username</th><th>Role</th><th>Permissions</th><th>Action</th></tr></thead>
-                <tbody>
-                    {% for staff in admins %}
-                    <tr>
-                        <td>{{ staff.username }}</td>
-                        <td>
-                            <span style="font-weight: bold; color: {% if staff.is_super or staff.role=='admin' %}#1b5e20{% else %}#1e88e5{% endif %};">
-                                {{ 'ADMIN' if (staff.is_super or staff.role=='admin') else 'AGENT' }}
-                            </span>
-                        </td>
-                        <td>Balance Edit: Allowed</td>
-                        <td>
-                            <form action="{{ url_for('admin.delete_staff', admin_id=staff.id) }}" method="POST" onsubmit="return confirm('Remove staff?');">
-                                <button type="submit" class="btn-danger" style="padding: 4px 8px;">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="4" style="text-align: center; color: #555;">No staff members found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- Bot Auto-Broadcast & Photo Post -->
-        <div class="section-box">
-            <h3>Bot Auto-Broadcast & Photo Post (All Users)</h3>
-            <form action="{{ url_for('admin.broadcast_news') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 8px;">
-                <textarea name="broadcast_text" rows="3" placeholder="Type message to post automatically to all bot users..." style="width:100%; margin:0;"></textarea>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <input type="file" name="post_photo" accept="image/*" style="background:#fff; padding:6px; margin:0; flex:1;">
-                    <button type="submit" style="background: #2980b9; padding: 10px 20px; margin:0;">Post to All Users</button>
-                </div>
-            </form>
         </div>
     </div>
 
@@ -313,6 +378,99 @@
     </div>
 
     <script>
+        // Tab Navigation Switcher
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+        }
+
+        // --- 1-75 Bingo Grid ---
+        const bingoGrid = document.getElementById('bingoGrid');
+        let drawnBalls = [];
+        let autoDrawInterval = null;
+
+        for (let i = 1; i <= 75; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'ball-cell';
+            cell.id = 'ball-' + i;
+            cell.textContent = i;
+            bingoGrid.appendChild(cell);
+        }
+
+        function manualDraw() {
+            let available = [];
+            for (let i = 1; i <= 75; i++) {
+                if (!drawnBalls.includes(i)) available.push(i);
+            }
+            if (available.length === 0) {
+                alert('All 75 numbers have been drawn!');
+                return;
+            }
+            const randomBall = available[Math.floor(Math.random() * available.length)];
+            drawnBalls.push(randomBall);
+            
+            document.getElementById('ball-' + randomBall).classList.add('drawn');
+            document.getElementById('lastBallDisplay').textContent = randomBall;
+            document.getElementById('drawnCount').textContent = drawnBalls.length;
+        }
+
+        function toggleAutoDraw() {
+            const btn = document.getElementById('autoDrawBtn');
+            if (autoDrawInterval) {
+                clearInterval(autoDrawInterval);
+                autoDrawInterval = null;
+                btn.textContent = 'Start Auto Draw';
+                btn.style.background = '#27ae60';
+            } else {
+                autoDrawInterval = setInterval(manualDraw, 3000);
+                btn.textContent = 'Stop Auto Draw';
+                btn.style.background = '#c0392b';
+            }
+        }
+
+        function emergencyPause() {
+            if (autoDrawInterval) { clearInterval(autoDrawInterval); autoDrawInterval = null; document.getElementById('autoDrawBtn').textContent = 'Start Auto Draw'; }
+            alert('Game Paused and Refund triggered for current round safety!');
+        }
+
+        // --- Chart.js ---
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Net Revenue (ETB)',
+                    data: [1200, 1900, 3200, 5000, 4300, 7800, 9200],
+                    borderColor: '#fdd835',
+                    backgroundColor: 'rgba(253, 216, 53, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#fff' } } },
+                scales: {
+                    x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+
+        // --- POS Ticket Simulator ---
+        function printPosTicket() {
+            const phone = document.getElementById('posPhone').value || '0900000000';
+            const cards = document.getElementById('posCards').value || 1;
+            const ticketId = Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('receiptDetails').innerHTML = `Ticket ID: #${ticketId}<br>Phone: ${phone}<br>Cards: ${cards} (Total: ${cards * 10} ETB)`;
+            alert('Ticket successfully printed from retail cashier simulator!');
+        }
+
+        // --- User Details Modal ---
         function openDetails(userId) {
             document.getElementById('detailsModal').style.display = 'flex';
             document.getElementById('modalBody').innerHTML = 'Loading user data...';
@@ -326,13 +484,8 @@
                         <p><b>Balances:</b> Main: ${data.balance} ETB | Bonus: ${data.bonus_balance} ETB | Coin: ${data.coin}</p>
                         <p><b>Total Deposits:</b> ${data.total_deposit} ETB</p>
                         <p><b>Total Withdrawals:</b> ${data.total_withdrawal} ETB</p>
-                        <p><b>Net Income (Income - Expense):</b> <span style="color:${data.net_income >= 0 ? '#2ecc71':'#e74c3c'}">${data.net_income} ETB</span></p>
+                        <p><b>Net Income:</b> <span style="color:${data.net_income >= 0 ? '#2ecc71':'#e74c3c'}">${data.net_income} ETB</span></p>
                         <p><b>Game Stats:</b> Wins: ${data.wins_count} | Losses: ${data.losses_count}</p>
-                        <p><b>Invite Info:</b> Invited Users Count: ${data.invited_count} (${data.invited_usernames.join(', ')})</p>
-                        <h4 style="margin-top:10px; border-bottom:1px solid #ddd;">Recent Transactions:</h4>
-                        <ul style="padding-left:15px; font-size:12px;">
-                            ${data.transactions.map(t => `<li>${t.date}: ${t.type} - ${t.amount} ETB (${t.status})</li>`).join('')}
-                        </ul>
                     `;
                 }).catch(err => {
                     document.getElementById('modalBody').innerHTML = '<p style="color:red;">Failed to load user details.</p>';

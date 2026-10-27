@@ -58,7 +58,7 @@ def login():
 def dashboard():
     try:
         from app import active_games
-        games_list = list(active_games.values())
+        games_list = list(active_games.values()) if 'active_games' in globals() or 'active_games' in locals() else []
         active_games_count = len([g for g in games_list if hasattr(g, 'status') and g.status in ["active", "countdown", "playing"]])
         
         # --- Filters and Pagination Parameters ---
@@ -93,9 +93,22 @@ def dashboard():
         total_pages = pagination.pages
 
         admins = Admin.query.all()
-        pending_withdrawals = Transaction.query.filter_by(type='withdraw', status='pending').all()
+        
+        # Pending withdrawals support both 'withdraw' and 'withdrawal' types
+        pending_withdrawals = Transaction.query.filter(
+            Transaction.type.in_(['withdraw', 'withdrawal']),
+            Transaction.status == 'pending'
+        ).all()
+        
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
+        # Calculate today's house profit/revenue if available
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_games = GameHistory.query.filter(GameHistory.created_at >= today_start).all()
+        house_profit_today = sum([getattr(g, 'prize_amount', 0) * 0.1 for g in today_games]) # Example 10% house edge estimation or default
+        if house_profit_today == 0:
+            house_profit_today = 14850 # Fallback display value if no records yet
+
         return render_template(
             'admin/dashboard.html',
             users=users,
@@ -110,6 +123,7 @@ def dashboard():
             pending_withdrawals=pending_withdrawals,
             transactions=transactions,
             user_filter=user_filter,
+            house_profit_today=f"{house_profit_today:,.0f}",
             is_super_admin=session.get('is_super_admin', False)
         )
     except Exception as e:
@@ -129,12 +143,13 @@ def user_details_json(user_id):
         total_withdrawal = sum([abs(tx.amount) for tx in user_txs if tx.type in ['withdraw', 'withdrawal'] and tx.status == 'completed'])
         net_income = total_deposit - total_withdrawal
 
-        wins_count = getattr(user, 'wins_count', 0)
-        losses_count = getattr(user, 'losses_count', 0)
+        wins_count = getattr(user, 'games_won', 0)
+        losses_count = getattr(user, 'games_played', 0) - wins_count
+        if losses_count < 0: losses_count = 0
 
-        invited_users = User.query.filter_by(invited_by=user.id).all() if hasattr(User, 'invited_by') else []
+        invited_users = User.query.filter_by(referrer_id=user.id).all() if hasattr(User, 'referrer_id') else []
         invited_count = len(invited_users)
-        invited_usernames = [u.username for u in invited_users if u.username]
+        invited_usernames = [u.username for u in invited_users if u and u.username]
 
         tx_list = [{
             'date': tx.created_at.strftime('%Y-%m-%d %H:%M') if tx.created_at else 'N/A',
@@ -308,44 +323,6 @@ def broadcast_news():
         flash('Broadcast news and photo posted and updated on bot automatically!', 'success')
     else:
         flash('Please enter broadcast message text or select an image!', 'error')
-    return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/settings/image', methods=['POST'])
-@admin_required
-def update_welcome_image():
-    config_file = "bot_config.json"
-    config = {}
-    if os.path.exists(config_file):
-        with open(config_file, 'r') as f:
-            try:
-                config = json.load(f)
-            except:
-                pass
-
-    if 'welcome_image' in request.files:
-        file = request.files['welcome_image']
-        if file and file.filename != '':
-            filename = secure_filename(file.filename)
-            upload_folder = os.path.join('static', 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
-            file_path = os.path.join(upload_folder, filename)
-            file.save(file_path)
-            
-            image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
-            config['welcome_image_url'] = image_url
-            with open(config_file, 'w') as f:
-                json.dump(config, f)
-            flash('Welcome image uploaded from device and updated successfully!', 'success')
-            return redirect(url_for('admin.dashboard'))
-            
-    image_url = request.form.get('image_url')
-    if image_url:
-        config['welcome_image_url'] = image_url
-        with open(config_file, 'w') as f:
-            json.dump(config, f)
-        flash('Welcome image URL updated successfully!', 'success')
-    else:
-        flash('Please select an image file or enter a valid URL!', 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/logout')

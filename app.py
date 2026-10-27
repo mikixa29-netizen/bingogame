@@ -28,7 +28,7 @@ with app.app_context():
     db.create_all()
     try:
         db.session.execute(db.text("ALTER TABLE game_history ADD COLUMN IF NOT EXISTS is_win BOOLEAN DEFAULT FALSE;"))
-        db.session.execute(db.text("ALTER TABLE game_history ADD COLUMN IF NOT EXISTS user_id INTEGER;"))
+        db.session.execute(db.text("ALTER TABLE game_history ADD COLUMN IF NOT EXISTS user_id BIGINT;"))
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -350,7 +350,6 @@ def join_game(game_id):
         if total_user_balance < total_cost:
             return jsonify({'error': 'Insufficient balance for selected cartelas!'}), 400
 
-        # ቦነስ ባላንስ ቅድሚያ እንዲቀነስ ተደርጓል
         bonus_bal = user.bonus_balance or 0.0
         main_bal = user.balance or 0.0
 
@@ -596,7 +595,7 @@ def withdraw():
     user.balance -= amount
     tx = Transaction(
         user_id=user.id, 
-        type='withdraw', 
+        type='withdrawal', # Updated to match admin panel filter
         amount=amount, 
         payment_method=payment_method,
         withdrawal_phone=withdrawal_phone,

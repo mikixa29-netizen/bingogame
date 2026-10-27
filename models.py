@@ -18,9 +18,10 @@ class User(db.Model):
     is_blocked = db.Column(db.Boolean, default=False)
     is_deleted = db.Column(db.Boolean, default=False)  # ለ Soft Delete የተጨመረ
     
-    transactions = db.relationship('Transaction', backref='user', lazy=True)
+    transactions = db.relationship('Transaction', backref='user', lazy=True, cascade='all, delete-orphan')
     transfers_sent = db.relationship('Transfer', foreign_keys='Transfer.sender_id', backref='sender', lazy=True)
     transfers_received = db.relationship('Transfer', foreign_keys='Transfer.receiver_id', backref='receiver', lazy=True)
+    game_histories = db.relationship('GameHistory', foreign_keys='GameHistory.user_id', backref='history_user', lazy=True)
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -75,13 +76,15 @@ class GameHistory(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow) # ለ 3 ወር ርዕስ ማጣሪያ የሚያገለግል
     finished_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    winner_user = db.relationship('User', foreign_keys=[winner_id], backref='won_histories', lazy=True)
+
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), nullable=False)
-    type = db.Column(db.String(20))
+    type = db.Column(db.String(20)) # deposit, withdrawal
     amount = db.Column(db.Float, nullable=False)
     payment_method = db.Column(db.String(32))
-    status = db.Column(db.String(20), default='pending')
+    status = db.Column(db.String(20), default='pending') # pending, approved, rejected
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
 
