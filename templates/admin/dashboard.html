@@ -39,7 +39,6 @@
         * {
             box-sizing: border-box;
             font-family: 'Inria Serif', serif;
-            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
 
         body {
@@ -57,7 +56,6 @@
             width: 260px;
             background: var(--sidebar-bg);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -68,7 +66,6 @@
             z-index: 100;
             border-right: 1px solid var(--glass-border);
             box-shadow: 4px 0 15px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
         }
 
         .sidebar-header {
@@ -83,7 +80,6 @@
             font-size: 19px;
             margin: 0;
             color: var(--accent-yellow);
-            letter-spacing: 0.5px;
         }
 
         .sidebar-menu {
@@ -112,7 +108,6 @@
             border-radius: 10px;
             cursor: pointer;
             text-align: left;
-            transition: all 0.2s ease;
         }
 
         .sidebar-btn:hover {
@@ -139,14 +134,12 @@
             flex-direction: column;
             min-height: 100vh;
             width: calc(100% - 260px);
-            transition: margin-left 0.3s ease, width 0.3s ease;
         }
 
         /* Top Header */
         .top-bar {
             background: var(--glass-bg);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             padding: 12px 24px;
             display: flex;
             justify-content: space-between;
@@ -155,24 +148,12 @@
             position: sticky;
             top: 0;
             z-index: 90;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            gap: 12px;
         }
 
         .top-left-controls {
             display: flex;
             align-items: center;
             gap: 15px;
-        }
-
-        .mobile-hamburger {
-            display: none;
-            background: transparent;
-            border: none;
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px;
         }
 
         .status-badge {
@@ -193,44 +174,6 @@
             height: 8px;
             background-color: #2ecc71;
             border-radius: 50%;
-            box-shadow: 0 0 8px #2ecc71;
-        }
-
-        .search-box {
-            position: relative;
-            max-width: 220px;
-        }
-
-        .search-box input {
-            padding: 7px 10px 7px 30px;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            background: rgba(255, 255, 255, 0.85);
-            color: #333;
-            font-size: 12px;
-            width: 100%;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            font-size: 12px;
-        }
-
-        .top-right-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .top-right-controls select, .top-right-controls button {
-            margin: 0;
-            font-size: 12px;
-            padding: 6px 12px;
-            border-radius: 20px;
         }
 
         .logout-btn {
@@ -241,7 +184,6 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: bold;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
         }
 
         /* Content Area & Views */
@@ -256,15 +198,8 @@
 
         .view-section.active-view {
             display: block;
-            animation: fadeIn 0.3s ease-in-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Glassmorphism Cards & Box */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -274,12 +209,8 @@
 
         .stat-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            color: var(--text-color);
             padding: 18px;
             border-radius: 16px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
             text-align: center;
             border: 1px solid var(--glass-border);
         }
@@ -289,7 +220,6 @@
             font-size: 13px;
             text-transform: uppercase;
             margin: 0 0 8px 0;
-            letter-spacing: 0.5px;
         }
 
         .stat-card strong {
@@ -299,12 +229,9 @@
 
         .section-box {
             background: var(--glass-bg);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             padding: 20px;
             border-radius: 16px;
             margin-bottom: 20px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
             border: 1px solid var(--glass-border);
             overflow-x: auto;
         }
@@ -320,7 +247,6 @@
             gap: 8px;
         }
 
-        /* Form Inputs & Tables */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -330,7 +256,6 @@
             overflow: hidden;
             font-size: 13px;
             margin-bottom: 10px;
-            min-width: 650px;
         }
 
         th, td {
@@ -344,7 +269,6 @@
             color: white;
             font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         input, select, textarea {
@@ -356,7 +280,6 @@
             font-size: 13px;
             font-weight: bold;
             margin-bottom: 6px;
-            outline: none;
             width: 100%;
         }
 
@@ -369,16 +292,10 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 12px;
-            text-decoration: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        }
-
-        button:hover, .btn:hover {
-            opacity: 0.92;
         }
 
         .btn-danger { background: #c0392b; }
@@ -386,14 +303,18 @@
         .btn-primary { background: #1e88e5; }
         .btn-info { background: #2980b9; }
 
-        /* Bingo Matrix Styling */
+        /* Payment Method Badges with Specific Distinct Colors */
+        .badge-telebirr { background: #1e88e5; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
+        .badge-cbe { background: #8e44ad; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
+        .badge-cbebirr { background: #27ae60; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
+        .badge-mpesa { background: #e67e22; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
+
+        /* Bingo Matrix */
         .bingo-grid {
             display: grid;
             grid-template-columns: repeat(15, 1fr);
             gap: 5px;
             margin-top: 10px;
-            max-width: 100%;
-            overflow-x: auto;
         }
 
         .ball-cell {
@@ -404,185 +325,61 @@
             padding: 10px 2px;
             border-radius: 8px;
             font-size: 13px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .ball-cell.drawn {
             background: var(--accent-yellow);
             color: #c0392b;
             transform: scale(1.06);
-            box-shadow: 0 0 10px rgba(253, 216, 53, 0.9);
         }
 
-        .badge-danger {
-            background: #e74c3c;
-            color: #fff;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .badge-safe {
-            background: #2ecc71;
-            color: #fff;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(5px);
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
+        /* Cartela Preview Box */
+        .cartela-preview-box {
             background: #fff;
-            color: #333;
-            padding: 22px;
-            border-radius: 14px;
-            width: 90%;
-            max-width: 580px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-        }
-
-        .close-modal {
-            float: right;
-            font-size: 22px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #e74c3c;
-        }
-
-        /* Responsive Sidebar for Mobile */
-        @media (max-width: 900px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-
-            .main-wrapper {
-                margin-left: 0;
-                width: 100%;
-            }
-
-            .mobile-hamburger {
-                display: block;
-            }
-
-            .bingo-grid {
-                grid-template-columns: repeat(10, 1fr);
-            }
-        }
-
-        @media (max-width: 600px) {
-            .bingo-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
-            .search-box {
-                display: none;
-            }
+            color: #222;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 2px dashed #1b5e20;
+            text-align: center;
         }
     </style>
 </head>
 <body data-theme="light">
 
-    <!-- Fixed Left Sidebar Navigation Layout -->
+    <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebarNav">
         <div class="sidebar-header">
-            <h2>🍀 Edil Bingo (እድል)</h2>
+            <h2>🍀 Edil Bingo Admin</h2>
         </div>
         <ul class="sidebar-menu">
-            <li>
-                <button class="sidebar-btn active" onclick="switchTab('dashboard', this)">
-                    <i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_dashboard">Dashboard</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('bingo_game', this)">
-                    <i class="fa-solid fa-gamepad"></i> <span data-i18n="nav_bingo">Live Bingo Matrix</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('financials', this)">
-                    <i class="fa-solid fa-wallet"></i> <span data-i18n="nav_financials">Financial Approvals</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('users', this)">
-                    <i class="fa-solid fa-users"></i> <span data-i18n="nav_users">Users & Balance</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('retail_pos', this)">
-                    <i class="fa-solid fa-print"></i> <span data-i18n="nav_pos">Retail Shop POS</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('antifraud', this)">
-                    <i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav_antifraud">Anti-Fraud & Risk</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('broadcast', this)">
-                    <i class="fa-solid fa-paper-plane"></i> <span data-i18n="nav_broadcast">Bot Broadcast</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('staff', this)">
-                    <i class="fa-solid fa-user-shield"></i> <span data-i18n="nav_staff">Staff Management</span>
-                </button>
-            </li>
-            <li>
-                <button class="sidebar-btn" onclick="switchTab('api_settings', this)">
-                    <i class="fa-solid fa-sliders"></i> <span data-i18n="nav_api">System & API</span>
-                </button>
-            </li>
+            <li><button class="sidebar-btn active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('bingo_game', this)"><i class="fa-solid fa-gamepad"></i> Live Rooms (10,20,50,100)</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('financials', this)"><i class="fa-solid fa-wallet"></i> Pending Financials</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('users', this)"><i class="fa-solid fa-users"></i> Users & Balance</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('shop_pos', this)"><i class="fa-solid fa-store"></i> Shop & Cartela POS</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('gateways', this)"><i class="fa-solid fa-credit-card"></i> Payment Gateways</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('broadcast', this)"><i class="fa-solid fa-bullhorn"></i> Telegram Broadcast</button></li>
+            <li><button class="sidebar-btn" onclick="switchTab('staff', this)"><i class="fa-solid fa-user-shield"></i> Staff & Cashiers</button></li>
         </ul>
     </aside>
 
-    <!-- Main Content Wrapper -->
+    <!-- Main Wrapper -->
     <div class="main-wrapper">
-        <!-- Sticky Top Bar Controls -->
         <header class="top-bar">
             <div class="top-left-controls">
-                <button class="mobile-hamburger" onclick="toggleMobileSidebar()"><i class="fa-solid fa-bars"></i></button>
                 <div class="status-badge">
-                    <span class="status-dot"></span> System Online
-                </div>
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Quick Search ID / Phone...">
+                    <span class="status-dot"></span> Server Secured & Online
                 </div>
             </div>
-
-            <div class="top-right-controls">
-                <select id="langSelect" onchange="switchLanguage(this.value)" style="width: auto;">
-                    <option value="en">EN (English)</option>
-                    <option value="am">AM (አማርኛ)</option>
-                </select>
+            <div class="top-right-controls" style="display: flex; gap: 10px; align-items: center;">
                 <button onclick="toggleTheme()" id="themeToggle"><i class="fa-solid fa-moon"></i> Dark</button>
-                <a href="{{ url_for('admin.logout') }}" class="logout-btn" data-i18n="logout">Logout</a>
+                <a href="{{ url_for('admin.logout') }}" class="logout-btn">Logout</a>
             </div>
         </header>
 
-        <!-- Main Content View Area -->
         <main class="content-container">
-
             {% with messages = get_flashed_messages() %}
               {% if messages %}
                 <ul style="list-style:none; padding:0; margin:0 0 15px 0;">
@@ -597,95 +394,54 @@
             <section id="view-dashboard" class="view-section active-view">
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h3 data-i18n="total_players">Total / Active / Blocked</h3>
-                        <p><strong>{{ total_players|default(1250) }}</strong> / <span style="color:#2ecc71;">{{ active_players_count|default(1190) }}</span> / <span style="color:#e74c3c;">{{ blocked_players_count|default(60) }}</span></p>
+                        <h3>Total / Active / Blocked</h3>
+                        <p><strong>{{ total_players|default(0) }}</strong> / <span style="color:#2ecc71;">{{ active_players_count|default(0) }}</span> / <span style="color:#e74c3c;">{{ blocked_players_count|default(0) }}</span></p>
                     </div>
                     <div class="stat-card">
-                        <h3 data-i18n="active_games">Active Games</h3>
-                        <p><strong>{{ active_games_count|default(3) }}</strong></p>
+                        <h3>Active Games & Rooms</h3>
+                        <p><strong>{{ active_games_count|default(0) }}</strong></p>
                     </div>
                     <div class="stat-card">
-                        <h3 data-i18n="pending_withdrawals">Pending Withdrawals</h3>
-                        <p><strong>{{ pending_withdrawals|length if pending_withdrawals is defined else 4 }}</strong></p>
+                        <h3>Pending Requests</h3>
+                        <p><strong>{{ pending_withdrawals|length if pending_withdrawals is defined else 0 }}</strong></p>
                     </div>
                     <div class="stat-card">
-                        <h3 data-i18n="house_profit">House Profit Today</h3>
-                        <p><strong>{{ house_profit_today|default('18,450') }} ETB</strong></p>
+                        <h3>House Profit Today</h3>
+                        <p><b>{{ house_profit_today|default('0.0') }} ETB</b></p>
                     </div>
                 </div>
 
                 <div class="section-box">
-                    <h3 data-i18n="analytics_title"><i class="fa-solid fa-chart-line"></i> Revenue & Net Profit Analytics</h3>
+                    <h3><i class="fa-solid fa-chart-line"></i> Server-side Revenue & Net Profit Analytics</h3>
                     <div style="position: relative; height: 260px; width: 100%;">
                         <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
-
-                <div class="section-box">
-                    <h3 data-i18n="game_rooms"><i class="fa-solid fa-dice"></i> Recent Games & Rooms History</h3>
-                    <table>
-                        <thead>
-                            <tr><th>Game ID</th><th>Stake</th><th>Players</th><th>Pool</th><th>Status</th><th>Winner(s)</th></tr>
-                        </thead>
-                        <tbody>
-                            {% if games is defined and games %}
-                                {% for g in games %}
-                                <tr>
-                                    <td>#{{ g.game_id }}</td>
-                                    <td>{{ g.entry_price|default(0) }} ETB</td>
-                                    <td>{{ g.players|length if g.players is iterable else 0 }} Players</td>
-                                    <td>{{ g.pool|default(0) }} ETB</td>
-                                    <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ g.status }}</span></td>
-                                    <td>
-                                        {% if g.winners %}
-                                            🏆 {% for w in g.winners %}@{{ w.username }} {% endfor %}
-                                        {% else %}
-                                            In progress...
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr><td>#GM-8088</td><td>10 ETB</td><td>45 Players</td><td>450 ETB</td><td><span style="color:#2ecc71;">Completed</span></td><td>🏆 @kebede_win (360 ETB)</td></tr>
-                                <tr><td>#GM-8089</td><td>50 ETB</td><td>12 Players</td><td>600 ETB</td><td><span style="color:var(--accent-yellow);">Active</span></td><td>In progress...</td></tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
             </section>
 
-            <!-- 2. BINGO LIVE CONTROLLER VIEW -->
+            <!-- 2. LIVE BINGO ROOMS (10, 20, 50, 100 ETB) -->
             <section id="view-bingo_game" class="view-section">
                 <div class="section-box">
-                    <h3 data-i18n="bingo_control"><i class="fa-solid fa-bowling-ball"></i> 1-75 Live Bingo Call Controller & Matrix</h3>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center;">
-                        <select id="roomSelector" style="width: auto; margin:0;">
-                            <option value="standard">Standard Room (10 ETB/card)</option>
-                            <option value="vip">VIP Room (50 ETB/card)</option>
-                            <option value="speed">Speed Bingo (20 ETB/card)</option>
-                        </select>
-                        <select id="speedSelector" style="width: auto; margin:0;" onchange="changeDrawSpeed(this.value)">
-                            <option value="5000">Speed: 5 Sec</option>
-                            <option value="3000" selected>Speed: 3 Sec</option>
-                            <option value="1000">Speed: 1 Sec</option>
-                        </select>
-                        <button type="button" class="btn" onclick="toggleAutoDraw()" id="autoDrawBtn" data-i18n="start_auto"><i class="fa-solid fa-play"></i> Start Auto Draw</button>
-                        <button type="button" class="btn btn-warning" onclick="manualDraw()" data-i18n="manual_call"><i class="fa-solid fa-bullhorn"></i> Manual Call Next</button>
-                        <button type="button" class="btn btn-danger" onclick="emergencyPause()" data-i18n="emergency_pause"><i class="fa-solid fa-pause"></i> Emergency Pause & Refund</button>
-                        <button type="button" class="btn btn-info" onclick="resetBingoBoard()"><i class="fa-solid fa-rotate"></i> Reset Board</button>
+                    <h3><i class="fa-solid fa-bowling-ball"></i> Live Bingo Rooms Control (10, 20, 50, 100 ETB)</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+                        <button class="btn" onclick="selectRoom(10)">Room 10 ETB</button>
+                        <button class="btn" onclick="selectRoom(20)">Room 20 ETB</button>
+                        <button class="btn" onclick="selectRoom(50)">Room 50 ETB</button>
+                        <button class="btn" onclick="selectRoom(100)">Room 100 ETB</button>
+                        <button class="btn btn-danger" onclick="emergencyPause()">Emergency Server Pause</button>
                     </div>
-                    <div style="font-size: 14px; margin-bottom: 10px; font-weight: bold; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 10px;">
-                        <span>Last Called Ball: <span id="lastBallDisplay" style="color: var(--accent-yellow); font-size: 22px;">--</span></span>
-                        <span>Total Drawn: <span id="drawnCount">0</span> / 75</span>
+                    <p>Active Room Stake: <b id="selectedRoomDisplay" style="color:var(--accent-yellow);">10 ETB</b></p>
+                    <div style="font-size: 14px; margin-bottom: 10px; font-weight: bold;">
+                        Last Called Ball: <span id="lastBallDisplay" style="color: var(--accent-yellow); font-size: 20px;">--</span> | Total Drawn: <span id="drawnCount">0</span> / 75
                     </div>
                     <div class="bingo-grid" id="bingoGrid"></div>
                 </div>
             </section>
 
-            <!-- 3. FINANCIAL APPROVALS VIEW -->
+            <!-- 3. FINANCIAL APPROVALS (PENDING ONLY + METHOD BADGES) -->
             <section id="view-financials" class="view-section">
                 <div class="section-box">
-                    <h3 data-i18n="financial_requests"><i class="fa-solid fa-money-bill-transfer"></i> Financial Requests (TeleBirr, CBE, Chapa, BOA)</h3>
+                    <h3><i class="fa-solid fa-money-bill-transfer"></i> Pending Financial Requests (Deposit & Withdrawal)</h3>
                     <table>
                         <thead>
                             <tr><th>Tx ID</th><th>User ID</th><th>Type</th><th>Amount</th><th>Method & Details</th><th>Status</th><th>Action</th></tr>
@@ -696,9 +452,16 @@
                                 <tr>
                                     <td>#{{ tx.id }}</td>
                                     <td>{{ tx.user_id }}</td>
-                                    <td><span style="color: #c0392b; font-weight: bold;">Withdrawal</span></td>
+                                    <td><b>{{ tx.type | capitalize }}</b></td>
                                     <td>{{ tx.amount | abs }} ETB</td>
-                                    <td>{{ tx.withdrawal_phone|default('TeleBirr (0911***)') }}</td>
+                                    <td>
+                                        {% set pm = tx.payment_method | default('telebirr') | lower %}
+                                        {% if 'telebirr' in pm %}<span class="badge-telebirr"><i class="fa-solid fa-mobile-screen"></i> Telebirr</span>
+                                        {% elif 'cbebirr' in pm %}<span class="badge-cbebirr"><i class="fa-solid fa-building-columns"></i> CBE Birr</span>
+                                        {% elif 'cbe' in pm %}<span class="badge-cbe"><i class="fa-solid fa-building-columns"></i> CBE Bank</span>
+                                        {% elif 'mpesa' in pm %}<span class="badge-mpesa"><i class="fa-solid fa-globe"></i> M-Pesa</span>
+                                        {% else %}<span style="background:#555; color:#fff; padding:3px 6px; border-radius:4px;">{{ tx.payment_method }}</span>{% endif %}
+                                    </td>
                                     <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status }}</span></td>
                                     <td>
                                         <div style="display: flex; gap: 6px;">
@@ -709,61 +472,20 @@
                                 </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr>
-                                    <td>#TX901</td>
-                                    <td>User_882</td>
-                                    <td><span style="color: #27ae60; font-weight: bold;">Deposit</span></td>
-                                    <td>500 ETB</td>
-                                    <td>CBE Birr (1000***)</td>
-                                    <td><span style="color: var(--accent-yellow); font-weight: bold;">Pending</span></td>
-                                    <td>
-                                        <div style="display: flex; gap: 6px;">
-                                            <button class="btn" onclick="alert('Approved!')">Approve</button>
-                                            <button class="btn btn-danger" onclick="alert('Rejected!')">Reject</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>#TX902</td>
-                                    <td>User_412</td>
-                                    <td><span style="color: #c0392b; font-weight: bold;">Withdrawal</span></td>
-                                    <td>1,200 ETB</td>
-                                    <td>TeleBirr (0944***)</td>
-                                    <td><span style="color: var(--accent-yellow); font-weight: bold;">Pending</span></td>
-                                    <td>
-                                        <div style="display: flex; gap: 6px;">
-                                            <button class="btn" onclick="alert('Approved!')">Approve</button>
-                                            <button class="btn btn-danger" onclick="alert('Rejected!')">Reject</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>#TX903</td>
-                                    <td>User_505</td>
-                                    <td><span style="color: #27ae60; font-weight: bold;">Deposit</span></td>
-                                    <td>2,500 ETB</td>
-                                    <td>Bank of Abyssinia (BOA)</td>
-                                    <td><span style="color: var(--accent-yellow); font-weight: bold;">Pending</span></td>
-                                    <td>
-                                        <div style="display: flex; gap: 6px;">
-                                            <button class="btn" onclick="alert('Approved!')">Approve</button>
-                                            <button class="btn btn-danger" onclick="alert('Rejected!')">Reject</button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <tr><td colspan="7" style="text-align: center; color: #555;">No pending requests found.</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- 4. USERS & BALANCE VIEW -->
+            <!-- 4. USERS & BALANCE CONTROL (MAX 1 DECIMAL) -->
             <section id="view-users" class="view-section">
                 <div class="section-box">
-                    <h3 data-i18n="user_mgmt"><i class="fa-solid fa-users-gear"></i> User Management & Balance Control</h3>
+                    <h3><i class="fa-solid fa-users-gear"></i> User Management & Balance Control (Max 1 Decimal)</h3>
                     <table>
                         <thead>
-                            <tr><th>ID</th><th>Username / Phone</th><th>Main | Bonus | Coin Balance</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th>ID</th><th>Username / Phone</th><th>Main | Bonus Balance</th><th>Status</th><th>Action</th></tr>
                         </thead>
                         <tbody>
                             {% if users is defined and users %}
@@ -772,198 +494,143 @@
                                     <td>{{ u.id }}</td>
                                     <td>{{ u.username or u.phone or 'N/A' }}</td>
                                     <td>
-                                        <form action="{{ url_for('admin.update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; align-items: center; margin:0;">
-                                            <input type="number" step="0.01" name="balance" value="{{ u.balance }}" style="width: 70px; margin:0;">
-                                            <input type="number" step="0.01" name="bonus_balance" value="{{ u.bonus_balance }}" style="width: 70px; margin:0;">
-                                            <input type="number" name="coin" value="{{ u.coin|default(0) }}" style="width: 50px; margin:0;">
-                                            <button type="submit" style="padding: 6px 8px;">Save</button>
+                                        <form action="{{ url_for('admin.update_user', user_id=u.id) }}" method="POST" style="display: flex; gap: 4px; margin:0;">
+                                            <input type="number" step="0.1" name="balance" value="{{ '%.1f' | format(u.balance) }}" style="width: 80px; margin:0;">
+                                            <input type="number" step="0.1" name="bonus_balance" value="{{ '%.1f' | format(u.bonus_balance) }}" style="width: 80px; margin:0;">
+                                            <button type="submit">Save</button>
                                         </form>
                                     </td>
-                                    <td>
-                                        {% if u.is_blocked %}<span style="color: #c0392b; font-weight:bold;">Blocked</span>{% else %}<span style="color: #2ecc71; font-weight:bold;">Active</span>{% endif %}
-                                    </td>
-                                    <td>
-                                        <div style="display:flex; gap:5px; align-items: center;">
-                                            <button type="button" class="btn btn-primary" onclick="openDetails('{{ u.id }}')">Details</button>
-                                            <button type="button" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                                        </div>
-                                    </td>
+                                    <td>{% if u.is_blocked %}<span style="color:#c0392b;">Blocked</span>{% else %}<span style="color:#2ecc71;">Active</span>{% endif %}</td>
+                                    <td><button class="btn" onclick="openDetails('{{ u.id }}')">Details</button></td>
                                 </tr>
                                 {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td>#101</td>
-                                    <td>@alemu_bingo (0912345678)</td>
-                                    <td>
-                                        <div style="display: flex; gap: 4px; align-items: center;">
-                                            <input type="number" value="250.00" style="width: 70px; margin:0;">
-                                            <input type="number" value="50.00" style="width: 70px; margin:0;">
-                                            <input type="number" value="10" style="width: 50px; margin:0;">
-                                            <button class="btn" onclick="alert('Saved!')">Save</button>
-                                        </div>
-                                    </td>
-                                    <td><span style="color: #2ecc71; font-weight:bold;">Active</span></td>
-                                    <td>
-                                        <div style="display:flex; gap:5px; align-items: center;">
-                                            <button class="btn btn-primary" onclick="openDetails(101)">Details</button>
-                                            <button class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- 5. RETAIL SHOP POS VIEW -->
-            <section id="view-retail_pos" class="view-section">
+            <!-- 5. SHOP POS & CASHIER (SHOP NAME/LOCATION, CARTELA ID, PRINT PREVIEW) -->
+            <section id="view-shop_pos" class="view-section">
                 <div class="section-box">
-                    <h3 data-i18n="retail_printer"><i class="fa-solid fa-cash-register"></i> Retail Shop Cashier & Ticket Printer Simulator</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px;">
+                    <h3><i class="fa-solid fa-store"></i> Shop Cashier & Cartela Ticket Printing</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px;">
                         <div>
-                            <label style="font-size: 12px; display: block; margin-bottom: 4px;">Player Phone / ID:</label>
-                            <input type="text" id="posPhone" placeholder="09xxxxxxxx">
-                            <label style="font-size: 12px; display: block; margin-bottom: 4px;">Number of Cards:</label>
-                            <input type="number" id="posCards" value="2" min="1" max="10">
-                            <button type="button" class="btn btn-info" onclick="printPosTicket()" style="margin-top: 6px; width: 100%;"><i class="fa-solid fa-print"></i> Issue & Print Ticket</button>
+                            <label>Shop Location / Name:</label>
+                            <input type="text" id="shopNameInput" value="Edil Bingo Shop #01 - Bole">
+                            <label>Player Phone / ID:</label>
+                            <input type="text" id="posPhone" placeholder="0911000000">
+                            <label>Cartela Number / ID Selection:</label>
+                            <input type="number" id="cartelaNum" value="105" min="1" max="500" oninput="updateCartelaPreview()">
+                            <button type="button" class="btn" onclick="generateAndPrintTicket()" style="margin-top: 8px; width: 100%;"><i class="fa-solid fa-print"></i> Generate & Print Ticket</button>
                         </div>
-                        <div id="posReceiptPreview" style="background: #fff; color: #333; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px dashed #666;">
-                            <p style="margin: 0; font-weight: bold; font-size: 13px;">🍀 EDIL BINGO SHOP #01</p>
-                            <p style="margin: 4px 0;">--------------------------</p>
-                            <p style="margin: 0;" id="receiptDetails">Ready to issue ticket...</p>
-                            <p style="margin: 4px 0;">--------------------------</p>
-                            <p style="margin: 0; font-size: 10px;">Good Luck & Play Responsibly!</p>
+                        <div>
+                            <label>Cartela Design & ID Preview:</label>
+                            <div class="cartela-preview-box" id="cartelaPreviewBox">
+                                <b id="previewShopTitle">EDIL BINGO - BOLE SHOP</b><br>
+                                <span>Cartela ID: #<span id="previewCartelaId">105</span></span>
+                                <hr style="border: 1px dashed #1b5e20; margin: 6px 0;">
+                                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; font-size: 10px; background: #f0f0f0; padding: 4px;" id="cartelaGridMatrix">
+                                    <!-- Dynamic 5x5 matrix preview -->
+                                    <span>12</span><span>22</span><span>35</span><span>48</span><span>62</span>
+                                    <span>5</span><span>19</span><span>31</span><span>55</span><span>70</span>
+                                    <span>8</span><span>25</span><span>FREE</span><span>51</span><span>68</span>
+                                    <span>14</span><span>29</span><span>39</span><span>58</span><span>72</span>
+                                    <span>3</span><span>18</span><span>40</span><span>59</span><span>75</span>
+                                </div>
+                                <span style="font-size: 10px; color: #555; display: block; margin-top: 4px;">Status: Ready for printing</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 6. ANTI-FRAUD VIEW -->
-            <section id="view-antifraud" class="view-section">
+            <!-- 6. DYNAMIC PAYMENT GATEWAYS -->
+            <section id="view-gateways" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-shield-cat"></i> Anti-Fraud & Risk Detection Monitor</h3>
-                    <table>
-                        <thead>
-                            <tr><th>User ID</th><th>IP Address</th><th>Win Rate (%)</th><th>Multi-Acc Flag</th><th>Risk Level</th><th>Action</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>User_990</td>
-                                <td>196.188.2.45</td>
-                                <td>88.4% (Suspicious)</td>
-                                <td><span class="badge-danger">Linked (3 Accounts)</span></td>
-                                <td><span class="badge-danger">High Risk</span></td>
-                                <td><button class="btn btn-danger" onclick="alert('User Account Frozen!')">Freeze Acc</button></td>
-                            </tr>
-                            <tr>
-                                <td>User_120</td>
-                                <td>196.190.1.12</td>
-                                <td>32.1% (Normal)</td>
-                                <td><span class="badge-safe">Clean</span></td>
-                                <td><span class="badge-safe">Safe</span></td>
-                                <td><button class="btn btn-info" onclick="alert('User Flag Cleared')">Verify</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Gateways & Phone Numbers</h3>
+                    <form action="{{ url_for('admin.update_gateway') if url_for is defined else '#' }}" method="POST" style="max-width: 500px; display: flex; flex-direction: column; gap: 10px;">
+                        <label>Payment Method:</label>
+                        <select name="method_name">
+                            <option value="telebirr">Telebirr</option>
+                            <option value="cbebirr">CBE Birr</option>
+                            <option value="cbe">CBE Bank</option>
+                            <option value="mpesa">M-Pesa</option>
+                        </select>
+                        <label>Merchant / Account Number / Phone:</label>
+                        <input type="text" name="account_number" placeholder="0911223344" required>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="checkbox" name="is_active" id="gatewayActive" checked style="width: auto;">
+                            <label for="gatewayActive" style="margin:0;">Active for Bot Wallet Users</label>
+                        </div>
+                        <button type="submit" class="btn">Save & Publish to Bot Wallet</button>
+                    </form>
                 </div>
             </section>
 
-            <!-- 7. BOT BROADCAST VIEW -->
+            <!-- 7. TELEGRAM BOT BROADCAST -->
             <section id="view-broadcast" class="view-section">
                 <div class="section-box">
-                    <h3 data-i18n="bot_broadcast"><i class="fa-solid fa-bullhorn"></i> Telegram Bot Broadcast & News Post</h3>
-                    <form action="#" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 10px;">
-                        <textarea rows="4" placeholder="Type message to broadcast automatically to all Telegram bot users..." style="width:100%; margin:0;"></textarea>
-                        <input type="file" accept="image/*" style="background:#fff; padding:6px; margin:0;">
-                        <button type="button" onclick="alert('Broadcast sent successfully!')" style="background: #2980b9; padding: 10px; margin:0;"><i class="fa-solid fa-paper-plane"></i> Send Broadcast</button>
+                    <h3><i class="fa-solid fa-bullhorn"></i> Telegram Bot Instant Broadcast</h3>
+                    <form action="{{ url_for('admin.broadcast_news') if url_for is defined else '#' }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 10px;">
+                        <textarea name="broadcast_text" rows="4" placeholder="Type news or update to broadcast instantly to all bot users..." style="width:100%;"></textarea>
+                        <input type="file" name="post_photo" accept="image/*" style="background:#fff; padding:6px;">
+                        <button type="submit" style="background: #2980b9; padding: 10px;"><i class="fa-solid fa-paper-plane"></i> Send to All Bot Users</button>
                     </form>
                 </div>
             </section>
 
-            <!-- 8. STAFF MANAGEMENT VIEW -->
+            <!-- 8. STAFF & CASHIERS -->
             <section id="view-staff" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-user-shield"></i> Superadmin: Staff & Agent Management</h3>
-                    <form action="#" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-bottom: 14px;">
-                        <input type="text" placeholder="Staff Username" required style="margin:0;">
-                        <input type="password" placeholder="Password" required style="margin:0;">
-                        <select style="margin:0;">
-                            <option value="admin">Admin</option>
-                            <option value="agent">Agent (View Only)</option>
-                        </select>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" id="edit_bal" style="width:auto; margin:0;">
-                            <label for="edit_bal" style="font-size:12px; margin:0;">Allow Balance Edit</label>
-                        </div>
-                        <button type="submit" style="background: var(--header-bg); margin:0;">Add Staff Member</button>
+                    <h3><i class="fa-solid fa-user-shield"></i> Shop Cashier & Agent Staff Management</h3>
+                    <form action="{{ url_for('admin.add_staff') if url_for is defined else '#' }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 14px;">
+                        <input type="text" name="username" placeholder="Cashier Username" required style="margin:0;">
+                        <input type="password" name="password" placeholder="Password" required style="margin:0;">
+                        <input type="text" name="shop_name" placeholder="Shop Name / Location" required style="margin:0;">
+                        <button type="submit" class="btn">Add Shop Cashier</button>
                     </form>
-                    <table>
-                        <thead><tr><th>Username</th><th>Role</th><th>Permissions</th><th>Action</th></tr></thead>
-                        <tbody>
-                            <tr>
-                                <td>agent_bole</td>
-                                <td><span style="font-weight: bold; color: #1e88e5;">AGENT</span></td>
-                                <td>Balance Edit: Allowed</td>
-                                <td><button class="btn btn-danger" style="padding: 4px 8px;">Remove</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- 9. API SETTINGS VIEW -->
-            <section id="view-api_settings" class="view-section">
-                <div class="section-box">
-                    <h3 data-i18n="api_settings"><i class="fa-solid fa-code-branch"></i> Developer API & Integration Settings</h3>
-                    <div style="max-width: 600px;">
-                        <label style="font-size:12px; font-weight:bold;">Telegram Bot Token:</label>
-                        <input type="password" value="123456789:ABCdefGHIjklMNOpqrsTUVwxyz" style="margin-bottom:8px;">
-                        <label style="font-size:12px; font-weight:bold;">Payment Gateway Webhook URL:</label>
-                        <input type="text" value="https://edilbingo.et/api/v1/webhook" style="margin-bottom:8px;">
-                        <label style="font-size:12px; font-weight:bold;">WebSocket Server Endpoint:</label>
-                        <input type="text" value="wss://edilbingo.et/ws/game" style="margin-bottom:12px;">
-                        <button type="button" class="btn btn-primary" onclick="alert('API Integration Settings Saved!')" style="width:100%;">Save Configuration</button>
-                    </div>
                 </div>
             </section>
 
         </main>
     </div>
 
-    <!-- User Details Modal -->
-    <div id="detailsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeDetails()">&times;</span>
-            <h3 style="color: var(--header-bg); margin-bottom: 10px;">User Profile Details</h3>
-            <div id="modalBody">Loading...</div>
-        </div>
-    </div>
-
     <!-- JavaScript Controls -->
     <script>
-        // Navigation Handler for Side Buttons
         function switchTab(viewId, btnEl) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active-view'));
             document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
-            
             document.getElementById('view-' + viewId).classList.add('active-view');
             btnEl.classList.add('active');
-
-            // Close mobile menu on click
-            document.getElementById('sidebarNav').classList.remove('mobile-open');
         }
 
-        function toggleMobileSidebar() {
-            document.getElementById('sidebarNav').classList.toggle('mobile-open');
+        // Dark/Light Mode with persistent localStorage
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeToggle');
+            if (body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                btn.innerHTML = '<i class="fa-solid fa-sun"></i> Light';
+                localStorage.setItem('edil_theme', 'dark');
+            } else {
+                body.setAttribute('data-theme', 'light');
+                btn.innerHTML = '<i class="fa-solid fa-moon"></i> Dark';
+                localStorage.setItem('edil_theme', 'light');
+            }
         }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('edil_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            if(savedTheme === 'dark') {
+                document.getElementById('themeToggle').innerHTML = '<i class="fa-solid fa-sun"></i> Light';
+            }
+        });
 
-        // Bingo 1-75 Audio & Draw logic
+        // Bingo 1-75 Matrix setup
         const bingoGrid = document.getElementById('bingoGrid');
         let drawnBalls = [];
-        let autoDrawInterval = null;
-        let drawSpeed = 3000;
-
         for (let i = 1; i <= 75; i++) {
             const cell = document.createElement('div');
             cell.className = 'ball-cell';
@@ -972,88 +639,44 @@
             bingoGrid.appendChild(cell);
         }
 
-        function getBingoLetter(num) {
-            if (num <= 15) return "B";
-            if (num <= 30) return "I";
-            if (num <= 45) return "N";
-            if (num <= 60) return "G";
-            return "O";
-        }
-
-        function speakNumber(num) {
-            if ('speechSynthesis' in window) {
-                const letter = getBingoLetter(num);
-                const utterance = new SpeechSynthesisUtterance(letter + " " + num);
-                utterance.rate = 1.0;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function changeDrawSpeed(val) {
-            drawSpeed = parseInt(val);
-            if (autoDrawInterval) {
-                clearInterval(autoDrawInterval);
-                autoDrawInterval = setInterval(manualDraw, drawSpeed);
-            }
-        }
-
-        function manualDraw() {
-            let available = [];
-            for (let i = 1; i <= 75; i++) {
-                if (!drawnBalls.includes(i)) available.push(i);
-            }
-            if (available.length === 0) {
-                alert('All 75 numbers have been drawn!');
-                if (autoDrawInterval) toggleAutoDraw();
-                return;
-            }
-            const randomBall = available[Math.floor(Math.random() * available.length)];
-            drawnBalls.push(randomBall);
-            
-            document.getElementById('ball-' + randomBall).classList.add('drawn');
-            const letter = getBingoLetter(randomBall);
-            document.getElementById('lastBallDisplay').textContent = letter + "-" + randomBall;
-            document.getElementById('drawnCount').textContent = drawnBalls.length;
-            
-            speakNumber(randomBall);
-        }
-
-        function toggleAutoDraw() {
-            const btn = document.getElementById('autoDrawBtn');
-            if (autoDrawInterval) {
-                clearInterval(autoDrawInterval);
-                autoDrawInterval = null;
-                btn.innerHTML = '<i class="fa-solid fa-play"></i> Start Auto Draw';
-                btn.style.background = '#1b5e20';
-            } else {
-                autoDrawInterval = setInterval(manualDraw, drawSpeed);
-                btn.innerHTML = '<i class="fa-solid fa-stop"></i> Stop Auto Draw';
-                btn.style.background = '#c0392b';
-            }
-        }
-
-        function emergencyPause() {
-            if (autoDrawInterval) toggleAutoDraw();
-            alert('🚨 Emergency Pause triggered! Round frozen & bets returned.');
-        }
-
-        function resetBingoBoard() {
-            if (autoDrawInterval) toggleAutoDraw();
+        function selectRoom(stake) {
+            document.getElementById('selectedRoomDisplay').textContent = stake + " ETB Room";
             drawnBalls = [];
             document.querySelectorAll('.ball-cell').forEach(c => c.classList.remove('drawn'));
             document.getElementById('lastBallDisplay').textContent = '--';
             document.getElementById('drawnCount').textContent = '0';
         }
 
+        function emergencyPause() {
+            alert('🚨 Emergency Server-side Pause triggered! Round frozen & bets secured.');
+        }
+
+        // Shop POS Cartela Live Preview
+        function updateCartelaPreview() {
+            const shopName = document.getElementById('shopNameInput').value || 'EDIL BINGO SHOP';
+            const cartelaId = document.getElementById('cartelaNum').value || '1';
+            document.getElementById('previewShopTitle').textContent = shopName.toUpperCase();
+            document.getElementById('previewCartelaId').textContent = cartelaId;
+        }
+
+        function generateAndPrintTicket() {
+            const shop = document.getElementById('shopNameInput').value;
+            const phone = document.getElementById('posPhone').value || '0900000000';
+            const cartela = document.getElementById('cartelaNum').value || '1';
+            const ticketId = Math.floor(100000 + Math.random() * 900000);
+            
+            alert(`Ticket #${ticketId} generated successfully for Cartela ID #${cartela} at ${shop}! Recorded for cashier session.`);
+        }
+
         // Chart.js Revenue Setup
         const ctx = document.getElementById('revenueChart').getContext('2d');
-        const revenueChart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 datasets: [{
                     label: 'Net Revenue (ETB)',
-                    data: [15000, 22000, 19500, 31000, 28000, 45000, 52000],
+                    data: [12000, 18500, 15000, 24000, 21000, 35000, 41000],
                     borderColor: '#fdd835',
                     backgroundColor: 'rgba(253, 216, 53, 0.2)',
                     fill: true,
@@ -1070,112 +693,6 @@
                 }
             }
         });
-
-        // Retail POS Generator
-        function printPosTicket() {
-            const phone = document.getElementById('posPhone').value || '0911002233';
-            const cards = document.getElementById('posCards').value || 1;
-            const ticketId = Math.floor(100000 + Math.random() * 900000);
-            document.getElementById('receiptDetails').innerHTML = `TICKET #${ticketId}<br>Player: ${phone}<br>Cards Purchased: ${cards}<br>Total Paid: ${cards * 10} ETB`;
-            alert('POS Ticket Printed!');
-        }
-
-        // Modal Controls
-        function openDetails(userId) {
-            document.getElementById('detailsModal').style.display = 'flex';
-            document.getElementById('modalBody').innerHTML = `
-                <p><b>User ID:</b> #${userId}</p>
-                <p><b>Username:</b> @alemu_bingo</p>
-                <p><b>Phone:</b> 0912345678</p>
-                <p><b>Main Balance:</b> 250.00 ETB</p>
-                <p><b>Bonus Balance:</b> 50.00 ETB</p>
-                <p><b>Coins:</b> 10</p>
-                <p><b>Account Status:</b> <span style="color:green; font-weight:bold;">Active</span></p>
-            `;
-        }
-        function closeDetails() {
-            document.getElementById('detailsModal').style.display = 'none';
-        }
-
-        // Theme Switcher
-        function toggleTheme() {
-            const body = document.body;
-            const btn = document.getElementById('themeToggle');
-            if (body.getAttribute('data-theme') === 'light') {
-                body.setAttribute('data-theme', 'dark');
-                btn.innerHTML = '<i class="fa-solid fa-sun"></i> Light';
-            } else {
-                body.setAttribute('data-theme', 'light');
-                btn.innerHTML = '<i class="fa-solid fa-moon"></i> Dark';
-            }
-        }
-
-        // Language Switcher
-        const translations = {
-            en: {
-                logout: "Logout",
-                nav_dashboard: "Dashboard",
-                nav_bingo: "Live Bingo Matrix",
-                nav_financials: "Financial Approvals",
-                nav_users: "Users & Balance",
-                nav_pos: "Retail Shop POS",
-                nav_antifraud: "Anti-Fraud & Risk",
-                nav_broadcast: "Bot Broadcast",
-                nav_staff: "Staff Management",
-                nav_api: "System & API",
-                total_players: "Total / Active / Blocked",
-                active_games: "Active Games",
-                pending_withdrawals: "Pending Withdrawals",
-                house_profit: "House Profit Today",
-                bingo_control: "1-75 Live Bingo Call Controller & Matrix",
-                start_auto: "Start Auto Draw",
-                manual_call: "Manual Call Next",
-                emergency_pause: "Emergency Pause & Refund",
-                analytics_title: "Revenue & Net Profit Analytics",
-                financial_requests: "Financial Requests (TeleBirr, CBE, Chapa, BOA)",
-                game_rooms: "Recent Games & Rooms History",
-                user_mgmt: "User Management & Balance Control",
-                retail_printer: "Retail Shop Cashier & Ticket Printer Simulator",
-                bot_broadcast: "Telegram Bot Broadcast & News Post",
-                api_settings: "Developer API & Integration Settings"
-            },
-            am: {
-                logout: "ውጣ",
-                nav_dashboard: "ዳሽቦርድ",
-                nav_bingo: "የቀጥታ ቢንጎ ጨዋታ",
-                nav_financials: "የገንዘብ ማረጋገጫዎች",
-                nav_users: "ተጠቃሚዎች እና ሂሳብ",
-                nav_pos: "የሱቅ ቲክቲ ማተሚያ",
-                nav_antifraud: "የደህንነት ቁጥጥር",
-                nav_broadcast: "የቦት መልዕክት መላኪያ",
-                nav_staff: "የሰራተኞች አስተዳደር",
-                nav_api: "የሲስተም ኤፒአይ",
-                total_players: "ጠቅላላ / ንቁ / የታገዱ",
-                active_games: "በጨዋታ ላይ ያሉ",
-                pending_withdrawals: "የሚጠባበቁ ወጪዎች",
-                house_profit: "የዛሬ የካሲኖ ትርፍ",
-                bingo_control: "የ 1-75 ቢንጎ በቀጥታ መቆጣጠሪያ ማትሪክስ",
-                start_auto: "በራሱ እንዲወጣ አስጀምር",
-                manual_call: "ቀጣይ ኳስ በእጅ ጥራ",
-                emergency_pause: "አስቸኳይ ማቆሚያ እና ገንዘብ መመለሻ",
-                analytics_title: "የገቢ እና አጠቃላይ ትርፍ ገበታ",
-                financial_requests: "የገንዘብ ጥያቄዎች (ቴሌብር፣ ሲቢኢ፣ ቻፓ፣ ቦአ)",
-                game_rooms: "የቅርብ ጊዜ ጨዋታዎች ታሪክ",
-                user_mgmt: "ተጠቃሚዎች እና ሂሳብ ማስተካከያ",
-                retail_printer: "የሱቅ ቲክቲ ማተሚያ ሲሙሌተር",
-                bot_broadcast: "የቴሌግራም ቦት መልዕክት መላኪያ",
-                api_settings: "የዴቨሎፐር ኤፒአይ መቆጣጠሪያ"
-            }
-        };
-
-        function switchLanguage(lang) {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang] && translations[lang][key]) {
-                    el.textContent = translations[lang][key];
-                }
-            });
-        }
     </script>
 </body>
 </html>

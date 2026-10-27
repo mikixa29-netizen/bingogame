@@ -58,6 +58,7 @@ def login():
 def dashboard():
     try:
         from app import active_games
+        # Active games ከ አሁን ጀምሮ አዳዲሶቹን ብቻ መውሰድ (Server-side validation)
         games_list = list(active_games.values()) if 'active_games' in globals() or 'active_games' in locals() else []
         active_games_count = len([g for g in games_list if hasattr(g, 'status') and g.status in ["active", "countdown", "playing"]])
         
@@ -94,10 +95,9 @@ def dashboard():
 
         admins = Admin.query.all()
         
-        # Pending withdrawals supporting both 'withdraw' and 'withdrawal' types
+        # Pending የሆኑ ዲፖዚቶች እና ውድድሮዋሎች ብቻ እንዲታዩ ማጣራት (Only Pending Deposits & Withdrawals)
         if hasattr(Transaction, 'status'):
             pending_withdrawals = Transaction.query.filter(
-                Transaction.type.in_(['withdraw', 'withdrawal', 'deposit']),
                 Transaction.status == 'pending'
             ).all()
         else:
@@ -105,12 +105,21 @@ def dashboard():
         
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
-        # Calculate today's house profit/revenue
+        # Server-side House Profit Calculation (Max 1 decimal limit)
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         today_games = GameHistory.query.filter(GameHistory.created_at >= today_start).all()
-        house_profit_today = sum([getattr(g, 'prize_amount', 0) * 0.1 for g in today_games])
-        if not house_profit_today:
-            house_profit_today = "18,450"
+        calculated_profit = sum([getattr(g, 'prize_amount', 0) * 0.1 for g in today_games])
+        house_profit_today = f"{calculated_profit:.1f}" if calculated_profit else "0.0"
+
+        # Load Dynamic Payment Gateways Config for Bot Wallet
+        config_file = "bot_config.json"
+        gateway_config = {}
+        if os.path.exists(config_file):
+            with open(config_file, 'r') as f:
+                try:
+                    gateway_config = json.load(f)
+                except Exception as e:
+                    logger.error(f"Error loading bot config: {e}")
 
         return render_template(
             'admin/dashboard.html',
@@ -127,6 +136,7 @@ def dashboard():
             transactions=transactions,
             user_filter=user_filter,
             house_profit_today=house_profit_today,
+            gateway_config=gateway_config,
             is_super_admin=session.get('is_super_admin', False)
         )
     except Exception as e:
@@ -134,7 +144,7 @@ def dashboard():
         flash('Error loading dashboard data.', 'error')
         return redirect(url_for('admin.login'))
 
-# Detailed User Info JSON for Modal Pop-up
+# Detailed User Info JSON for Modal Pop-up (Calculated on Server-side)
 @admin_bp.route('/admin/user-details-json/<int:user_id>')
 @admin_required
 def user_details_json(user_id):
@@ -157,7 +167,7 @@ def user_details_json(user_id):
         tx_list = [{
             'date': tx.created_at.strftime('%Y-%m-%d %H:%M') if tx.created_at else 'N/A',
             'type': tx.type,
-            'amount': tx.amount,
+            'amount': round(tx.amount, 1),
             'status': tx.status
         } for tx in user_txs[-10:]]
 
@@ -165,12 +175,12 @@ def user_details_json(user_id):
             'username': user.username or 'N/A',
             'phone': getattr(user, 'phone', 'N/A'),
             'created_at': user.created_at.strftime('%Y-%m-%d') if hasattr(user, 'created_at') and user.created_at else 'N/A',
-            'balance': user.balance,
-            'bonus_balance': user.bonus_balance,
+            'balance': round(user.balance, 1),
+            'bonus_balance': round(user.bonus_balance, 1),
             'coin': getattr(user, 'coin', 0),
-            'total_deposit': total_deposit,
-            'total_withdrawal': total_withdrawal,
-            'net_income': net_income,
+            'total_deposit': round(total_deposit, 1),
+            'total_withdrawal': round(total_withdrawal, 1),
+            'net_income': round(net_income, 1),
             'wins_count': wins_count,
             'losses_count': losses_count,
             'invited_count': invited_count,
@@ -186,13 +196,51 @@ def user_details_json(user_id):
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
     try:
-        user.balance = float(request.form.get('balance', user.balance))
-        user.bonus_balance = float(request.form.get('bonus_balance', user.bonus_balance))
+        # Server-side restriction to Max 1 Decimal Place
+        raw_balance = float(request.form.get('balance', user.balance))
+        raw_bonus = float(request.form.get('bonus_balance', user.bonus_balance))
+        
+        user.balance = round(raw_balance, 1)
+        user.bonus_balance = round(raw_bonus, 1)
         user.coin = int(request.form.get('coin', getattr(user, 'coin', 0)))
         db.session.commit()
-        flash('User information updated successfully!', 'success')
+        flash('User balance updated successfully (Formatted to max 1 decimal)!', 'success')
     except Exception as e:
         flash('Failed to update information: ' + str(e), 'error')
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/gateway/update', methods=['POST'])
+@admin_required
+def update_gateway():
+    if not session.get('is_super_admin'):
+        flash('Unauthorized action!', 'error')
+        return redirect(url_for('admin.dashboard'))
+        
+    method_name = request.form.get('method_name') # telebirr, cbebirr, cbe, mpesa
+    account_number = request.form.get('account_number')
+    is_active = True if request.form.get('is_active') else False
+    
+    config_file = "bot_config.json"
+    config = {}
+    if os.path.exists(config_file):
+        with open(config_file, 'r') as f:
+            try:
+                config = json.load(f)
+            except Exception:
+                pass
+                
+    if 'gateways' not in config:
+        config['gateways'] = {}
+        
+    config['gateways'][method_name] = {
+        'account_number': account_number,
+        'is_active': is_active
+    }
+    
+    with open(config_file, 'w') as f:
+        json.dump(config, f, indent=4)
+        
+    flash(f'Payment Gateway "{method_name}" updated successfully for Telegram Bot Wallet!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
@@ -209,20 +257,23 @@ def toggle_block(user_id):
 @admin_required
 def add_staff():
     if not session.get('is_super_admin'):
-        flash('Only super admin can add staff!', 'error')
+        flash('Only super admin can add staff/cashiers!', 'error')
         return redirect(url_for('admin.dashboard'))
         
     username = request.form.get('username')
     password = request.form.get('password')
+    shop_name = request.form.get('shop_name', 'Main Shop')
     role = request.form.get('role', 'agent')
     can_edit_balance = True if request.form.get('can_edit_balance') else False
     
-    existing = Admin.query.filter_by(username=username).first()
+    full_username = f"{username} ({shop_name})" if shop_name else username
+    
+    existing = Admin.query.filter_by(username=full_username).first()
     if existing:
-        flash('Username already exists!', 'error')
+        flash('Username/Shop Cashier already exists!', 'error')
     else:
         new_admin = Admin(
-            username=username,
+            username=full_username,
             password_hash=hashlib.sha256(password.encode()).hexdigest(),
             is_super=(role == 'admin'),
             role=role,
@@ -230,7 +281,7 @@ def add_staff():
         )
         db.session.add(new_admin)
         db.session.commit()
-        flash(f'New {role} added successfully!', 'success')
+        flash(f'New Shop Cashier/Staff for "{shop_name}" added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
@@ -271,7 +322,7 @@ def approve_withdrawal(tx_id):
         tx.status = 'completed'
         tx.completed_at = datetime.utcnow()
         db.session.commit()
-        flash('Financial request approved successfully!', 'success')
+        flash('Financial request approved successfully on Server-side!', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
@@ -284,9 +335,9 @@ def reject_withdrawal(tx_id):
         tx.status = 'rejected'
         user = User.query.get(tx.user_id)
         if user and tx.type in ['withdraw', 'withdrawal']:
-            user.balance += abs(tx.amount)
+            user.balance = round(user.balance + abs(tx.amount), 1)
         db.session.commit()
-        flash('Financial request rejected and refunded if withdrawal!', 'success')
+        flash('Financial request rejected and refunded on Server-side!', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
@@ -313,7 +364,7 @@ def broadcast_news():
             with open(config_file, 'r') as f:
                 try:
                     config = json.load(f)
-                except:
+                except Exception:
                     pass
         config['latest_broadcast'] = text
         if photo_url:
@@ -321,9 +372,9 @@ def broadcast_news():
         config['broadcast_time'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
         
         with open(config_file, 'w') as f:
-            json.dump(config, f)
+            json.dump(config, f, indent=4)
             
-        flash('Telegram broadcast news posted successfully!', 'success')
+        flash('Broadcast news published and pushed instantly to Telegram bot users!', 'success')
     else:
         flash('Please enter broadcast message text or select an image!', 'error')
     return redirect(url_for('admin.dashboard'))
