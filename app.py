@@ -3,6 +3,7 @@ import random
 import json
 import logging
 import hashlib
+import re
 from flask import Flask, jsonify, request, session, render_template, redirect, url_for, flash
 from datetime import datetime, date, timedelta
 from database import db, init_db
@@ -542,6 +543,96 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+# --- 🚀 አዲሱ የ SMS Webhook ራውት (MacroDroid አውቶማቲክ ዲፖዚት መቀበያ) ---
+@app.route('/api/webhook/sms', methods=['POST'])
+def sms_webhook():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data received'}), 400
+
+        sms_text = str(data.get('message', '') or data.get('text', ''))
+        sender = str(data.get('sender', '')).lower()
+
+        if not sms_text:
+            return jsonify({'success': False, 'error': 'Empty SMS text'}), 400
+
+        logger.info(f"Incoming SMS from {sender}: {sms_text}")
+
+        amount = 0.0
+        txn_id = ""
+
+        # --- 1. ቴሌብር (Telebirr) ኤስ ኤም ኤስ ማንበቢያ ---
+        if 'telebirr' in sender or 'telebirr' in sms_text.lower() or 'fr' in sms_text.lower():
+            amount_match = re.search(r'(?:ብር|ETB|Br)\s*([\d,]+\.\d{2})', sms_text, re.IGNORECASE) or re.search(r'([\d,]+\.\d{2})\s*(?:ብር|ETB|Br)', sms_text, re.IGNORECASE)
+            txn_match = re.search(r'\b([A-Z0-9]{10,})\b', sms_text)
+            
+            if amount_match:
+                amount = float(amount_match.group(1).replace(',', ''))
+            if txn_match:
+                txn_id = txn_match.group(1)
+
+        # --- 2. ንግድ ባንክ ወይም ሌሎች ባንኮች (CBE / Banks) ኤስ ኤም ኤስ ማንበቢያ ---
+        elif 'cbe' in sender or 'cbebirr' in sms_text.lower() or 'bank' in sms_text.lower() or 'account' in sms_text.lower():
+            amount_match = re.search(r'(?:ETB|Br|ብር)\s*([\d,]+\.\d{2})', sms_text, re.IGNORECASE) or re.search(r'([\d,]+\.\d{2})\s*(?:ETB|Br|ብር)', sms_text, re.IGNORECASE)
+            txn_match = re.search(r'\b([A-Z0-9]{8,})\b', sms_text)
+            
+            if amount_match:
+                amount = float(amount_match.group(1).replace(',', ''))
+            if txn_match:
+                txn_id = txn_match.group(1)
+
+        if not txn_id:
+            txn_id = hashlib.md5(sms_text.encode()).hexdigest()[:16].upper()
+
+        if amount <= 0:
+            return jsonify({'success': False, 'error': 'Could not parse amount from SMS'}), 400
+
+        # --- 3. የድግግሞሽ መከላከያ (Anti-Duplicate Check) ---
+        existing_tx = Transaction.query.filter_by(transaction_id=txn_id).first()
+        if existing_tx:
+            return jsonify({'success': False, 'error': 'Duplicate transaction. Already processed.'}), 400
+
+        # --- 4. ተጠቃሚው አስቀድሞ በዌብአፕ የጠየቀውን (Pending) ዲፖሲት መፈለግ ---
+        pending_tx = Transaction.query.filter_by(status='pending', type='deposit', amount=amount).first()
+        
+        if pending_tx:
+            pending_tx.status = 'completed'
+            pending_tx.transaction_id = txn_id
+            
+            user = User.query.get(pending_tx.user_id)
+            if user:
+                user.balance = round(user.balance + amount, 1)
+                db.session.commit()
+                return jsonify({'success': True, 'message': f'Matched pending tx and credited {amount} ETB to user {user.telegram_id}'}), 200
+
+        # --- 5. ቀጥታ በስልክ ቁጥር ማዛመድ (Direct SMS Match via Phone Number) ---
+        phone_match = re.search(r'(09\d{8}|2519\d{8})', sms_text)
+        if phone_match:
+            phone_str = phone_match.group(1)
+            user = User.query.filter(User.phone.like(f"%{phone_str[-9:]}%")).first()
+            if user:
+                user.balance = round(user.balance + amount, 1)
+                new_tx = Transaction(
+                    user_id=user.id,
+                    type='deposit',
+                    amount=amount,
+                    payment_method='auto_sms',
+                    transaction_id=txn_id,
+                    status='completed',
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(new_tx)
+                db.session.commit()
+                return jsonify({'success': True, 'message': f'Auto-credited via phone match to user {user.telegram_id}'}), 200
+
+        return jsonify({'success': False, 'message': 'SMS received, amount parsed, but no matching user or pending transaction found.'}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception(f"SMS Webhook Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # --- የተሻሻለ የዲፖዚት (Deposit) ራውት ከአዲስ የ PaymentGateway ዳታቤዝ ጋር ---
 @app.route('/deposit', methods=['POST'])
 def deposit():
@@ -561,12 +652,10 @@ def deposit():
     if not transaction_id or len(transaction_id) < 5:
         return jsonify({'error': 'Please enter a valid receipt or transaction reference ID.'}), 400
 
-    # 1. የድግግሞሽ መከላከያ (Anti-Duplicate Check)
     existing_tx = Transaction.query.filter_by(transaction_id=transaction_id).first()
     if existing_tx:
         return jsonify({'error': 'This transaction reference ID has already been used!'}), 400
 
-    # 2. አድሚኑ አክቲቭ ያደረጋቸው እና ለዲፖዚት የፈቀዳቸውን ጌትዌዮች ከ PaymentGateway ማረጋገጥ
     valid_gateway = PaymentGateway.query.filter(
         PaymentGateway.is_active == True,
         PaymentGateway.purpose == 'deposit',
@@ -576,7 +665,6 @@ def deposit():
     if not valid_gateway:
         return jsonify({'error': 'Selected payment method is invalid or currently inactive.'}), 400
 
-    # 3. ትራንዛክሽኑን መመዝገብ (ለአስተማማኝ ሁኔታ pending ማድረግ ይቻላል ወይም በራስሰር completed)
     user.balance += amount
     tx = Transaction(
         user_id=user.id, 
@@ -590,7 +678,6 @@ def deposit():
     db.session.commit()
     return jsonify({'success': True, 'message': 'Deposit successful!'})
 
-# --- ለአድሚን ጌትዌዮች የሚሰጥ የ API ማከፋፈያ (Deposit & Withdrawal) ---
 @app.route('/api/payment-methods', methods=['GET'])
 def api_payment_methods():
     gateways = PaymentGateway.query.filter_by(is_active=True, purpose='deposit').all()
