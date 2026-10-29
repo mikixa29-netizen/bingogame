@@ -4,136 +4,164 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - Wallet</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body {
-            background-color: #12100e; color: #ffffff;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 12px; padding-bottom: 90px;
+        :root {
+            --bg-color: #122208;
+            --card-bg: rgba(27, 94, 32, 0.35);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --header-bg: #1b5e20;
+            --accent-yellow: #fdd835;
+            --text-color: #ffffff;
+            --success-green: #2ecc71;
+            --danger-red: #e74c3c;
         }
-        .header-title { font-size: 20px; font-weight: 700; margin: 15px 0; text-align: center; color: #fff; }
-        .wallet-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; }
+
+        * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-color); color: var(--text-color);
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 16px; padding-bottom: 90px;
+            background-image: radial-gradient(circle at top, #1b5e20 0%, #122208 70%);
+        }
+
+        .header-title { font-size: 24px; font-weight: 700; margin: 20px 0; text-align: center; color: var(--accent-yellow); letter-spacing: 0.5px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .wallet-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 16px; }
         
         /* Balances Section */
         .wallet-card {
-            background: #1e1b18; border-radius: 16px; padding: 18px; border: 1px solid #2d2925;
+            background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 18px; padding: 20px; 
+            border: 1px solid var(--card-border); box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-        .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .balance-box { background: #27231f; padding: 12px; border-radius: 12px; border: 1px solid #36312c; }
-        .balance-box .label { font-size: 11px; opacity: 0.7; text-transform: uppercase; font-weight: 600; }
-        .balance-box .value { font-size: 18px; font-weight: 700; color: #fdd835; margin-top: 4px; }
+        .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        .balance-box { 
+            background: rgba(0, 0, 0, 0.3); padding: 14px; border-radius: 14px; 
+            border: 1px solid rgba(255, 255, 255, 0.08); text-align: center;
+        }
+        .balance-box .label { font-size: 11px; opacity: 0.8; text-transform: uppercase; font-weight: 700; color: #a5d6a7; letter-spacing: 0.5px; }
+        .balance-box .value { font-size: 20px; font-weight: 700; color: var(--accent-yellow); margin-top: 6px; }
 
         /* Action Box & Trigger Buttons */
         .action-section {
-            background: #1e1b18; border-radius: 16px; padding: 16px; border: 1px solid #2d2925;
+            background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 18px; padding: 18px; 
+            border: 1px solid var(--card-border); box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-        .section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .section-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--accent-yellow); display: flex; align-items: center; gap: 8px; }
         
         .btn-open-modal {
-            background: #1e88e5; color: white; border: none; width: 100%; padding: 14px;
-            border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;
+            background: linear-gradient(135deg, #2ecc71, #1b5e20); color: white; border: none; width: 100%; padding: 14px;
+            border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
         }
-        .btn-open-modal.deposit { background: #1f8a4c; }
+        .btn-open-modal:hover { opacity: 0.95; transform: translateY(-1px); }
+        
         .btn-action {
-            background: #1f8a4c; color: white; border: none; width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #2ecc71, #1b5e20); color: white; border: none; width: 100%; padding: 14px;
             border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
         }
         .btn-action:active, .btn-open-modal:active { transform: scale(0.98); }
-        .btn-withdraw { background: #d32f2f; }
-        .btn-transfer { background: #0288d1; }
+        .btn-withdraw { background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); }
+        .btn-transfer { background: linear-gradient(135deg, #3498db, #2980b9); box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); }
 
         .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 12px; font-weight: 600; opacity: 0.8; }
+        .form-group label { font-size: 12px; font-weight: 700; opacity: 0.9; color: #e8f5e9; }
         .form-control {
-            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #3a342f;
-            background: #27231f; color: #fff; font-size: 14px; outline: none;
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.35); color: #fff; font-size: 14px; font-weight: bold; outline: none;
+            transition: all 0.2s;
         }
-        .form-control:focus { border-color: #1f8a4c; }
+        .form-control:focus { border-color: var(--accent-yellow); box-shadow: 0 0 8px rgba(253, 216, 53, 0.25); }
 
         /* MODAL STYLES */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75); display: none; justify-content: center;
-            align-items: flex-end; z-index: 2000; backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.8); display: none; justify-content: center;
+            align-items: flex-end; z-index: 2000; backdrop-filter: blur(6px);
         }
         .modal-overlay.active { display: flex; }
         .modal-content {
-            background: #1c1815; width: 100%; max-width: 440px; border-top-left-radius: 20px;
-            border-top-right-radius: 20px; padding: 20px; position: relative; border-top: 1px solid #332d27;
-            animation: slideUp 0.25s ease-out;
+            background: #122208; width: 100%; max-width: 440px; border-top-left-radius: 24px;
+            border-top-right-radius: 24px; padding: 24px; position: relative; border-top: 1px solid var(--accent-yellow);
+            animation: slideUp 0.25s ease-out; box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .modal-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        .btn-close { background: #2a241f; border: none; color: #aaa; width: 32px; height: 32px; border-radius: 8px; font-size: 18px; cursor: pointer; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .modal-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--accent-yellow); }
+        .btn-close { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 34px; height: 34px; border-radius: 10px; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        .btn-close:hover { background: rgba(255,255,255,0.2); }
         
         .currency-badge {
-            background: #27231f; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between;
-            align-items: center; font-size: 14px; font-weight: 600; margin-bottom: 15px; border: 1px solid #332d27;
+            background: rgba(0, 0, 0, 0.3); padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between;
+            align-items: center; font-size: 14px; font-weight: 700; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.1);
         }
         .method-card {
-            background: #27231f; border: 1.5px solid #3a342f; border-radius: 12px; padding: 14px;
+            background: rgba(27, 94, 32, 0.4); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 14px;
             display: flex; align-items: center; justify-content: space-between; cursor: pointer; position: relative;
+            transition: all 0.2s ease;
         }
-        .method-card.selected { border-color: #f57c00; }
+        .method-card:hover { border-color: var(--accent-yellow); background: rgba(27, 94, 32, 0.7); }
+        .method-card.selected { border-color: var(--accent-yellow); background: rgba(253, 216, 53, 0.1); }
         .badge-popular {
-            position: absolute; top: 8px; right: 10px; background: #e65100; color: #fff;
+            position: absolute; top: 8px; right: 10px; background: var(--accent-yellow); color: #1b5e20;
             font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
         }
-        .gateway-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 6px; background: #fff; padding: 2px; }
+        .gateway-logo { width: 32px; height: 32px; object-fit: contain; border-radius: 8px; background: #fff; padding: 3px; }
 
         /* Step 2 Quick Amounts */
-        .quick-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+        .quick-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
         .btn-quick {
-            background: #2a2520; border: 1px solid #3d352e; color: #fff; padding: 10px;
-            border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center;
+            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; padding: 12px;
+            border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: 0.2s;
         }
-        .btn-quick:active { background: #1f8a4c; }
+        .btn-quick:active, .btn-quick:hover { background: #1b5e20; border-color: var(--accent-yellow); color: var(--accent-yellow); }
 
         /* Step 3 Copy Boxes */
         .copy-box {
-            background: #25201b; border: 1px solid #362f28; border-radius: 12px; padding: 12px;
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 14px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
         }
-        .copy-info .lbl { font-size: 11px; color: #888; font-weight: 500; }
-        .copy-info .val { font-size: 15px; font-weight: 700; color: #fff; margin-top: 2px; }
-        .btn-copy { background: #332c25; border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+        .copy-info .lbl { font-size: 11px; color: #a5d6a7; font-weight: 600; text-transform: uppercase; }
+        .copy-info .val { font-size: 16px; font-weight: 700; color: var(--accent-yellow); margin-top: 3px; }
+        .btn-copy { background: rgba(255, 255, 255, 0.12); border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-copy:hover { background: rgba(255, 255, 255, 0.2); }
 
-        .notice-text { font-size: 11px; color: #888; line-height: 1.4; margin-top: 10px; text-align: center; }
+        .notice-text { font-size: 11px; color: #b0bec5; line-height: 1.4; margin-top: 10px; text-align: center; }
 
         /* Transaction History */
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .filter-select { background: #27231f; color: #fff; font-weight: 600; border-radius: 8px; padding: 8px; border: 1px solid #3a342f; font-size: 12px; }
+        .filter-select { background: rgba(0,0,0,0.3); color: #fff; font-weight: 700; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.15); font-size: 13px; outline: none; }
         .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; }
-        .tx-item { background: #27231f; border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #1f8a4c; }
-        .tx-item.outcome { border-left-color: #d32f2f; }
-        .tx-type { font-size: 12px; font-weight: 700; text-transform: uppercase; }
-        .tx-date { font-size: 10px; color: #888; margin-top: 2px; }
-        .tx-amount { font-size: 14px; font-weight: 700; color: #fdd835; }
-        .tx-status { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .tx-status.completed { background: #1f8a4c; color: #fff; }
-        .tx-status.pending { background: #e65100; color: #fff; }
+        .tx-item { background: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--success-green); border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .tx-item.outcome { border-left-color: var(--danger-red); }
+        .tx-type { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #fff; }
+        .tx-date { font-size: 10px; color: #9e9e9e; margin-top: 2px; }
+        .tx-amount { font-size: 15px; font-weight: 700; color: var(--accent-yellow); }
+        .tx-status { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; margin-top: 3px; display: inline-block; }
+        .tx-status.completed { background: rgba(46, 204, 113, 0.2); color: var(--success-green); border: 1px solid var(--success-green); }
+        .tx-status.pending { background: rgba(253, 216, 53, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
 
         /* Bottom Nav */
         .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: #181512;
-            display: flex; justify-content: space-around; padding: 10px 0;
-            border-top: 1px solid #2a241e; z-index: 1000;
+            position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(9, 32, 11, 0.95);
+            backdrop-filter: blur(12px); display: flex; justify-content: space-around; padding: 12px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.15); z-index: 1000;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #777; font-size: 11px; font-weight: 600; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #81c784; font-size: 11px; font-weight: 700; transition: 0.2s; }
         .nav-item span { font-size: 18px; margin-bottom: 2px; }
-        .nav-item.active { color: #1f8a4c; }
+        .nav-item.active { color: var(--accent-yellow); text-shadow: 0 0 10px rgba(253, 216, 53, 0.4); }
     </style>
 </head>
 <body>
 
-    <div class="header-title">💰 Wallet</div>
+    <div class="header-title"><i class="fa-solid fa-wallet" style="color: var(--accent-yellow);"></i> My Wallet</div>
 
     <div class="wallet-container">
         <!-- Balances Card -->
         <div class="wallet-card">
-            <div style="font-size: 14px; font-weight: 700; color: #aaa;">Account Balances</div>
+            <div style="font-size: 14px; font-weight: 700; color: #a5d6a7;">Account Balances</div>
             <div class="balance-grid">
                 <div class="balance-box">
                     <div class="label">Main Balance</div>
@@ -148,13 +176,13 @@
 
         <!-- Deposit Action Button -->
         <div class="action-section">
-            <div class="section-title">📥 Deposit Funds</div>
-            <button class="btn-open-modal deposit" onclick="openDepositModal()">+ Make a Deposit</button>
+            <div class="section-title"><i class="fa-solid fa-circle-arrow-down"></i> Deposit Funds</div>
+            <button class="btn-open-modal" onclick="openDepositModal()"><i class="fa-solid fa-plus-circle"></i> Make a Deposit</button>
         </div>
 
         <!-- Withdraw Section -->
         <div class="action-section">
-            <div class="section-title">📤 Withdraw Funds</div>
+            <div class="section-title"><i class="fa-solid fa-circle-arrow-up"></i> Withdraw Funds</div>
             <form onsubmit="handleWithdraw(event)">
                 <div class="form-group">
                     <label>Payout Method</label>
@@ -177,7 +205,7 @@
 
         <!-- Transfer Section -->
         <div class="action-section">
-            <div class="section-title">💸 Transfer Bonus Balance</div>
+            <div class="section-title"><i class="fa-solid fa-right-left"></i> Transfer Bonus Balance</div>
             <form onsubmit="handleTransfer(event)">
                 <div class="form-group">
                     <label>Recipient Phone Number</label>
@@ -193,7 +221,7 @@
 
         <!-- History Section -->
         <div class="action-section">
-            <div class="section-title">🕒 Transaction History</div>
+            <div class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Transaction History</div>
             <div class="filter-grid">
                 <select id="timeFilter" class="filter-select" onchange="loadTransactionHistory()">
                     <option value="today">Today</option>
@@ -209,7 +237,7 @@
                 </select>
             </div>
             <div class="tx-list" id="txHistoryContainer">
-                <div style="text-align: center; font-size: 12px; color: #888; padding: 10px;">Loading history...</div>
+                <div style="text-align: center; font-size: 13px; color: #a5d6a7; padding: 15px;">Loading history...</div>
             </div>
         </div>
     </div>
@@ -219,16 +247,16 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title" id="modalTitle">Deposit</div>
-                <button class="btn-close" onclick="closeDepositModal()">✕</button>
+                <button class="btn-close" onclick="closeDepositModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <!-- STEP 1: CHOOSE PAYMENT METHOD -->
             <div id="depStep1">
                 <div class="currency-badge">
                     <span>🇪🇹 Ethiopian birr</span>
-                    <span style="color:#888;">ETB</span>
+                    <span style="color:var(--accent-yellow);">ETB</span>
                 </div>
-                <div style="font-size: 13px; font-weight: 600; color: #aaa; margin-bottom: 10px;">Choose a payment method</div>
+                <div style="font-size: 13px; font-weight: 700; color: #a5d6a7; margin-bottom: 10px;">Choose a payment method</div>
                 <div id="paymentMethodsList" style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Dynamically Loaded via API -->
                 </div>
@@ -247,25 +275,25 @@
                     <button class="btn-quick" onclick="setAmount(250)">ETB 250</button>
                     <button class="btn-quick" onclick="setAmount(500)">ETB 500</button>
                 </div>
-                <div style="font-size: 11px; color: #888; text-align: center; margin: 12px 0;">50% of this deposit stays locked until you win 50% profit</div>
+                <div style="font-size: 11px; color: #b0bec5; text-align: center; margin: 12px 0;">50% of this deposit stays locked until you win 50% profit</div>
                 <button class="btn-action" onclick="goToStep3()">Deposit</button>
             </div>
 
             <!-- STEP 3: COPY DETAILS & ENTER TXN ID -->
             <div id="depStep3" style="display: none;">
-                <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">
+                <div style="font-size: 12px; color: #b0bec5; margin-bottom: 12px; line-height: 1.4;">
                     1. Send funds to the following account<br>
                     2. After payment, enter the transaction ID, or the funds will not be credited
                 </div>
 
-                <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #fff;">1. Copy bank details</div>
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--accent-yellow);">1. Copy bank details</div>
                 
                 <div class="copy-box">
                     <div class="copy-info">
                         <div class="lbl">Recipient's account name · <span id="adminAccountName">Henok</span></div>
                         <div class="val" id="adminAccountPhone">0971321653</div>
                     </div>
-                    <button class="btn-copy" onclick="copyText('adminAccountPhone')">📋</button>
+                    <button class="btn-copy" onclick="copyText('adminAccountPhone')"><i class="fa-regular fa-copy"></i></button>
                 </div>
 
                 <div class="copy-box">
@@ -273,16 +301,16 @@
                         <div class="lbl">Amount</div>
                         <div class="val">ETB <span id="confirmAmountDisplay">100</span></div>
                     </div>
-                    <button class="btn-copy" onclick="copyText('confirmAmountDisplay')">📋</button>
+                    <button class="btn-copy" onclick="copyText('confirmAmountDisplay')"><i class="fa-regular fa-copy"></i></button>
                 </div>
 
-                <div style="font-size: 13px; font-weight: 700; margin: 14px 0 8px 0; color: #fff;">2. Enter payment details</div>
+                <div style="font-size: 13px; font-weight: 700; margin: 14px 0 8px 0; color: var(--accent-yellow);">2. Enter payment details</div>
                 <div class="form-group">
                     <input type="text" id="finalTxnId" class="form-control" placeholder="DXXXXXXXXX" required>
-                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Enter the transaction ID or paste the whole payment SMS</div>
+                    <div style="font-size: 10px; color: #b0bec5; margin-top: 4px;">Enter the transaction ID or paste the whole payment SMS</div>
                 </div>
 
-                <div class="notice-text" style="margin-bottom: 12px;">
+                <div class="notice-text" style="margin-bottom: 14px;">
                     Use the receiving account shown above. If you already paid, submit your receipt even if the account assignment has since changed.
                 </div>
 
@@ -305,7 +333,6 @@
         let depositAmountVal = 0;
         let adminAccounts = [];
 
-        // Fetch Dynamic Admin Payment Methods & Accounts with Logo Support
         function loadAdminPaymentAccounts() {
             fetch('/api/payment-methods')
                 .then(res => res.json())
@@ -322,16 +349,15 @@
             if(!adminAccounts.length) return;
             
             container.innerHTML = adminAccounts.map((acc, index) => {
-                // Fixed: Render uploaded image logo correctly instead of text URL
                 let iconHtml = acc.logo_url 
                     ? `<img src="${acc.logo_url}" class="gateway-logo" alt="${acc.name}">` 
-                    : `<span style="font-size: 20px;">${acc.icon || '📱'}</span>`;
+                    : `<span style="font-size: 22px;">${acc.icon || '📱'}</span>`;
 
                 return `
                     <div class="method-card ${index === 0 ? 'selected' : ''}" onclick="goToStep2('${acc.id}', '${acc.name}')">
-                        <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
                             ${iconHtml}
-                            <span style="font-weight: 700;">${acc.name}</span>
+                            <span style="font-weight: 700; font-size: 15px;">${acc.name}</span>
                         </div>
                         ${acc.popular ? '<span class="badge-popular">Popular</span>' : ''}
                     </div>
@@ -373,7 +399,6 @@
             depositAmountVal = amt;
             document.getElementById('confirmAmountDisplay').innerText = amt;
 
-            // Find matching admin account info if available
             const accInfo = adminAccounts.find(a => a.id === selectedMethod.id) || { account_name: 'Henok', phone: '0971321653' };
             document.getElementById('adminAccountName').innerText = accInfo.account_name || accInfo.name || 'Admin';
             document.getElementById('adminAccountPhone').innerText = accInfo.phone || '0971321653';
@@ -461,7 +486,7 @@
                 const list = data.transactions || [];
                 container.innerHTML = '';
                 if (list.length === 0) {
-                    container.innerHTML = `<div style="text-align: center; font-size: 12px; color: #888; padding: 15px;">No transactions found.</div>`;
+                    container.innerHTML = `<div style="text-align: center; font-size: 13px; color: #a5d6a7; padding: 15px;">No transactions found.</div>`;
                     return;
                 }
                 list.forEach(tx => {
@@ -483,7 +508,7 @@
                 });
             })
             .catch(() => {
-                container.innerHTML = `<div style="text-align: center; font-size: 12px; color: #ffeb3b; padding: 10px;">Failed to load history.</div>`;
+                container.innerHTML = `<div style="text-align: center; font-size: 13px; color: #ffeb3b; padding: 10px;">Failed to load history.</div>`;
             });
         }
 
