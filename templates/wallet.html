@@ -180,14 +180,14 @@
             <button class="btn-open-modal" onclick="openDepositModal()"><i class="fa-solid fa-plus-circle"></i> Make a Deposit</button>
         </div>
 
-        <!-- Withdraw Section (Dynamic Admin Gateways Integrated) -->
+        <!-- Withdraw Section -->
         <div class="action-section">
             <div class="section-title"><i class="fa-solid fa-circle-arrow-up"></i> Withdraw Funds</div>
             <form onsubmit="handleWithdraw(event)">
                 <div class="form-group">
-                    <label>Payout Method (Admin Active Gateways)</label>
+                    <label>Payout Method</label>
                     <select id="withdrawMethodSelect" class="form-control" required>
-                        <option value="">Loading active methods...</option>
+                        <option value="">Loading payout methods...</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -330,25 +330,36 @@
     <script>
         let selectedMethod = { id: 'telebirr', name: 'Telebirr' };
         let depositAmountVal = 0;
-        let adminAccounts = [];
+        let adminDepositAccounts = [];
+        let adminWithdrawalAccounts = [];
 
         function loadAdminPaymentAccounts() {
+            // Load deposit gateways
             fetch('/api/payment-methods')
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.methods.length > 0) {
-                        adminAccounts = data.methods;
+                        adminDepositAccounts = data.methods;
                         renderPaymentMethods();
+                    }
+                }).catch(e => console.log('Error loading deposit accounts'));
+
+            // Load withdrawal gateways
+            fetch('/api/withdrawal-methods')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.methods.length > 0) {
+                        adminWithdrawalAccounts = data.methods;
                         renderWithdrawalDropdown();
                     }
-                }).catch(e => console.log('Using default payment accounts'));
+                }).catch(e => console.log('Error loading withdrawal accounts'));
         }
 
         function renderPaymentMethods() {
             const container = document.getElementById('paymentMethodsList');
-            if(!adminAccounts.length) return;
+            if(!adminDepositAccounts.length) return;
             
-            container.innerHTML = adminAccounts.map((acc, index) => {
+            container.innerHTML = adminDepositAccounts.map((acc, index) => {
                 let iconHtml = acc.logo_url 
                     ? `<img src="${acc.logo_url}" class="gateway-logo" alt="${acc.name}">` 
                     : `<span style="font-size: 22px;">${acc.icon || '📱'}</span>`;
@@ -359,19 +370,17 @@
                             ${iconHtml}
                             <span style="font-weight: 700; font-size: 15px;">${acc.name}</span>
                         </div>
-                        ${acc.popular ? '<span class="badge-popular">Popular</span>' : ''}
                     </div>
                 `;
             }).join('');
         }
 
-        // Render Withdrawal Dropdown using Admin Active Gateways
         function renderWithdrawalDropdown() {
             const selectEl = document.getElementById('withdrawMethodSelect');
-            if (!adminAccounts.length) return;
+            if (!adminWithdrawalAccounts.length) return;
 
-            selectEl.innerHTML = adminAccounts.map(acc => `
-                <option value="${acc.name}">${acc.name} (Active Gateway)</option>
+            selectEl.innerHTML = adminWithdrawalAccounts.map(acc => `
+                <option value="${acc.name}">${acc.name}</option>
             `).join('');
         }
 
@@ -409,7 +418,7 @@
             depositAmountVal = amt;
             document.getElementById('confirmAmountDisplay').innerText = amt;
 
-            const accInfo = adminAccounts.find(a => a.id === selectedMethod.id) || { account_name: 'Henok', phone: '0971321653' };
+            const accInfo = adminDepositAccounts.find(a => a.id === selectedMethod.id) || { account_name: 'Henok', phone: '0971321653' };
             document.getElementById('adminAccountName').innerText = accInfo.account_name || accInfo.name || 'Admin';
             document.getElementById('adminAccountPhone').innerText = accInfo.phone || '0971321653';
 

@@ -90,7 +90,6 @@ def dashboard():
 
         admins = Admin.query.all()
         
-        # Pending financial requests (including withdrawals with user payment method & destination)
         pending_withdrawals = Transaction.query.filter_by(status='pending').all()
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
@@ -226,6 +225,7 @@ def add_gateway():
     method_name = request.form.get('method_name', '').strip()
     account_name = request.form.get('account_name', '').strip()
     account_number = request.form.get('account_number', '').strip()
+    gateway_purpose = request.form.get('gateway_purpose', 'deposit').strip() # 'deposit' or 'withdraw'
     is_active = True if request.form.get('is_active') else False
     
     if not method_name or not account_number:
@@ -244,7 +244,7 @@ def add_gateway():
         logo_file.save(file_path)
         logo_url = url_for('static', filename=f'uploads/{filename}', _external=True)
 
-    account_key = f"{method_type}_{int(datetime.utcnow().timestamp())}"
+    account_key = f"{gateway_purpose}_{method_type}_{int(datetime.utcnow().timestamp())}"
 
     config_file = "bot_config.json"
     config = {}
@@ -257,17 +257,13 @@ def add_gateway():
                 
     if 'gateways' not in config:
         config['gateways'] = {}
-        
-    if is_active:
-        for key, item in config['gateways'].items():
-            if item.get('method_type') == method_type:
-                item['is_active'] = False
 
     config['gateways'][account_key] = {
         'method_type': method_type,
         'name': method_name,
         'account_name': account_name,
         'account_number': account_number,
+        'purpose': gateway_purpose,
         'logo_url': logo_url,
         'is_active': is_active
     }
@@ -275,7 +271,7 @@ def add_gateway():
     with open(config_file, 'w') as f:
         json.dump(config, f, indent=4)
         
-    flash(f'Payment account "{method_name}" added successfully!', 'success')
+    flash(f'Payment account "{method_name}" for {gateway_purpose} added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/gateway/toggle/<account_key>', methods=['POST'])
@@ -286,16 +282,8 @@ def toggle_gateway(account_key):
         with open(config_file, 'r') as f:
             config = json.load(f)
         if 'gateways' in config and account_key in config['gateways']:
-            target_method_type = config['gateways'][account_key].get('method_type', 'telebirr')
             current_status = config['gateways'][account_key].get('is_active', False)
-            new_status = not current_status
-
-            if new_status:
-                for key, item in config['gateways'].items():
-                    if item.get('method_type') == target_method_type:
-                        item['is_active'] = False
-
-            config['gateways'][account_key]['is_active'] = new_status
+            config['gateways'][account_key]['is_active'] = not current_status
             
             with open(config_file, 'w') as f:
                 json.dump(config, f, indent=4)
@@ -446,7 +434,7 @@ def api_payment_methods():
                 data = json.load(f)
                 if 'gateways' in data:
                     for acc_key, item in data['gateways'].items():
-                        if item.get('is_active', False):
+                        if item.get('is_active', False) and item.get('purpose', 'deposit') == 'deposit':
                             active_gateways.append({
                                 'id': item.get('method_type', 'telebirr'),
                                 'name': item.get('name', 'Telebirr'),
@@ -461,6 +449,35 @@ def api_payment_methods():
     if not active_gateways:
         active_gateways = [
             { 'id': 'telebirr', 'name': 'Telebirr', 'icon': '📱', 'logo_url': '', 'phone': '0971321653', 'account_name': 'Henok' }
+        ]
+
+    return jsonify({ 'success': True, 'methods': active_gateways })
+
+@admin_bp.route('/api/withdrawal-methods', methods=['GET'])
+def api_withdrawal_methods():
+    config_file = "bot_config.json"
+    active_gateways = []
+    
+    if os.path.exists(config_file):
+        with open(config_file, 'r') as f:
+            try:
+                data = json.load(f)
+                if 'gateways' in data:
+                    for acc_key, item in data['gateways'].items():
+                        if item.get('is_active', False) and item.get('purpose') == 'withdraw':
+                            active_gateways.append({
+                                'id': item.get('method_type', 'telebirr'),
+                                'name': item.get('name', 'Telebirr'),
+                                'icon': item.get('logo_url') or '💳',
+                                'logo_url': item.get('logo_url', ''),
+                            })
+            except Exception as e:
+                logger.error(f"Error reading withdrawal gateways config: {e}")
+                
+    if not active_gateways:
+        active_gateways = [
+            { 'id': 'telebirr', 'name': 'Telebirr', 'icon': '📱', 'logo_url': '' },
+            { 'id': 'cbe_birr', 'name': 'CBE Birr', 'icon': '🏦', 'logo_url': '' }
         ]
 
     return jsonify({ 'success': True, 'methods': active_gateways })

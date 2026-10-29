@@ -116,7 +116,10 @@
         .btn-primary { background: #1e88e5; }
         .btn-info { background: #2980b9; }
 
-        .badge-method { background: #1e88e5; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        /* Distinct Method Badge Colors */
+        .badge-telebirr { background: #0288d1; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-cbe { background: #388e3c; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-other { background: #f57c00; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
 
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
@@ -222,8 +225,18 @@
                                 <td><b>{{ tx.type | capitalize }}</b></td>
                                 <td>{{ tx.amount | abs }} ETB</td>
                                 <td>
-                                    <span class="badge-method"><i class="fa-solid fa-credit-card"></i> {{ tx.payment_method | default('N/A') }}</span><br>
-                                    <small style="color: #333; font-weight: bold;">Acc/Phone: {{ tx.withdrawal_phone or tx.phone or tx.account_number or 'N/A' }}</small>
+                                    {% set pm_lower = tx.payment_method | default('telebirr') | lower %}
+                                    {% if 'telebirr' in pm_lower %}
+                                        <span class="badge-telebirr"><i class="fa-solid fa-mobile-screen"></i> {{ tx.payment_method }}</span>
+                                    {% elif 'cbe' in pm_lower %}
+                                        <span class="badge-cbe"><i class="fa-solid fa-building-columns"></i> {{ tx.payment_method }}</span>
+                                    {% else %}
+                                        <span class="badge-other"><i class="fa-solid fa-credit-card"></i> {{ tx.payment_method }}</span>
+                                    {% endif %}
+                                    <br>
+                                    <strong style="color: var(--accent-yellow); font-size: 13px; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">
+                                        Acc/Phone: {{ tx.withdrawal_phone or tx.phone or tx.account_number or 'N/A' }}
+                                    </strong>
                                 </td>
                                 <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status }}</span></td>
                                 <td>
@@ -302,17 +315,24 @@
             <!-- 7. PAYMENT GATEWAYS -->
             <section id="view-gateways" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit & Withdrawal Payment Accounts & Logos</h3>
+                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit & Withdrawal Payment Accounts</h3>
                     
                     <!-- Add New Payment Account Form -->
                     <form action="{{ url_for('admin.add_gateway') }}" method="POST" enctype="multipart/form-data" style="background: rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                         <div>
+                            <label>Gateway Purpose:</label>
+                            <select name="gateway_purpose" required>
+                                <option value="deposit">Deposit Gateway (For Users to Deposit)</option>
+                                <option value="withdraw">Withdrawal Gateway (For Payouts)</option>
+                            </select>
+                        </div>
+                        <div>
                             <label>Payment Method Name:</label>
-                            <input type="text" name="method_name" placeholder="e.g. Telebirr, Dashen Bank" required>
+                            <input type="text" name="method_name" placeholder="e.g. Telebirr, CBE Birr" required>
                         </div>
                         <div>
                             <label>Account Holder Name:</label>
-                            <input type="text" name="account_name" placeholder="Account Holder Name" required>
+                            <input type="text" name="account_name" placeholder="Account Holder Name">
                         </div>
                         <div>
                             <label>Account Number / Phone:</label>
@@ -324,7 +344,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; grid-column: 1 / -1;">
                             <input type="checkbox" name="is_active" id="newGatewayActive" checked style="width: auto;">
-                            <label for="newGatewayActive" style="margin:0;">Set Active (Show immediately to users in Wallet for Deposit & Withdrawal)</label>
+                            <label for="newGatewayActive" style="margin:0;">Set Active (Show immediately in Wallet)</label>
                         </div>
                         <button type="submit" class="btn" style="grid-column: 1 / -1;"><i class="fa-solid fa-plus"></i> Save Payment Account</button>
                     </form>
@@ -332,7 +352,7 @@
                     <!-- Accounts List Table -->
                     <table>
                         <thead>
-                            <tr><th>Logo</th><th>Method Name</th><th>Account Holder</th><th>Number / Phone</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th>Logo</th><th>Purpose</th><th>Method Name</th><th>Account Holder</th><th>Number / Phone</th><th>Status</th><th>Actions</th></tr>
                         </thead>
                         <tbody>
                             {% if gateway_config.get('gateways') %}
@@ -345,6 +365,7 @@
                                             <i class="fa-solid fa-wallet" style="font-size: 20px;"></i>
                                         {% endif %}
                                     </td>
+                                    <td><b>{{ g_info.get('purpose', 'deposit') | upper }}</b></td>
                                     <td><b>{{ g_info.get('name', 'N/A') }}</b></td>
                                     <td>{{ g_info.get('account_name', 'N/A') }}</td>
                                     <td><code>{{ g_info.get('account_number', 'N/A') }}</code></td>
@@ -357,13 +378,11 @@
                                     </td>
                                     <td>
                                         <div style="display: flex; gap: 6px;">
-                                            <!-- Toggle ON/OFF -->
                                             <form action="{{ url_for('admin.toggle_gateway', account_key=acc_key) }}" method="POST" style="margin:0;">
                                                 <button type="submit" class="btn btn-info" style="padding: 5px 10px;">
                                                     {% if g_info.get('is_active', False) %} Turn OFF {% else %} Turn ON {% endif %}
                                                 </button>
                                             </form>
-                                            <!-- Delete Account -->
                                             <form action="{{ url_for('admin.delete_gateway', account_key=acc_key) }}" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete this account?');">
                                                 <button type="submit" class="btn btn-danger" style="padding: 5px 10px;">Delete</button>
                                             </form>
@@ -372,7 +391,7 @@
                                 </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr><td colspan="6" style="text-align: center; color: #888;">No payment accounts registered yet.</td></tr>
+                                <tr><td colspan="7" style="text-align: center; color: #888;">No payment accounts registered yet.</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
