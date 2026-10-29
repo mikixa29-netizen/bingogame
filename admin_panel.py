@@ -223,15 +223,28 @@ def add_gateway():
         flash('Unauthorized action!', 'error')
         return redirect(url_for('admin.dashboard'))
     
-    method_id = request.form.get('method_id', '').strip().lower().replace(' ', '_')
+    method_type = request.form.get('method_type', 'telebirr').strip().lower()
     method_name = request.form.get('method_name', '').strip()
     account_name = request.form.get('account_name', '').strip()
     account_number = request.form.get('account_number', '').strip()
     is_active = True if request.form.get('is_active') else False
     
-    if not method_id or not account_number:
-        flash('Method ID and Account Number are required!', 'error')
+    if not account_number:
+        flash('Account Number is required!', 'error')
         return redirect(url_for('admin.dashboard'))
+
+    # Handle Logo File Upload from PC/Phone
+    logo_file = request.files.get('logo_file')
+    logo_url = ''
+    if logo_file and logo_file.filename != '':
+        filename = secure_filename(logo_file.filename)
+        upload_folder = os.path.join('static', 'uploads')
+        os.makedirs(upload_folder, exist_ok=True)
+        file_path = os.path.join(upload_folder, filename)
+        logo_file.save(file_path)
+        logo_url = url_for('static', filename=f'uploads/{filename}', _external=True)
+
+    account_key = f"{method_type}_{int(datetime.utcnow().timestamp())}"
 
     config_file = "bot_config.json"
     config = {}
@@ -245,46 +258,64 @@ def add_gateway():
     if 'gateways' not in config:
         config['gateways'] = {}
         
-    config['gateways'][method_id] = {
-        'name': method_name or method_id.capitalize(),
+    # If this account is set to Active, turn OFF all other accounts of the same method_type
+    if is_active:
+        for key, item in config['gateways'].items():
+            if item.get('method_type') == method_type:
+                item['is_active'] = False
+
+    config['gateways'][account_key] = {
+        'method_type': method_type,
+        'name': method_name or method_type.upper(),
         'account_name': account_name,
         'account_number': account_number,
+        'logo_url': logo_url,
         'is_active': is_active
     }
     
     with open(config_file, 'w') as f:
         json.dump(config, f, indent=4)
         
-    flash(f'Payment method "{method_name}" added/updated successfully!', 'success')
+    flash(f'Payment account for "{method_name or method_type}" added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
-@admin_bp.route('/admin/gateway/toggle/<method_id>', methods=['POST'])
+@admin_bp.route('/admin/gateway/toggle/<account_key>', methods=['POST'])
 @admin_required
-def toggle_gateway(method_id):
+def toggle_gateway(account_key):
     config_file = "bot_config.json"
     if os.path.exists(config_file):
         with open(config_file, 'r') as f:
             config = json.load(f)
-        if 'gateways' in config and method_id in config['gateways']:
-            current_status = config['gateways'][method_id].get('is_active', True)
-            config['gateways'][method_id]['is_active'] = not current_status
+        if 'gateways' in config and account_key in config['gateways']:
+            target_method_type = config['gateways'][account_key].get('method_type', 'telebirr')
+            current_status = config['gateways'][account_key].get('is_active', False)
+            new_status = not current_status
+
+            # If turning ON, turn OFF all other accounts of the same method_type
+            if new_status:
+                for key, item in config['gateways'].items():
+                    if item.get('method_type') == target_method_type:
+                        item['is_active'] = False
+
+            config['gateways'][account_key]['is_active'] = new_status
+            
             with open(config_file, 'w') as f:
                 json.dump(config, f, indent=4)
-            flash(f'Gateway status updated successfully!', 'success')
+            flash('Gateway status updated successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
-@admin_bp.route('/admin/gateway/delete/<method_id>', methods=['POST'])
+@admin_bp.route('/admin/gateway/delete/<account_key>', methods=['POST'])
 @admin_required
-def delete_gateway(method_id):
+def delete_gateway(account_key):
     config_file = "bot_config.json"
     if os.path.exists(config_file):
         with open(config_file, 'r') as f:
             config = json.load(f)
-        if 'gateways' in config and method_id in config['gateways']:
-            del config['gateways'][method_id]
+        if 'gateways' in config and account_key in config['gateways']:
+            del config['gateways'][account_key]
             with open(config_file, 'w') as f:
                 json.dump(config, f, indent=4)
-            flash(f'Payment gateway deleted successfully!', 'success')
+            flash('Payment account deleted successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
@@ -325,7 +356,7 @@ def add_staff():
         )
         db.session.add(new_admin)
         db.session.commit()
-        flash(f'Staff added successfully!', 'success')
+        flash('Staff added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
@@ -409,32 +440,31 @@ def broadcast_news():
 @admin_bp.route('/api/payment-methods', methods=['GET'])
 def api_payment_methods():
     config_file = "bot_config.json"
-    gateways = [
-        { 'id': 'telebirr', 'name': 'Telebirr', 'icon': '📱', 'popular': True, 'phone': '0971321653', 'account_name': 'Henok', 'is_active': True },
-        { 'id': 'cbe_birr', 'name': 'CBE Birr', 'icon': '🏦', 'popular': False, 'phone': '1000123456789', 'account_name': 'Edil Bingo', 'is_active': True }
-    ]
+    active_gateways = []
     
     if os.path.exists(config_file):
         with open(config_file, 'r') as f:
             try:
                 data = json.load(f)
                 if 'gateways' in data:
-                    custom_gateways = []
-                    for g_id, g_info in data['gateways'].items():
-                        custom_gateways.append({
-                            'id': g_id,
-                            'name': g_info.get('name', g_id.capitalize()),
-                            'icon': g_info.get('icon', '💳'),
-                            'popular': g_info.get('popular', False),
-                            'phone': g_info.get('account_number'),
-                            'account_name': g_info.get('account_name'),
-                            'is_active': g_info.get('is_active', True)
-                        })
-                    gateways = custom_gateways
+                    for acc_key, item in data['gateways'].items():
+                        if item.get('is_active', False):
+                            active_gateways.append({
+                                'id': item.get('method_type', 'telebirr'),
+                                'name': item.get('name', 'Telebirr'),
+                                'icon': '📱' if item.get('method_type') == 'telebirr' else '🏦',
+                                'logo_url': item.get('logo_url', ''),
+                                'phone': item.get('account_number'),
+                                'account_name': item.get('account_name')
+                            })
             except Exception as e:
                 logger.error(f"Error reading gateways config: {e}")
                 
-    active_gateways = [g for g in gateways if g.get('is_active', True)]
+    if not active_gateways:
+        active_gateways = [
+            { 'id': 'telebirr', 'name': 'Telebirr', 'icon': '📱', 'logo_url': '', 'phone': '0971321653', 'account_name': 'Henok' }
+        ]
+
     return jsonify({ 'success': True, 'methods': active_gateways })
 
 @admin_bp.route('/admin/logout')
