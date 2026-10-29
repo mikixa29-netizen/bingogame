@@ -12,7 +12,6 @@ from config import ADMIN_USERNAME, ADMIN_PASSWORD
 
 logger = logging.getLogger(__name__)
 
-# Admin Blueprint creation
 admin_bp = Blueprint('admin', __name__, template_folder='templates')
 
 def admin_required(f):
@@ -91,13 +90,7 @@ def dashboard():
 
         admins = Admin.query.all()
         
-        if hasattr(Transaction, 'status'):
-            pending_withdrawals = Transaction.query.filter(
-                Transaction.status == 'pending'
-            ).all()
-        else:
-            pending_withdrawals = Transaction.query.filter_by(status='pending').all()
-        
+        pending_withdrawals = Transaction.query.filter_by(status='pending').all()
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -229,9 +222,9 @@ def update_gateway():
         flash('Unauthorized action!', 'error')
         return redirect(url_for('admin.dashboard'))
     
-    method_name = request.form.get('method_name') # e.g. telebirr, cbe_birr
+    method_name = request.form.get('method_name') # telebirr, cbe_birr, etc.
     account_number = request.form.get('account_number')
-    account_name = request.form.get('account_name', 'Admin')
+    account_name = request.form.get('account_name', 'Henok')
     is_active = True if request.form.get('is_active') else False
     
     config_file = "bot_config.json"
@@ -255,7 +248,7 @@ def update_gateway():
     with open(config_file, 'w') as f:
         json.dump(config, f, indent=4)
         
-    flash(f'Payment Gateway "{method_name}" updated successfully!', 'success')
+    flash(f'Payment Gateway "{method_name}" updated successfully (Active: {is_active})!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
@@ -377,13 +370,12 @@ def broadcast_news():
         flash('Please enter text or select an image!', 'error')
     return redirect(url_for('admin.dashboard'))
 
-# Public / Wallet API for Dynamic Payment Gateways
 @admin_bp.route('/api/payment-methods', methods=['GET'])
 def api_payment_methods():
     config_file = "bot_config.json"
-    gateways = [
-        { 'id': 'telebirr', 'name': 'Telebirr', 'icon': '📱', 'popular': True, 'phone': '0971321653', 'account_name': 'Henok' },
-        { 'id': 'cbe_birr', 'name': 'CBE Birr', 'icon': '🏦', 'popular': False, 'phone': '1000123456789', 'account_name': 'Edil Bingo' }
+    default_gateways = [
+        { 'id': 'telebirr', 'name': 'Telebirr', 'icon': '📱', 'popular': True, 'phone': '0971321653', 'account_name': 'Henok', 'is_active': True },
+        { 'id': 'cbe_birr', 'name': 'CBE Birr', 'icon': '🏦', 'popular': False, 'phone': '1000123456789', 'account_name': 'Edil Bingo', 'is_active': True }
     ]
     
     if os.path.exists(config_file):
@@ -392,15 +384,17 @@ def api_payment_methods():
                 data = json.load(f)
                 if 'gateways' in data:
                     for g_id, g_info in data['gateways'].items():
-                        if g_info.get('is_active', True):
-                            for gw in gateways:
-                                if gw['id'] == g_id:
-                                    gw['phone'] = g_info.get('account_number', gw['phone'])
-                                    gw['account_name'] = g_info.get('account_name', gw['account_name'])
+                        for gw in default_gateways:
+                            if gw['id'] == g_id:
+                                gw['phone'] = g_info.get('account_number', gw['phone'])
+                                gw['account_name'] = g_info.get('account_name', gw['account_name'])
+                                gw['is_active'] = g_info.get('is_active', True)
             except Exception as e:
                 logger.error(f"Error reading gateways config: {e}")
                 
-    return jsonify({ 'success': True, 'methods': gateways })
+    # Filter only active gateways for user wallet display
+    active_gateways = [g for g in default_gateways if g.get('is_active', True)]
+    return jsonify({ 'success': True, 'methods': active_gateways })
 
 @admin_bp.route('/admin/logout')
 def logout():
