@@ -126,7 +126,7 @@
         .modal-content { background: #fff; color: #333; padding: 22px; border-radius: 14px; width: 90%; max-width: 580px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
         .close-modal { float: right; font-size: 22px; font-weight: bold; cursor: pointer; color: #e74c3c; }
         
-        .gateway-logo-preview { width: 30px; height: 30px; object-fit: contain; border-radius: 4px; }
+        .gateway-logo-preview { width: 32px; height: 32px; object-fit: contain; border-radius: 6px; background: #f0f0f0; padding: 2px; }
     </style>
 </head>
 <body data-theme="light">
@@ -301,50 +301,40 @@
                 </div>
             </section>
 
-            <!-- 7. PAYMENT GATEWAYS (MULTIPLE ACCOUNTS, FILE UPLOAD, SINGLE ACTIVE SWITCH) -->
+            <!-- 7. PAYMENT GATEWAYS (CUSTOM METHOD NAME & FILE UPLOAD) -->
             <section id="view-gateways" class="view-section">
                 <div class="section-box">
                     <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Payment Accounts & Logos</h3>
                     
-                    <!-- Add New Payment Account Form (Supports File Upload) -->
+                    <!-- Add New Payment Account Form -->
                     <form action="{{ url_for('admin.add_gateway') }}" method="POST" enctype="multipart/form-data" style="background: rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                         <div>
-                            <label>Method Type:</label>
-                            <select name="method_type">
-                                <option value="telebirr">Telebirr (ቴሌብር)</option>
-                                <option value="cbe_birr">CBE Birr (ንግድ ባንክ)</option>
-                                <option value="dashen_bank">Dashen Bank (ዳሸን)</option>
-                                <option value="boa">Bank of Abyssinia (አቢሲኒያ)</option>
-                                <option value="awash">Awash Bank (አዋሽ)</option>
-                            </select>
+                            <label>የክፍያ ዘዴ ስም (እራስዎ ይጻፉ):</label>
+                            <input type="text" name="method_name" placeholder="ለምሳሌ፦ Telebirr ወይም Dashen Bank" required>
                         </div>
                         <div>
-                            <label>Display Title (e.g. Telebirr Main):</label>
-                            <input type="text" name="method_name" placeholder="Telebirr Main" required>
+                            <label>የአካውንት ባለቤት ስም (Account Name):</label>
+                            <input type="text" name="account_name" placeholder="የባለቤቱ ስም" required>
                         </div>
                         <div>
-                            <label>Account Name (e.g. Henok):</label>
-                            <input type="text" name="account_name" placeholder="Henok" required>
+                            <label>அካውንት ወይም ስልክ ቁጥር (Account Number):</label>
+                            <input type="text" name="account_number" placeholder="0911223344" required>
                         </div>
                         <div>
-                            <label>Account Number / Phone:</label>
-                            <input type="text" name="account_number" placeholder="0971321653" required>
-                        </div>
-                        <div>
-                            <label>Upload Logo (From PC/Phone):</label>
+                            <label>ሎጎ ፎቶ ይጫኑ (Logo Upload):</label>
                             <input type="file" name="logo_file" accept="image/*" style="background: #fff; padding: 6px;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; grid-column: 1 / -1;">
                             <input type="checkbox" name="is_active" id="newGatewayActive" checked style="width: auto;">
-                            <label for="newGatewayActive" style="margin:0;">Set Active (Auto-deactivates other accounts of this same method)</label>
+                            <label for="newGatewayActive" style="margin:0;">Active ያድርጉ (ለተጠቃሚዎች ወዲያውኑ እንዲታይ)</label>
                         </div>
-                        <button type="submit" class="btn" style="grid-column: 1 / -1;"><i class="fa-solid fa-plus"></i> Save Payment Account</button>
+                        <button type="submit" class="btn" style="grid-column: 1 / -1;"><i class="fa-solid fa-plus"></i> አዲስ የክፍያ አካውንት መዝግብ</button>
                     </form>
 
                     <!-- Accounts List Table -->
                     <table>
                         <thead>
-                            <tr><th>Logo</th><th>Method & Title</th><th>Account Holder</th><th>Number / Phone</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th>ሎጎ</th><th>የክፍያ ዘዴ ስም</th><th>ባለቤት</th><th>አካውንት / ስልክ</th><th>ሁኔታ</th><th>እርምጃዎች</th></tr>
                         </thead>
                         <tbody>
                             {% if gateway_config.get('gateways') %}
@@ -357,7 +347,7 @@
                                             <i class="fa-solid fa-wallet" style="font-size: 20px;"></i>
                                         {% endif %}
                                     </td>
-                                    <td><b>{{ g_info.get('name', 'N/A') }}</b> <small>({{ g_info.get('method_type', 'telebirr') }})</small></td>
+                                    <td><b>{{ g_info.get('name', 'N/A') }}</b></td>
                                     <td>{{ g_info.get('account_name', 'N/A') }}</td>
                                     <td><code>{{ g_info.get('account_number', 'N/A') }}</code></td>
                                     <td>
@@ -372,19 +362,19 @@
                                             <!-- Toggle ON/OFF -->
                                             <form action="{{ url_for('admin.toggle_gateway', account_key=acc_key) }}" method="POST" style="margin:0;">
                                                 <button type="submit" class="btn btn-info" style="padding: 5px 10px;">
-                                                    {% if g_info.get('is_active', False) %} Turn OFF {% else %} Turn ON {% endif %}
+                                                    {% if g_info.get('is_active', False) %} አጥፋ (OFF) {% else %} አብራ (ON) {% endif %}
                                                 </button>
                                             </form>
                                             <!-- Delete Account -->
-                                            <form action="{{ url_for('admin.delete_gateway', account_key=acc_key) }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this account?');">
-                                                <button type="submit" class="btn btn-danger" style="padding: 5px 10px;">Delete</button>
+                                            <form action="{{ url_for('admin.delete_gateway', account_key=acc_key) }}" method="POST" style="margin:0;" onsubmit="return confirm('ይህንን አካውንት መሰረዝ ይፈልጋሉ?');">
+                                                <button type="submit" class="btn btn-danger" style="padding: 5px 10px;">ሰርዝ</button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr><td colspan="6" style="text-align: center; color: #888;">No payment accounts registered yet.</td></tr>
+                                <tr><td colspan="6" style="text-align: center; color: #888;">ምንም የክፍያ አካውንት አልተመዘገበም።</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
