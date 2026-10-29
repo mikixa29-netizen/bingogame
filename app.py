@@ -22,7 +22,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 init_db(app)
 app.register_blueprint(admin_bp)
 
-from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory, Admin
+from models import User, Game, GameParticipant, Transaction, Transfer, GameHistory, Admin, PaymentGateway
 
 with app.app_context():
     db.create_all()
@@ -542,6 +542,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+# --- የተሻሻለ የዲፖዚት (Deposit) ራውት ከአዲስ የ PaymentGateway ዳታቤዝ ጋር ---
 @app.route('/deposit', methods=['POST'])
 def deposit():
     user_id = session.get('user_id')
@@ -551,7 +552,7 @@ def deposit():
     
     data = request.json or {}
     amount = float(data.get('amount', 0))
-    payment_method = data.get('payment_method', 'telebirr')
+    payment_method = str(data.get('payment_method', '')).strip()
     transaction_id = str(data.get('transaction_id', '')).strip()
 
     if amount < 10:
@@ -560,22 +561,72 @@ def deposit():
     if not transaction_id or len(transaction_id) < 5:
         return jsonify({'error': 'Please enter a valid receipt or transaction reference ID.'}), 400
 
+    # 1. የድግግሞሽ መከላከያ (Anti-Duplicate Check)
     existing_tx = Transaction.query.filter_by(transaction_id=transaction_id).first()
     if existing_tx:
         return jsonify({'error': 'This transaction reference ID has already been used!'}), 400
 
+    # 2. አድሚኑ አክቲቭ ያደረጋቸው እና ለዲፖዚት የፈቀዳቸውን ጌትዌዮች ከ PaymentGateway ማረጋገጥ
+    valid_gateway = PaymentGateway.query.filter(
+        PaymentGateway.is_active == True,
+        PaymentGateway.purpose == 'deposit',
+        (PaymentGateway.name.ilike(f"%{payment_method}%")) | (PaymentGateway.id == payment_method if payment_method.isdigit() else False)
+    ).first()
+
+    if not valid_gateway:
+        return jsonify({'error': 'Selected payment method is invalid or currently inactive.'}), 400
+
+    # 3. ትራንዛክሽኑን መመዝገብ (ለአስተማማኝ ሁኔታ pending ማድረግ ይቻላል ወይም በራስሰር completed)
     user.balance += amount
     tx = Transaction(
         user_id=user.id, 
         type='deposit', 
         amount=amount, 
-        payment_method=payment_method,
+        payment_method=valid_gateway.name,
         transaction_id=transaction_id,
         status='completed'
     )
     db.session.add(tx)
     db.session.commit()
     return jsonify({'success': True, 'message': 'Deposit successful!'})
+
+# --- ለአድሚን ጌትዌዮች የሚሰጥ የ API ማከፋፈያ (Deposit & Withdrawal) ---
+@app.route('/api/payment-methods', methods=['GET'])
+def api_payment_methods():
+    gateways = PaymentGateway.query.filter_by(is_active=True, purpose='deposit').all()
+    methods = []
+    for g in gateways:
+        methods.append({
+            'id': str(g.id),
+            'name': g.name,
+            'account_name': g.account_name,
+            'phone': g.account_number,
+            'logo_url': g.logo_url or ''
+        })
+    
+    if not methods:
+        methods = [{'id': 'telebirr', 'name': 'Telebirr', 'account_name': 'Henok', 'phone': '0971321653', 'logo_url': ''}]
+    
+    return jsonify({'success': True, 'methods': methods})
+
+@app.route('/api/withdrawal-methods', methods=['GET'])
+def api_withdrawal_methods():
+    gateways = PaymentGateway.query.filter_by(is_active=True, purpose='withdraw').all()
+    methods = []
+    for g in gateways:
+        methods.append({
+            'id': str(g.id),
+            'name': g.name,
+            'logo_url': g.logo_url or ''
+        })
+        
+    if not methods:
+        methods = [
+            {'id': 'telebirr', 'name': 'Telebirr', 'logo_url': ''},
+            {'id': 'cbe_birr', 'name': 'CBE Birr', 'logo_url': ''}
+        ]
+        
+    return jsonify({'success': True, 'methods': methods})
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
@@ -595,7 +646,7 @@ def withdraw():
     user.balance -= amount
     tx = Transaction(
         user_id=user.id, 
-        type='withdrawal', # Updated to match admin panel filter
+        type='withdrawal', 
         amount=amount, 
         payment_method=payment_method,
         withdrawal_phone=withdrawal_phone,

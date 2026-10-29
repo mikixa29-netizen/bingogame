@@ -32,6 +32,19 @@ class Admin(db.Model):
     can_edit_balance = db.Column(db.Boolean, default=True)   # ለአጀንት የሚሰጥ ፈቃድ
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+# አዲስ የተጨመረው የክፍያ ጌትዌዮች (Payment Gateways) ሞዴል
+class PaymentGateway(db.Model):
+    __tablename__ = 'payment_gateways'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)           # Telebirr, CBE Birr, etc.
+    account_name = db.Column(db.String(100), nullable=True)    # የ አካውንት ባለቤት ስም
+    account_number = db.Column(db.String(50), nullable=False)  # ስልክ ቁጥር ወይም የባንክ አካውንት
+    purpose = db.Column(db.String(20), default='deposit')      # 'deposit' ወይም 'withdraw'
+    logo_url = db.Column(db.String(255), nullable=True)        # የሎጎ ሊንክ/ፋይል ፓስ
+    is_active = db.Column(db.Boolean, default=True)            # አክቲቭ መሆኑን ማሳያ (ON/OFF)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     unique_code = db.Column(db.String(16), unique=True, nullable=True)

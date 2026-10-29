@@ -128,5 +128,22 @@ def init_db(app):
                         connection.execute(text(f'ALTER TABLE "transaction" ADD COLUMN {col_name} {col_type};'))
                     except Exception:
                         pass
+
+                # 4. አዲሱ የ PaymentGateways ሰንጠረዥ አምዶች በራስ-ሰር እንዲጨመሩ (Safe Migration)
+                gateway_columns_to_add = [
+                    ('name', 'VARCHAR(50)'),
+                    ('account_name', 'VARCHAR(100)'),
+                    ('account_number', 'VARCHAR(50)'),
+                    ('purpose', "VARCHAR(20) DEFAULT 'deposit'"),
+                    ('logo_url', 'VARCHAR(255)'),
+                    ('is_active', 'BOOLEAN DEFAULT TRUE'),
+                    ('created_at', 'TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP')
+                ]
+                for col_name, col_type in gateway_columns_to_add:
+                    try:
+                        connection.execute(text(f'ALTER TABLE "payment_gateways" ADD COLUMN {col_name} {col_type};'))
+                    except Exception:
+                        pass
+
         except Exception as migration_err:
             print(f"Migration notice: {migration_err}")
