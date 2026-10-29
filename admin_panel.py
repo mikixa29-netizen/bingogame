@@ -12,7 +12,6 @@ from config import ADMIN_USERNAME, ADMIN_PASSWORD
 
 logger = logging.getLogger(__name__)
 
-# Admin Blueprint creation
 admin_bp = Blueprint('admin', __name__, template_folder='templates')
 
 def admin_required(f):
@@ -46,10 +45,10 @@ def login():
                 session['admin_role'] = 'admin'
                 return redirect(url_for('admin.dashboard'))
             else:
-                flash('የተሳሳተ መግቢያ ስም ወይም የይለፍ ቃል!', 'error')
+                flash('Invalid username or password!', 'error')
         except Exception as e:
             logger.exception(f"Error during admin login: {e}")
-            flash('ስህተት ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።', 'error')
+            flash('An error occurred during login. Please try again.', 'error')
             
     return render_template('admin/login.html')
 
@@ -128,7 +127,7 @@ def dashboard():
         )
     except Exception as e:
         logger.exception(f"Error loading admin dashboard: {e}")
-        flash('ዳሽቦርዱን በመጫን ላይ ስህተት ተፈጥሯል።', 'error')
+        flash('Error loading dashboard data.', 'error')
         return redirect(url_for('admin.login'))
 
 @admin_bp.route('/admin/user-details-json/<int:user_id>')
@@ -176,7 +175,7 @@ def user_details_json(user_id):
         })
     except Exception as e:
         logger.exception(f"Error fetching user details JSON: {e}")
-        return jsonify({'error': 'መረጃዎችን ማምጣት አልተቻለም'}), 500
+        return jsonify({'error': 'Failed to load details'}), 500
 
 @admin_bp.route('/admin/user/add', methods=['POST'])
 @admin_required
@@ -197,9 +196,9 @@ def add_user():
         )
         db.session.add(new_user)
         db.session.commit()
-        flash('አዲስ ተጠቃሚ በአድሚን ተመዝግቧል!', 'success')
+        flash('New user added successfully!', 'success')
     except Exception as e:
-        flash('ተጠቃሚውን መመዝገብ አልተቻለም: ' + str(e), 'error')
+        flash('Failed to add user: ' + str(e), 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/user/<int:user_id>/update', methods=['POST'])
@@ -211,16 +210,16 @@ def update_user(user_id):
         user.bonus_balance = round(float(request.form.get('bonus_balance', user.bonus_balance)), 1)
         user.coin = int(request.form.get('coin', getattr(user, 'coin', 0)))
         db.session.commit()
-        flash('የተጠቃሚው መረጃ ተዘምኗል!', 'success')
+        flash('User information updated successfully!', 'success')
     except Exception as e:
-        flash('ማዘመን አልተቻለም: ' + str(e), 'error')
+        flash('Failed to update information: ' + str(e), 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/gateway/add', methods=['POST'])
 @admin_required
 def add_gateway():
     if not session.get('is_super_admin'):
-        flash('እርምጃው የተከለከለ ነው!', 'error')
+        flash('Unauthorized action!', 'error')
         return redirect(url_for('admin.dashboard'))
     
     method_name = request.form.get('method_name', '').strip()
@@ -229,13 +228,11 @@ def add_gateway():
     is_active = True if request.form.get('is_active') else False
     
     if not method_name or not account_number:
-        flash('የክፍያ ዘዴው ስም እና አካውንት ቁጥር ያስፈልጋሉ!', 'error')
+        flash('Payment method name and account number are required!', 'error')
         return redirect(url_for('admin.dashboard'))
 
-    # ከስም ወደ መለያ (ID) መቀየሪያ
     method_type = method_name.lower().replace(' ', '_')
 
-    # ሎጎ ፋይል ከስልክ ወይም ከኮምፒዩተር መቀበያ
     logo_file = request.files.get('logo_file')
     logo_url = ''
     if logo_file and logo_file.filename != '':
@@ -260,7 +257,6 @@ def add_gateway():
     if 'gateways' not in config:
         config['gateways'] = {}
         
-    # ይህ አካውንት Active ሆኖ ሲመዘገብ, ተመሳሳይ የክፍያ ዓይነት ያላቸውን ሌሎች አካውንቶች በራስ-ሰር Inactive ማድረግ
     if is_active:
         for key, item in config['gateways'].items():
             if item.get('method_type') == method_type:
@@ -278,7 +274,7 @@ def add_gateway():
     with open(config_file, 'w') as f:
         json.dump(config, f, indent=4)
         
-    flash(f'የክፍያ አካውንት "{method_name}" በተሳካ ሁኔታ ተመዝግቧል!', 'success')
+    flash(f'Payment account "{method_name}" added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/gateway/toggle/<account_key>', methods=['POST'])
@@ -302,7 +298,7 @@ def toggle_gateway(account_key):
             
             with open(config_file, 'w') as f:
                 json.dump(config, f, indent=4)
-            flash('የክፍያ አካውንት ሁኔታ ተዘምኗል!', 'success')
+            flash('Gateway status updated successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/gateway/delete/<account_key>', methods=['POST'])
@@ -316,7 +312,7 @@ def delete_gateway(account_key):
             del config['gateways'][account_key]
             with open(config_file, 'w') as f:
                 json.dump(config, f, indent=4)
-            flash('የክፍያ አካውንቱ ተሰርዟል!', 'success')
+            flash('Payment account deleted successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
@@ -325,15 +321,15 @@ def toggle_block(user_id):
     user = User.query.get_or_404(user_id)
     user.is_blocked = not user.is_blocked
     db.session.commit()
-    status_text = 'ታግዷል' if user.is_blocked else 'ንቁ ነው'
-    flash(f'የተጠቃሚው ሁኔታ: {status_text}', 'success')
+    status_text = 'Blocked' if user.is_blocked else 'Active'
+    flash(f'User status updated to {status_text}!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/staff/add', methods=['POST'])
 @admin_required
 def add_staff():
     if not session.get('is_super_admin'):
-        flash('ሱፐር አድሚን ብቻ ሰራተኛ መመዝገብ ይችላል!', 'error')
+        flash('Only super admin can add staff members!', 'error')
         return redirect(url_for('admin.dashboard'))
         
     username = request.form.get('username')
@@ -346,7 +342,7 @@ def add_staff():
     
     existing = Admin.query.filter_by(username=full_username).first()
     if existing:
-        flash('ይህ የሰራተኛ ስም ቀድሞውኑ አለ!', 'error')
+        flash('Staff username already exists!', 'error')
     else:
         new_admin = Admin(
             username=full_username,
@@ -357,20 +353,20 @@ def add_staff():
         )
         db.session.add(new_admin)
         db.session.commit()
-        flash('ሰራተኛው በተሳካ ሁኔታ ተመዝግቧል!', 'success')
+        flash('Staff member added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
 @admin_required
 def delete_staff(admin_id):
     if not session.get('is_super_admin'):
-        flash('እርምጃው የተከለከለ ነው!', 'error')
+        flash('Unauthorized action!', 'error')
         return redirect(url_for('admin.dashboard'))
         
     adm = Admin.query.get_or_404(admin_id)
     db.session.delete(adm)
     db.session.commit()
-    flash('ሰራተኛው ተሰርዟል።', 'success')
+    flash('Staff member deleted successfully.', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/withdrawal/<int:tx_id>/approve', methods=['POST'])
@@ -381,9 +377,9 @@ def approve_withdrawal(tx_id):
         tx.status = 'completed'
         tx.completed_at = datetime.utcnow()
         db.session.commit()
-        flash('ጥያቄው ጸድቋል!', 'success')
+        flash('Financial request approved successfully!', 'success')
     else:
-        flash('ትራንዛክሽኑ አልተገኘም ወይም ቀድሞ ተሠርቷል።', 'error')
+        flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/withdrawal/<int:tx_id>/reject', methods=['POST'])
@@ -396,9 +392,9 @@ def reject_withdrawal(tx_id):
         if user and tx.type in ['withdraw', 'withdrawal']:
             user.balance = round(user.balance + abs(tx.amount), 1)
         db.session.commit()
-        flash('ጥያቄው ተሰርዟል ገንዘቡም ተመላሽ ሆኗል!', 'success')
+        flash('Financial request rejected and refunded!', 'success')
     else:
-        flash('ትራንዛክሽኑ አልተገኘም ወይም ቀድሞ ተሠርቷል።', 'error')
+        flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/broadcast', methods=['POST'])
@@ -433,9 +429,9 @@ def broadcast_news():
         with open(config_file, 'w') as f:
             json.dump(config, f, indent=4)
             
-        flash('መልዕክቱ ለሁሉም ተጠቃሚዎች ተሰራጭቷል!', 'success')
+        flash('Broadcast message sent successfully to all users!', 'success')
     else:
-        flash('እባክዎ ጽሑፍ ያስገቡ ወይም ፎቶ ይምረጡ!', 'error')
+        flash('Please enter text or select an image!', 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/api/payment-methods', methods=['GET'])
@@ -453,8 +449,8 @@ def api_payment_methods():
                             active_gateways.append({
                                 'id': item.get('method_type', 'telebirr'),
                                 'name': item.get('name', 'Telebirr'),
-                                'icon': '💳',
-                                'logo_url': item.get('logo_url', ''),  # ሎጎው ለተጠቃሚው Wallet በግልጽ እንዲታይ ይላካል
+                                'icon': item.get('logo_url') or '💳',
+                                'logo_url': item.get('logo_url', ''),
                                 'phone': item.get('account_number'),
                                 'account_name': item.get('account_name')
                             })

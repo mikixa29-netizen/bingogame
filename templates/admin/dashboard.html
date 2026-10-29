@@ -134,7 +134,7 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebarNav">
         <div class="sidebar-header">
-            <h2>🍀 Edil Bingo (እድል)</h2>
+            <h2>🍀 Edil Bingo (Admin)</h2>
         </div>
         <ul class="sidebar-menu">
             <li><button class="sidebar-btn active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</button></li>
@@ -301,7 +301,7 @@
                 </div>
             </section>
 
-            <!-- 7. PAYMENT GATEWAYS (CUSTOM METHOD NAME & FILE UPLOAD) -->
+            <!-- 7. PAYMENT GATEWAYS (ENGLISH LABELS & FILE UPLOAD) -->
             <section id="view-gateways" class="view-section">
                 <div class="section-box">
                     <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Payment Accounts & Logos</h3>
@@ -309,32 +309,32 @@
                     <!-- Add New Payment Account Form -->
                     <form action="{{ url_for('admin.add_gateway') }}" method="POST" enctype="multipart/form-data" style="background: rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                         <div>
-                            <label>የክፍያ ዘዴ ስም (እራስዎ ይጻፉ):</label>
-                            <input type="text" name="method_name" placeholder="ለምሳሌ፦ Telebirr ወይም Dashen Bank" required>
+                            <label>Payment Method Name:</label>
+                            <input type="text" name="method_name" placeholder="e.g. Telebirr, Dashen Bank" required>
                         </div>
                         <div>
-                            <label>የአካውንት ባለቤት ስም (Account Name):</label>
-                            <input type="text" name="account_name" placeholder="የባለቤቱ ስም" required>
+                            <label>Account Holder Name:</label>
+                            <input type="text" name="account_name" placeholder="Account Holder Name" required>
                         </div>
                         <div>
-                            <label>அካውንት ወይም ስልክ ቁጥር (Account Number):</label>
+                            <label>Account Number / Phone:</label>
                             <input type="text" name="account_number" placeholder="0911223344" required>
                         </div>
                         <div>
-                            <label>ሎጎ ፎቶ ይጫኑ (Logo Upload):</label>
+                            <label>Upload Logo Image:</label>
                             <input type="file" name="logo_file" accept="image/*" style="background: #fff; padding: 6px;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; grid-column: 1 / -1;">
                             <input type="checkbox" name="is_active" id="newGatewayActive" checked style="width: auto;">
-                            <label for="newGatewayActive" style="margin:0;">Active ያድርጉ (ለተጠቃሚዎች ወዲያውኑ እንዲታይ)</label>
+                            <label for="newGatewayActive" style="margin:0;">Set Active (Show immediately to users in Wallet)</label>
                         </div>
-                        <button type="submit" class="btn" style="grid-column: 1 / -1;"><i class="fa-solid fa-plus"></i> አዲስ የክፍያ አካውንት መዝግብ</button>
+                        <button type="submit" class="btn" style="grid-column: 1 / -1;"><i class="fa-solid fa-plus"></i> Save Payment Account</button>
                     </form>
 
                     <!-- Accounts List Table -->
                     <table>
                         <thead>
-                            <tr><th>ሎጎ</th><th>የክፍያ ዘዴ ስም</th><th>ባለቤት</th><th>አካውንት / ስልክ</th><th>ሁኔታ</th><th>እርምጃዎች</th></tr>
+                            <tr><th>Logo</th><th>Method Name</th><th>Account Holder</th><th>Number / Phone</th><th>Status</th><th>Actions</th></tr>
                         </thead>
                         <tbody>
                             {% if gateway_config.get('gateways') %}
@@ -362,19 +362,19 @@
                                             <!-- Toggle ON/OFF -->
                                             <form action="{{ url_for('admin.toggle_gateway', account_key=acc_key) }}" method="POST" style="margin:0;">
                                                 <button type="submit" class="btn btn-info" style="padding: 5px 10px;">
-                                                    {% if g_info.get('is_active', False) %} አጥፋ (OFF) {% else %} አብራ (ON) {% endif %}
+                                                    {% if g_info.get('is_active', False) %} Turn OFF {% else %} Turn ON {% endif %}
                                                 </button>
                                             </form>
                                             <!-- Delete Account -->
-                                            <form action="{{ url_for('admin.delete_gateway', account_key=acc_key) }}" method="POST" style="margin:0;" onsubmit="return confirm('ይህንን አካውንት መሰረዝ ይፈልጋሉ?');">
-                                                <button type="submit" class="btn btn-danger" style="padding: 5px 10px;">ሰርዝ</button>
+                                            <form action="{{ url_for('admin.delete_gateway', account_key=acc_key) }}" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete this account?');">
+                                                <button type="submit" class="btn btn-danger" style="padding: 5px 10px;">Delete</button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr><td colspan="6" style="text-align: center; color: #888;">ምንም የክፍያ አካውንት አልተመዘገበም።</td></tr>
+                                <tr><td colspan="6" style="text-align: center; color: #888;">No payment accounts registered yet.</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
