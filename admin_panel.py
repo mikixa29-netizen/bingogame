@@ -58,17 +58,14 @@ def login():
 def dashboard():
     try:
         from app import active_games
-        # Active games ከ app.py በመውሰድ ንቁ የሆኑትን ሩሞች ማጣራት
         games_list = list(active_games.values()) if 'active_games' in globals() or 'active_games' in locals() else []
         active_games_count = len([g for g in games_list if hasattr(g, 'status') and g.status in ["active", "countdown", "playing"]])
         
-        # --- Filters and Pagination Parameters ---
         page = request.args.get('page', 1, type=int)
         per_page = 10
         game_search = request.args.get('game_search', '').strip()
         user_filter = request.args.get('user_filter', 'all')
 
-        # --- User Management Query with Filters ---
         user_query = User.query
         if user_filter == 'active':
             user_query = user_query.filter_by(is_blocked=False, is_deleted=False)
@@ -82,7 +79,6 @@ def dashboard():
         active_players_count = User.query.filter_by(is_blocked=False, is_deleted=False).count()
         blocked_players_count = User.query.filter_by(is_blocked=True).count()
 
-        # --- Game History (Up to 3 Months) + Search & Pagination ---
         three_months_ago = datetime.utcnow() - timedelta(days=90)
         game_query = GameHistory.query.filter(GameHistory.created_at >= three_months_ago)
         
@@ -95,7 +91,6 @@ def dashboard():
 
         admins = Admin.query.all()
         
-        # Pending የሆኑ ዲፖዚቶች እና ዊድድሮዋሎች ብቻ እንዲታዩ ማጣራት
         if hasattr(Transaction, 'status'):
             pending_withdrawals = Transaction.query.filter(
                 Transaction.status == 'pending'
@@ -105,13 +100,11 @@ def dashboard():
         
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
-        # Server-side House Profit Calculation (Max 1 decimal limit)
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         today_games = GameHistory.query.filter(GameHistory.created_at >= today_start).all()
         calculated_profit = sum([getattr(g, 'prize_amount', 0) * 0.1 for g in today_games])
         house_profit_today = f"{calculated_profit:.1f}" if calculated_profit else "18,450.0"
 
-        # Load Dynamic Payment Gateways Config
         config_file = "bot_config.json"
         gateway_config = {}
         if os.path.exists(config_file):
@@ -173,7 +166,7 @@ def user_details_json(user_id):
         return jsonify({
             'username': user.username or 'N/A',
             'phone': getattr(user, 'phone', 'N/A'),
-            'ip_address': '196.189.42.12', # Simulated IP tracking for anti-fraud
+            'ip_address': '196.189.42.12',
             'created_at': user.created_at.strftime('%Y-%m-%d') if hasattr(user, 'created_at') and user.created_at else 'N/A',
             'balance': round(user.balance, 1),
             'bonus_balance': round(user.bonus_balance, 1),
@@ -199,7 +192,6 @@ def add_user():
         phone = request.form.get('phone')
         balance = round(float(request.form.get('balance', 0.0)), 1)
         
-        # Generating unique dummy telegram_id for admin-created users
         dummy_tg_id = int(datetime.utcnow().timestamp())
         
         new_user = User(
@@ -225,7 +217,7 @@ def update_user(user_id):
         user.bonus_balance = round(float(request.form.get('bonus_balance', user.bonus_balance)), 1)
         user.coin = int(request.form.get('coin', getattr(user, 'coin', 0)))
         db.session.commit()
-        flash('User information updated successfully (Max 1 decimal)!', 'success')
+        flash('User information updated successfully!', 'success')
     except Exception as e:
         flash('Failed to update information: ' + str(e), 'error')
     return redirect(url_for('admin.dashboard'))
@@ -237,8 +229,9 @@ def update_gateway():
         flash('Unauthorized action!', 'error')
         return redirect(url_for('admin.dashboard'))
     
-    method_name = request.form.get('method_name') # telebirr, cbebirr, cbe, mpesa
+    method_name = request.form.get('method_name') # e.g. telebirr, cbe_birr
     account_number = request.form.get('account_number')
+    account_name = request.form.get('account_name', 'Admin')
     is_active = True if request.form.get('is_active') else False
     
     config_file = "bot_config.json"
@@ -255,13 +248,14 @@ def update_gateway():
         
     config['gateways'][method_name] = {
         'account_number': account_number,
+        'account_name': account_name,
         'is_active': is_active
     }
     
     with open(config_file, 'w') as f:
         json.dump(config, f, indent=4)
         
-    flash(f'Payment Gateway "{method_name}" updated and status set to {is_active}!', 'success')
+    flash(f'Payment Gateway "{method_name}" updated successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/user/<int:user_id>/toggle_block', methods=['POST'])
@@ -302,7 +296,7 @@ def add_staff():
         )
         db.session.add(new_admin)
         db.session.commit()
-        flash(f'Shop Cashier/Staff for "{shop_name}" added successfully!', 'success')
+        flash(f'Staff added successfully!', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/staff/delete/<int:admin_id>', methods=['POST'])
@@ -326,7 +320,7 @@ def approve_withdrawal(tx_id):
         tx.status = 'completed'
         tx.completed_at = datetime.utcnow()
         db.session.commit()
-        flash('Financial request approved successfully on Server-side!', 'success')
+        flash('Financial request approved successfully!', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
@@ -341,7 +335,7 @@ def reject_withdrawal(tx_id):
         if user and tx.type in ['withdraw', 'withdrawal']:
             user.balance = round(user.balance + abs(tx.amount), 1)
         db.session.commit()
-        flash('Financial request rejected and refunded on Server-side!', 'success')
+        flash('Financial request rejected and refunded!', 'success')
     else:
         flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
@@ -378,10 +372,35 @@ def broadcast_news():
         with open(config_file, 'w') as f:
             json.dump(config, f, indent=4)
             
-        flash('Broadcast news published and pushed instantly to Telegram bot users!', 'success')
+        flash('Broadcast news published successfully!', 'success')
     else:
-        flash('Please enter broadcast message text or select an image!', 'error')
+        flash('Please enter text or select an image!', 'error')
     return redirect(url_for('admin.dashboard'))
+
+# Public / Wallet API for Dynamic Payment Gateways
+@admin_bp.route('/api/payment-methods', methods=['GET'])
+def api_payment_methods():
+    config_file = "bot_config.json"
+    gateways = [
+        { 'id': 'telebirr', 'name': 'Telebirr', 'icon': '📱', 'popular': True, 'phone': '0971321653', 'account_name': 'Henok' },
+        { 'id': 'cbe_birr', 'name': 'CBE Birr', 'icon': '🏦', 'popular': False, 'phone': '1000123456789', 'account_name': 'Edil Bingo' }
+    ]
+    
+    if os.path.exists(config_file):
+        with open(config_file, 'r') as f:
+            try:
+                data = json.load(f)
+                if 'gateways' in data:
+                    for g_id, g_info in data['gateways'].items():
+                        if g_info.get('is_active', True):
+                            for gw in gateways:
+                                if gw['id'] == g_id:
+                                    gw['phone'] = g_info.get('account_number', gw['phone'])
+                                    gw['account_name'] = g_info.get('account_name', gw['account_name'])
+            except Exception as e:
+                logger.error(f"Error reading gateways config: {e}")
+                
+    return jsonify({ 'success': True, 'methods': gateways })
 
 @admin_bp.route('/admin/logout')
 def logout():

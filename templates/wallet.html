@@ -4,91 +4,135 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edil Bingo - Wallet</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body {
-            margin: 0; padding: 12px; background-color: #89C149; color: #FFFEFE;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 80px;
+            background-color: #12100e; color: #ffffff;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 12px; padding-bottom: 90px;
         }
-        .header-title { font-size: 24px; font-weight: bold; margin: 15px 0; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
-        .wallet-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; }
+        .header-title { font-size: 20px; font-weight: 700; margin: 15px 0; text-align: center; color: #fff; }
+        .wallet-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; }
+        
+        /* Balances Section */
         .wallet-card {
-            background: rgba(255, 255, 255, 0.25); border-radius: 16px; padding: 20px; text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            backdrop-filter: blur(5px);
+            background: #1e1b18; border-radius: 16px; padding: 18px; border: 1px solid #2d2925;
         }
         .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .balance-box { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); }
-        .balance-box .label { font-size: 11px; opacity: 0.95; text-transform: uppercase; font-weight: bold; }
-        .balance-box .value { font-size: 18px; font-weight: bold; color: #fdd835; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .balance-box { background: #27231f; padding: 12px; border-radius: 12px; border: 1px solid #36312c; }
+        .balance-box .label { font-size: 11px; opacity: 0.7; text-transform: uppercase; font-weight: 600; }
+        .balance-box .value { font-size: 18px; font-weight: 700; color: #fdd835; margin-top: 4px; }
 
+        /* Action Box & Trigger Buttons */
         .action-section {
-            background: rgba(255, 255, 255, 0.25); border-radius: 16px; padding: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            backdrop-filter: blur(5px);
+            background: #1e1b18; border-radius: 16px; padding: 16px; border: 1px solid #2d2925;
         }
-        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: #fff; }
-        .payment-methods { display: flex; gap: 10px; margin-bottom: 12px; }
-        .pay-method-option {
-            flex: 1; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; font-size: 12px; font-weight: bold;
-            display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.2s;
+        .section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #fff; display: flex; align-items: center; gap: 8px; }
+        
+        .btn-open-modal {
+            background: #1e88e5; color: white; border: none; width: 100%; padding: 14px;
+            border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;
         }
-        .pay-method-option.selected { background: #27ae60; border-color: #fdd835; color: #fff; }
-
-        .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
-        .form-group label { font-size: 12px; font-weight: bold; opacity: 0.95; }
-        .form-control {
-            width: 100%; padding: 12px; border-radius: 10px; border: none;
-            background: #fff; color: #333; font-size: 14px; font-weight: bold;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
+        .btn-open-modal.deposit { background: #1f8a4c; }
         .btn-action {
-            background: #27ae60; color: white; border: none; width: 100%; padding: 14px;
-            border-radius: 22px; font-size: 15px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: 8px; transition: 0.2s;
+            background: #1f8a4c; color: white; border: none; width: 100%; padding: 14px;
+            border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s;
         }
-        .btn-action:active { transform: scale(0.98); }
-        .btn-withdraw { background: #e74c3c; }
-        .btn-transfer { background: #2980b9; }
-        .rules-text { font-size: 11px; opacity: 0.9; margin-top: 8px; line-height: 1.4; color: #fffee0; }
+        .btn-action:active, .btn-open-modal:active { transform: scale(0.98); }
+        .btn-withdraw { background: #d32f2f; }
+        .btn-transfer { background: #0288d1; }
 
+        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: 600; opacity: 0.8; }
+        .form-control {
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #3a342f;
+            background: #27231f; color: #fff; font-size: 14px; outline: none;
+        }
+        .form-control:focus { border-color: #1f8a4c; }
+
+        /* MODAL STYLES (MATCHING BUNA.BET SCREENSHOTS) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); display: none; justify-content: center;
+            align-items: flex-end; z-index: 2000; backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: #1c1815; width: 100%; max-width: 440px; border-top-left-radius: 20px;
+            border-top-right-radius: 20px; padding: 20px; position: relative; border-top: 1px solid #332d27;
+            animation: slideUp 0.25s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .btn-close { background: #2a241f; border: none; color: #aaa; width: 32px; height: 32px; border-radius: 8px; font-size: 18px; cursor: pointer; }
+        
+        .currency-badge {
+            background: #27231f; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between;
+            align-items: center; font-size: 14px; font-weight: 600; margin-bottom: 15px; border: 1px solid #332d27;
+        }
+        .method-card {
+            background: #27231f; border: 1.5px solid #3a342f; border-radius: 12px; padding: 14px;
+            display: flex; align-items: center; justify-content: space-between; cursor: pointer; position: relative;
+        }
+        .method-card.selected { border-color: #f57c00; }
+        .badge-popular {
+            position: absolute; top: 8px; right: 10px; background: #e65100; color: #fff;
+            font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+        }
+
+        /* Step 2 Quick Amounts */
+        .quick-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+        .btn-quick {
+            background: #2a2520; border: 1px solid #3d352e; color: #fff; padding: 10px;
+            border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center;
+        }
+        .btn-quick:active { background: #1f8a4c; }
+
+        /* Step 3 Copy Boxes */
+        .copy-box {
+            background: #25201b; border: 1px solid #362f28; border-radius: 12px; padding: 12px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+        }
+        .copy-info .lbl { font-size: 11px; color: #888; font-weight: 500; }
+        .copy-info .val { font-size: 15px; font-weight: 700; color: #fff; margin-top: 2px; }
+        .btn-copy { background: #332c25; border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+
+        .notice-text { font-size: 11px; color: #888; line-height: 1.4; margin-top: 10px; text-align: center; }
+
+        /* Transaction History */
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .filter-select {
-            background: #ffffff; color: #222; font-weight: bold; border-radius: 8px; padding: 8px; border: none; font-size: 12px;
-        }
-        .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
-        .tx-item {
-            background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px 12px;
-            display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #27ae60;
-        }
-        .tx-item.income { border-left-color: #27ae60; }
-        .tx-item.outcome { border-left-color: #e74c3c; }
-        .tx-type { font-size: 12px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
-        .tx-date { font-size: 10px; opacity: 0.8; margin-top: 2px; }
-        .tx-amount { font-size: 14px; font-weight: bold; color: #fdd835; }
-        .tx-status { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
-        .tx-status.completed { background: #27ae60; color: #fff; }
-        .tx-status.pending { background: #e67e22; color: #fff; }
+        .filter-select { background: #27231f; color: #fff; font-weight: 600; border-radius: 8px; padding: 8px; border: 1px solid #3a342f; font-size: 12px; }
+        .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; }
+        .tx-item { background: #27231f; border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #1f8a4c; }
+        .tx-item.outcome { border-left-color: #d32f2f; }
+        .tx-type { font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .tx-date { font-size: 10px; color: #888; margin-top: 2px; }
+        .tx-amount { font-size: 14px; font-weight: 700; color: #fdd835; }
+        .tx-status { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .tx-status.completed { background: #1f8a4c; color: #fff; }
+        .tx-status.pending { background: #e65100; color: #fff; }
 
+        /* Bottom Nav */
         .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #181512;
             display: flex; justify-content: space-around; padding: 10px 0;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 1000;
-            border-top-left-radius: 16px; border-top-right-radius: 16px;
+            border-top: 1px solid #2a241e; z-index: 1000;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #777; font-size: 11px; font-weight: bold; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #777; font-size: 11px; font-weight: 600; }
         .nav-item span { font-size: 18px; margin-bottom: 2px; }
-        .nav-item.active { color: #27ae60; transform: translateY(-2px); }
+        .nav-item.active { color: #1f8a4c; }
     </style>
 </head>
 <body>
+
     <div class="header-title">💰 Wallet</div>
 
     <div class="wallet-container">
+        <!-- Balances Card -->
         <div class="wallet-card">
-            <div style="font-size: 15px; font-weight: bold;">Account Balances</div>
+            <div style="font-size: 14px; font-weight: 700; color: #aaa;">Account Balances</div>
             <div class="balance-grid">
                 <div class="balance-box">
                     <div class="label">Main Balance</div>
@@ -101,60 +145,36 @@
             </div>
         </div>
 
+        <!-- Deposit Action Button -->
         <div class="action-section">
             <div class="section-title">📥 Deposit Funds</div>
-            <form onsubmit="handleDeposit(event)">
-                <div class="form-group">
-                    <label>Select Payment Method</label>
-                    <div class="payment-methods">
-                        <div class="pay-method-option selected" id="dep-telebirr" onclick="selectDepositMethod('telebirr')">
-                            <span>📱 Telebirr</span>
-                        </div>
-                        <div class="pay-method-option" id="dep-cbe" onclick="selectDepositMethod('cbe_birr')">
-                            <span>🏦 CBE Birr</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Amount (ETB)</label>
-                    <input type="number" id="depositAmount" class="form-control" placeholder="Enter amount (Min 10 Br)" min="10" required>
-                </div>
-                <div class="form-group">
-                    <label>Receipt / Reference Number (Txn ID)</label>
-                    <input type="text" id="depositRef" class="form-control" placeholder="Enter receipt number" required>
-                </div>
-                <button type="submit" class="btn-action">Submit Deposit</button>
-                <div class="rules-text">⚠️ Note: False receipt reference numbers will result in an account suspension.</div>
-            </form>
+            <button class="btn-open-modal deposit" onclick="openDepositModal()">+ Make a Deposit</button>
         </div>
 
+        <!-- Withdraw Section -->
         <div class="action-section">
             <div class="section-title">📤 Withdraw Funds</div>
             <form onsubmit="handleWithdraw(event)">
                 <div class="form-group">
                     <label>Payout Method</label>
-                    <div class="payment-methods">
-                        <div class="pay-method-option selected" id="wd-telebirr" onclick="selectWithdrawMethod('telebirr')">
-                            <span>📱 Telebirr</span>
-                        </div>
-                        <div class="pay-method-option" id="wd-cbe" onclick="selectWithdrawMethod('cbe_birr')">
-                            <span>🏦 CBE Birr</span>
-                        </div>
-                    </div>
+                    <select id="withdrawMethodSelect" class="form-control">
+                        <option value="telebirr">📱 Telebirr</option>
+                        <option value="cbe_birr">🏦 CBE Birr</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Withdrawal Amount (ETB)</label>
-                    <input type="number" id="withdrawAmount" class="form-control" placeholder="Enter amount (Min 50 Br)" min="50" required>
+                    <input type="number" id="withdrawAmount" class="form-control" placeholder="Min 50 Br" min="50" required>
                 </div>
                 <div class="form-group">
                     <label>Phone / Account Number</label>
-                    <input type="text" id="withdrawPhone" class="form-control" placeholder="09xxxxxxxx or Bank account" required>
+                    <input type="text" id="withdrawPhone" class="form-control" placeholder="09xxxxxxxx" required>
                 </div>
                 <button type="submit" class="btn-action btn-withdraw">Request Withdrawal</button>
-                <div class="rules-text">⚠️ Note: Withdrawal requests are manually verified by an administrator.</div>
             </form>
         </div>
 
+        <!-- Transfer Section -->
         <div class="action-section">
             <div class="section-title">💸 Transfer Bonus Balance</div>
             <form onsubmit="handleTransfer(event)">
@@ -167,10 +187,10 @@
                     <input type="number" id="transferAmount" class="form-control" placeholder="Enter amount" min="10" required>
                 </div>
                 <button type="submit" class="btn-action btn-transfer">Transfer Bonus</button>
-                <div class="rules-text">💡 Note: Transfers are deducted from and added to your Bonus Balance.</div>
             </form>
         </div>
 
+        <!-- History Section -->
         <div class="action-section">
             <div class="section-title">🕒 Transaction History</div>
             <div class="filter-grid">
@@ -188,11 +208,96 @@
                 </select>
             </div>
             <div class="tx-list" id="txHistoryContainer">
-                <div style="text-align: center; font-size: 12px; opacity: 0.8; padding: 10px;">Loading history...</div>
+                <div style="text-align: center; font-size: 12px; color: #888; padding: 10px;">Loading history...</div>
             </div>
         </div>
     </div>
 
+    <!-- 3-STEP DEPOSIT MODAL -->
+    <div class="modal-overlay" id="depositModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Deposit</div>
+                <button class="btn-close" onclick="closeDepositModal()">✕</button>
+            </div>
+
+            <!-- STEP 1: CHOOSE PAYMENT METHOD -->
+            <div id="depStep1">
+                <div class="currency-badge">
+                    <span>🇪🇹 Ethiopian birr</span>
+                    <span style="color:#888;">ETB</span>
+                </div>
+                <div style="font-size: 13px; font-weight: 600; color: #aaa; margin-bottom: 10px;">Choose a payment method</div>
+                <div id="paymentMethodsList" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Dynamically Loaded via API or Default -->
+                    <div class="method-card selected" onclick="goToStep2('telebirr', 'Telebirr')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 20px;">📱</span>
+                            <span style="font-weight: 700;">Telebirr</span>
+                        </div>
+                        <span class="badge-popular">Popular</span>
+                    </div>
+                </div>
+                <div class="notice-text">Minimum deposit 20.00 ETB</div>
+            </div>
+
+            <!-- STEP 2: CHOOSE / ENTER AMOUNT -->
+            <div id="depStep2" style="display: none;">
+                <div class="form-group">
+                    <label>Amount (ETB)</label>
+                    <input type="number" id="modalDepositAmount" class="form-control" placeholder="from ETB 20.00" min="20">
+                </div>
+                <div class="quick-amounts">
+                    <button class="btn-quick" onclick="setAmount(20)">ETB 20</button>
+                    <button class="btn-quick" onclick="setAmount(100)">ETB 100</button>
+                    <button class="btn-quick" onclick="setAmount(250)">ETB 250</button>
+                    <button class="btn-quick" onclick="setAmount(500)">ETB 500</button>
+                </div>
+                <div style="font-size: 11px; color: #888; text-align: center; margin: 12px 0;">50% of this deposit stays locked until you win 50% profit</div>
+                <button class="btn-action" onclick="goToStep3()">Deposit</button>
+            </div>
+
+            <!-- STEP 3: COPY DETAILS & ENTER TXN ID -->
+            <div id="depStep3" style="display: none;">
+                <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">
+                    1. Send funds to the following account<br>
+                    2. After payment, enter the transaction ID, or the funds will not be credited
+                </div>
+
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #fff;">1. Copy bank details</div>
+                
+                <div class="copy-box">
+                    <div class="copy-info">
+                        <div class="lbl">Recipient's phone number · <span id="adminAccountName">Henok</span></div>
+                        <div class="val" id="adminAccountPhone">0971321653</div>
+                    </div>
+                    <button class="btn-copy" onclick="copyText('adminAccountPhone')">📋</button>
+                </div>
+
+                <div class="copy-box">
+                    <div class="copy-info">
+                        <div class="lbl">Amount</div>
+                        <div class="val">ETB <span id="confirmAmountDisplay">100</span></div>
+                    </div>
+                    <button class="btn-copy" onclick="copyText('confirmAmountDisplay')">📋</button>
+                </div>
+
+                <div style="font-size: 13px; font-weight: 700; margin: 14px 0 8px 0; color: #fff;">2. Enter payment details</div>
+                <div class="form-group">
+                    <input type="text" id="finalTxnId" class="form-control" placeholder="DXXXXXXXXX" required>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Enter the transaction ID or paste the whole Telebirr SMS</div>
+                </div>
+
+                <div class="notice-text" style="margin-bottom: 12px;">
+                    Use the receiving account shown above. If you already paid, submit your receipt even if the account assignment has since changed.
+                </div>
+
+                <button class="btn-action" onclick="submitFinalDeposit()">Confirm transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <a href="/" class="nav-item"><span>🎮</span> Game</a>
         <a href="/scores" class="nav-item"><span>🏆</span> Scores</a>
@@ -202,38 +307,109 @@
     </div>
 
     <script>
-        let selectedDepositMethod = 'telebirr';
-        let selectedWithdrawMethod = 'telebirr';
+        let selectedMethod = { id: 'telebirr', name: 'Telebirr' };
+        let depositAmountVal = 0;
+        let adminAccounts = []; // Will be loaded dynamically from Admin
 
-        function selectDepositMethod(method) {
-            selectedDepositMethod = method;
-            document.getElementById('dep-telebirr').classList.toggle('selected', method === 'telebirr');
-            document.getElementById('dep-cbe').classList.toggle('selected', method === 'cbe_birr');
+        // Fetch Dynamic Admin Payment Methods & Accounts
+        function loadAdminPaymentAccounts() {
+            fetch('/api/payment-methods')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.methods.length > 0) {
+                        adminAccounts = data.methods;
+                        renderPaymentMethods();
+                    }
+                }).catch(e => console.log('Using default payment accounts'));
         }
 
-        function selectWithdrawMethod(method) {
-            selectedWithdrawMethod = method;
-            document.getElementById('wd-telebirr').classList.toggle('selected', method === 'telebirr');
-            document.getElementById('wd-cbe').classList.toggle('selected', method === 'cbe_birr');
-        }
-
-        function handleDeposit(event) {
-            event.preventDefault();
-            const amount = document.getElementById('depositAmount').value;
-            const ref = document.getElementById('depositRef').value;
+        function renderPaymentMethods() {
+            const container = document.getElementById('paymentMethodsList');
+            if(!adminAccounts.length) return;
             
+            container.innerHTML = adminAccounts.map((acc, index) => `
+                <div class="method-card ${index === 0 ? 'selected' : ''}" onclick="goToStep2('${acc.id}', '${acc.name}')">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px;">${acc.icon || '📱'}</span>
+                        <span style="font-weight: 700;">${acc.name}</span>
+                    </div>
+                    ${acc.popular ? '<span class="badge-popular">Popular</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function openDepositModal() {
+            document.getElementById('depositModal').classList.add('active');
+            showStep(1);
+        }
+
+        function closeDepositModal() {
+            document.getElementById('depositModal').classList.remove('active');
+        }
+
+        function showStep(stepNum) {
+            document.getElementById('depStep1').style.display = stepNum === 1 ? 'block' : 'none';
+            document.getElementById('depStep2').style.display = stepNum === 2 ? 'block' : 'none';
+            document.getElementById('depStep3').style.display = stepNum === 3 ? 'block' : 'none';
+        }
+
+        function goToStep2(methodId, methodName) {
+            selectedMethod = { id: methodId, name: methodName };
+            document.getElementById('modalTitle').innerText = methodName;
+            showStep(2);
+        }
+
+        function setAmount(amt) {
+            document.getElementById('modalDepositAmount').value = amt;
+        }
+
+        function goToStep3() {
+            const amt = document.getElementById('modalDepositAmount').value;
+            if (!amt || amt < 20) {
+                alert('⚠️ Minimum deposit amount is 20 ETB');
+                return;
+            }
+            depositAmountVal = amt;
+            document.getElementById('confirmAmountDisplay').innerText = amt;
+
+            // Find matching admin account info if available
+            const accInfo = adminAccounts.find(a => a.id === selectedMethod.id) || { name: 'Henok', phone: '0971321653' };
+            document.getElementById('adminAccountName').innerText = accInfo.name || 'Admin';
+            document.getElementById('adminAccountPhone').innerText = accInfo.phone || '0971321653';
+
+            showStep(3);
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text);
+            alert('📋 Copied: ' + text);
+        }
+
+        function submitFinalDeposit() {
+            const txnId = document.getElementById('finalTxnId').value.trim();
+            if (!txnId) {
+                alert('⚠️ Please enter the Transaction ID / Reference Number');
+                return;
+            }
+
             fetch('/deposit', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ amount: amount, payment_method: selectedDepositMethod, transaction_id: ref })
+                body: JSON.stringify({
+                    amount: depositAmountVal,
+                    payment_method: selectedMethod.id,
+                    transaction_id: txnId
+                })
             })
             .then(res => res.json())
             .then(data => {
-                if(data.success) { 
-                    alert('✅ Deposit submitted successfully!'); 
-                    location.reload(); 
-                } else { 
-                    alert('⚠️ ' + (data.error || 'Deposit failed.')); 
+                if (data.success) {
+                    alert('✅ Deposit request submitted successfully!');
+                    closeDepositModal();
+                    location.reload();
+                } else {
+                    alert('⚠️ ' + (data.error || 'Submission failed'));
                 }
             });
         }
@@ -242,41 +418,34 @@
             event.preventDefault();
             const amount = document.getElementById('withdrawAmount').value;
             const phone = document.getElementById('withdrawPhone').value;
-            
+            const method = document.getElementById('withdrawMethodSelect').value;
+
             fetch('/withdraw', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ amount: amount, payment_method: selectedWithdrawMethod, withdrawal_phone: phone })
+                body: JSON.stringify({ amount: amount, payment_method: method, withdrawal_phone: phone })
             })
             .then(res => res.json())
             .then(data => {
-                if(data.success) { 
-                    alert('✅ Withdrawal request submitted!'); 
-                    location.reload(); 
-                } else { 
-                    alert('⚠️ ' + (data.error || 'Withdrawal request failed.')); 
-                }
+                if(data.success) { alert('✅ Withdrawal request submitted!'); location.reload(); }
+                else { alert('⚠️ ' + (data.error || 'Request failed.')); }
             });
         }
 
         function handleTransfer(event) {
             event.preventDefault();
-            const receiverPhone = document.getElementById('transferReceiverPhone').value;
+            const phone = document.getElementById('transferReceiverPhone').value;
             const amount = document.getElementById('transferAmount').value;
-            
+
             fetch('/transfer', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: receiverPhone, amount: amount })
+                body: JSON.stringify({ phone: phone, amount: amount })
             })
             .then(res => res.json())
             .then(data => {
-                if(data.success) { 
-                    alert('✅ Bonus balance transferred successfully!'); 
-                    location.reload(); 
-                } else { 
-                    alert('⚠️ ' + (data.error || 'Transfer failed.')); 
-                }
+                if(data.success) { alert('✅ Transferred successfully!'); location.reload(); }
+                else { alert('⚠️ ' + (data.error || 'Transfer failed.')); }
             });
         }
 
@@ -290,23 +459,18 @@
             .then(data => {
                 const list = data.transactions || [];
                 container.innerHTML = '';
-
                 if (list.length === 0) {
-                    container.innerHTML = `<div style="text-align: center; font-size: 12px; opacity: 0.8; padding: 15px;">No transactions found.</div>`;
+                    container.innerHTML = `<div style="text-align: center; font-size: 12px; color: #888; padding: 15px;">No transactions found.</div>`;
                     return;
                 }
-
                 list.forEach(tx => {
                     const isIncome = (tx.type === 'deposit' || tx.type === 'win' || tx.type === 'transfer_in');
-                    const arrowIcon = isIncome ? '⬇️🟢' : '⬆️🔴';
                     const cssClass = isIncome ? 'income' : 'outcome';
-                    const displayType = tx.type === 'transfer_in' ? 'Received Transfer' : (tx.type === 'transfer_out' ? 'Sent Transfer' : tx.type);
-
                     const div = document.createElement('div');
                     div.className = `tx-item ${cssClass}`;
                     div.innerHTML = `
                         <div>
-                            <div class="tx-type">${arrowIcon} ${displayType} (${tx.method})</div>
+                            <div class="tx-type">${isIncome ? '⬇️' : '⬆️'} ${tx.type} (${tx.method})</div>
                             <div class="tx-date">${tx.date}</div>
                         </div>
                         <div style="text-align: right;">
@@ -317,13 +481,15 @@
                     container.appendChild(div);
                 });
             })
-            .catch(err => {
-                console.error(err);
+            .catch(() => {
                 container.innerHTML = `<div style="text-align: center; font-size: 12px; color: #ffeb3b; padding: 10px;">Failed to load history.</div>`;
             });
         }
 
-        document.addEventListener('DOMContentLoaded', loadTransactionHistory);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTransactionHistory();
+            loadAdminPaymentAccounts();
+        });
     </script>
 </body>
 </html>
