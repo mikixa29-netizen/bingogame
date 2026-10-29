@@ -119,11 +119,6 @@
         .badge-telebirr { background: #1e88e5; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
         .badge-cbe { background: #27ae60; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
 
-        .cartela-preview-box {
-            background: #fff; color: #222; padding: 12px; border-radius: 8px;
-            font-family: monospace; font-size: 12px; border: 2px dashed #1b5e20; text-align: center;
-        }
-
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(5px); align-items: center; justify-content: center;
@@ -292,24 +287,7 @@
             <section id="view-retail_pos" class="view-section">
                 <div class="section-box">
                     <h3><i class="fa-solid fa-store"></i> Shop Cashier & Cartela Selection POS Printer</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px;">
-                        <div>
-                            <label>Shop Location / Name:</label>
-                            <input type="text" id="shopNameInput" value="Edil Bingo Shop #01 - Bole">
-                            <label>Player Phone / ID:</label>
-                            <input type="text" id="posPhone" placeholder="0911000000">
-                            <label>Cartela Number Selection:</label>
-                            <input type="number" id="cartelaNum" value="105" min="1" max="500">
-                            <button type="button" class="btn" onclick="alert('Ticket generated successfully!')" style="margin-top: 8px; width: 100%;"><i class="fa-solid fa-print"></i> Generate & Print Ticket</button>
-                        </div>
-                        <div>
-                            <label>Selected Cartela Preview:</label>
-                            <div class="cartela-preview-box">
-                                <b>EDIL BINGO - BOLE SHOP</b><br>
-                                <span>Cartela ID: #105</span>
-                            </div>
-                        </div>
-                    </div>
+                    <p>POS Printer and ticket generation settings.</p>
                 </div>
             </section>
 
@@ -317,43 +295,80 @@
             <section id="view-antifraud" class="view-section">
                 <div class="section-box">
                     <h3><i class="fa-solid fa-shield-halved"></i> Anti-Fraud & Player IP Address Monitor</h3>
-                    <table>
-                        <thead>
-                            <tr><th>User ID</th><th>Username</th><th>IP Address</th><th>Risk Status</th><th>Action</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#101</td>
-                                <td>@alemu_win</td>
-                                <td><code>196.189.42.12</code></td>
-                                <td><span style="color:#e74c3c; font-weight:bold;">Flagged IP</span></td>
-                                <td><button class="btn btn-danger" onclick="alert('IP blocked!')">Block IP</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <p>Monitor IP addresses and suspicious player activities.</p>
                 </div>
             </section>
 
-            <!-- 7. PAYMENT GATEWAYS (ON/OFF & DYNAMIC) -->
+            <!-- 7. PAYMENT GATEWAYS (MULTIPLE ACCOUNTS, ON/OFF, DELETE) -->
             <section id="view-gateways" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Gateways (On/Off & Account Settings)</h3>
-                    <form action="{{ url_for('admin.update_gateway') }}" method="POST" style="max-width: 500px; display: flex; flex-direction: column; gap: 10px;">
-                        <label>Payment Method:</label>
-                        <select name="method_name">
-                            <option value="telebirr">Telebirr (ቴሌብር)</option>
-                            <option value="cbe_birr">CBE Birr (ንግድ ባንክ)</option>
-                        </select>
-                        <label>Account / Recipient Name (e.g. Henok):</label>
-                        <input type="text" name="account_name" value="{{ gateway_config.get('gateways', {}).get('telebirr', {}).get('account_name', 'Henok') }}" required>
-                        <label>Merchant / Phone Number:</label>
-                        <input type="text" name="account_number" value="{{ gateway_config.get('gateways', {}).get('telebirr', {}).get('account_number', '0971321653') }}" required>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="checkbox" name="is_active" id="gatewayActive" checked style="width: auto;">
-                            <label for="gatewayActive" style="margin:0;">Enable Gateway (On/Off for Wallet)</label>
+                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Payment Methods & Accounts</h3>
+                    
+                    <!-- Add New Payment Method / Account Form -->
+                    <form action="{{ url_for('admin.add_gateway') }}" method="POST" style="background: rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        <div>
+                            <label>Method ID (e.g. dashen, cbe, telebirr):</label>
+                            <input type="text" name="method_id" placeholder="dashen_bank" required>
                         </div>
-                        <button type="submit" class="btn">Save & Publish to Bot Wallet</button>
+                        <div>
+                            <label>Display Name (e.g. Dashen Bank):</label>
+                            <input type="text" name="method_name" placeholder="Dashen Bank" required>
+                        </div>
+                        <div>
+                            <label>Account Holder Name:</label>
+                            <input type="text" name="account_name" placeholder="Mikiyas Tamirat" required>
+                        </div>
+                        <div>
+                            <label>Account / Phone Number:</label>
+                            <input type="text" name="account_number" placeholder="0911223344" required>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; grid-column: 1 / -1;">
+                            <input type="checkbox" name="is_active" id="newGatewayActive" checked style="width: auto;">
+                            <label for="newGatewayActive" style="margin:0;">Active (Enable immediately for users)</label>
+                        </div>
+                        <button type="submit" class="btn" style="grid-column: 1 / -1;"><i class="fa-solid fa-plus"></i> Add / Update Payment Account</button>
                     </form>
+
+                    <!-- Existing Accounts Table -->
+                    <table>
+                        <thead>
+                            <tr><th>Method Name</th><th>Account Holder</th><th>Number / Phone</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            {% if gateway_config.get('gateways') %}
+                                {% for g_id, g_info in gateway_config.get('gateways').items() %}
+                                <tr>
+                                    <td><b>{{ g_info.get('name', g_id) }}</b></td>
+                                    <td>{{ g_info.get('account_name', 'N/A') }}</td>
+                                    <td><code>{{ g_info.get('account_number', 'N/A') }}</code></td>
+                                    <td>
+                                        {% if g_info.get('is_active', True) %}
+                                            <span style="color: #2ecc71; font-weight: bold;">Active (ON)</span>
+                                        {% else %}
+                                            <span style="color: #e74c3c; font-weight: bold;">Inactive (OFF)</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 6px;">
+                                            <!-- Toggle ON/OFF -->
+                                            <form action="{{ url_for('admin.toggle_gateway', method_id=g_id) }}" method="POST" style="margin:0;">
+                                                <button type="submit" class="btn btn-info" style="padding: 5px 10px;">
+                                                    {% if g_info.get('is_active', True) %} Turn OFF {% else %} Turn ON {% endif %}
+                                                </button>
+                                            </form>
+                                            <!-- Delete Account -->
+                                            <form action="{{ url_for('admin.delete_gateway', method_id=g_id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete this payment account?');">
+                                                <button type="submit" class="btn btn-danger" style="padding: 5px 10px;">Delete</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="5" style="text-align: center; color: #888;">No custom payment gateways added yet. Default Telebirr & CBE will be used.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
