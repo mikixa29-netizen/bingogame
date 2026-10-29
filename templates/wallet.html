@@ -84,7 +84,7 @@
         .modal-content {
             background: #122208; width: 100%; max-width: 440px; border-top-left-radius: 24px;
             border-top-right-radius: 24px; padding: 24px; position: relative; border-top: 1px solid var(--accent-yellow);
-            animation: slideUp 0.25s ease-out; box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+            animation: slideUp 0.25s ease-out; box-shadow: 0 -10px 40px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
@@ -180,15 +180,14 @@
             <button class="btn-open-modal" onclick="openDepositModal()"><i class="fa-solid fa-plus-circle"></i> Make a Deposit</button>
         </div>
 
-        <!-- Withdraw Section -->
+        <!-- Withdraw Section (Dynamic Admin Gateways Integrated) -->
         <div class="action-section">
             <div class="section-title"><i class="fa-solid fa-circle-arrow-up"></i> Withdraw Funds</div>
             <form onsubmit="handleWithdraw(event)">
                 <div class="form-group">
-                    <label>Payout Method</label>
-                    <select id="withdrawMethodSelect" class="form-control">
-                        <option value="telebirr">📱 Telebirr</option>
-                        <option value="cbe_birr">🏦 CBE Birr</option>
+                    <label>Payout Method (Admin Active Gateways)</label>
+                    <select id="withdrawMethodSelect" class="form-control" required>
+                        <option value="">Loading active methods...</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -196,7 +195,7 @@
                     <input type="number" id="withdrawAmount" class="form-control" placeholder="Min 50 Br" min="50" required>
                 </div>
                 <div class="form-group">
-                    <label>Phone / Account Number</label>
+                    <label>Your Receiving Account / Phone Number</label>
                     <input type="text" id="withdrawPhone" class="form-control" placeholder="09xxxxxxxx" required>
                 </div>
                 <button type="submit" class="btn-action btn-withdraw">Request Withdrawal</button>
@@ -340,6 +339,7 @@
                     if (data.success && data.methods.length > 0) {
                         adminAccounts = data.methods;
                         renderPaymentMethods();
+                        renderWithdrawalDropdown();
                     }
                 }).catch(e => console.log('Using default payment accounts'));
         }
@@ -363,6 +363,16 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // Render Withdrawal Dropdown using Admin Active Gateways
+        function renderWithdrawalDropdown() {
+            const selectEl = document.getElementById('withdrawMethodSelect');
+            if (!adminAccounts.length) return;
+
+            selectEl.innerHTML = adminAccounts.map(acc => `
+                <option value="${acc.name}">${acc.name} (Active Gateway)</option>
+            `).join('');
         }
 
         function openDepositModal() {
@@ -453,7 +463,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                if(data.success) { alert('✅ Withdrawal request submitted!'); location.reload(); }
+                if(data.success) { alert('✅ Withdrawal request submitted successfully!'); location.reload(); }
                 else { alert('⚠️ ' + (data.error || 'Request failed.')); }
             });
         }

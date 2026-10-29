@@ -116,8 +116,7 @@
         .btn-primary { background: #1e88e5; }
         .btn-info { background: #2980b9; }
 
-        .badge-telebirr { background: #1e88e5; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
-        .badge-cbe { background: #27ae60; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-method { background: #1e88e5; color: #fff; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
 
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
@@ -213,7 +212,7 @@
                     <h3><i class="fa-solid fa-money-bill-transfer"></i> Pending Financial Requests</h3>
                     <table>
                         <thead>
-                            <tr><th>Tx ID</th><th>User ID</th><th>Type</th><th>Amount</th><th>Method & Logo</th><th>Status</th><th>Action</th></tr>
+                            <tr><th>Tx ID</th><th>User ID</th><th>Type</th><th>Amount</th><th>Method & Destination Account</th><th>Status</th><th>Action</th></tr>
                         </thead>
                         <tbody>
                             {% for tx in pending_withdrawals %}
@@ -223,9 +222,8 @@
                                 <td><b>{{ tx.type | capitalize }}</b></td>
                                 <td>{{ tx.amount | abs }} ETB</td>
                                 <td>
-                                    {% set pm = tx.payment_method | default('telebirr') | lower %}
-                                    {% if 'telebirr' in pm %}<span class="badge-telebirr"><i class="fa-solid fa-mobile-screen"></i> Telebirr</span>
-                                    {% else %}<span class="badge-cbe"><i class="fa-solid fa-building-columns"></i> CBE Birr</span>{% endif %}
+                                    <span class="badge-method"><i class="fa-solid fa-credit-card"></i> {{ tx.payment_method | default('N/A') }}</span><br>
+                                    <small style="color: #333; font-weight: bold;">Acc/Phone: {{ tx.withdrawal_phone or tx.phone or tx.account_number or 'N/A' }}</small>
                                 </td>
                                 <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status }}</span></td>
                                 <td>
@@ -301,10 +299,10 @@
                 </div>
             </section>
 
-            <!-- 7. PAYMENT GATEWAYS (ENGLISH LABELS & FILE UPLOAD) -->
+            <!-- 7. PAYMENT GATEWAYS -->
             <section id="view-gateways" class="view-section">
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit Payment Accounts & Logos</h3>
+                    <h3><i class="fa-solid fa-credit-card"></i> Manage Deposit & Withdrawal Payment Accounts & Logos</h3>
                     
                     <!-- Add New Payment Account Form -->
                     <form action="{{ url_for('admin.add_gateway') }}" method="POST" enctype="multipart/form-data" style="background: rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
@@ -326,7 +324,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; grid-column: 1 / -1;">
                             <input type="checkbox" name="is_active" id="newGatewayActive" checked style="width: auto;">
-                            <label for="newGatewayActive" style="margin:0;">Set Active (Show immediately to users in Wallet)</label>
+                            <label for="newGatewayActive" style="margin:0;">Set Active (Show immediately to users in Wallet for Deposit & Withdrawal)</label>
                         </div>
                         <button type="submit" class="btn" style="grid-column: 1 / -1;"><i class="fa-solid fa-plus"></i> Save Payment Account</button>
                     </form>

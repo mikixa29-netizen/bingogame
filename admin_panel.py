@@ -90,6 +90,7 @@ def dashboard():
 
         admins = Admin.query.all()
         
+        # Pending financial requests (including withdrawals with user payment method & destination)
         pending_withdrawals = Transaction.query.filter_by(status='pending').all()
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
