@@ -50,7 +50,7 @@
         }
         .form-control:focus { border-color: #1f8a4c; }
 
-        /* MODAL STYLES (MATCHING BUNA.BET SCREENSHOTS) */
+        /* MODAL STYLES */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.75); display: none; justify-content: center;
@@ -81,6 +81,7 @@
             position: absolute; top: 8px; right: 10px; background: #e65100; color: #fff;
             font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
         }
+        .gateway-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 6px; background: #fff; padding: 2px; }
 
         /* Step 2 Quick Amounts */
         .quick-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
@@ -229,14 +230,7 @@
                 </div>
                 <div style="font-size: 13px; font-weight: 600; color: #aaa; margin-bottom: 10px;">Choose a payment method</div>
                 <div id="paymentMethodsList" style="display: flex; flex-direction: column; gap: 10px;">
-                    <!-- Dynamically Loaded via API or Default -->
-                    <div class="method-card selected" onclick="goToStep2('telebirr', 'Telebirr')">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 20px;">📱</span>
-                            <span style="font-weight: 700;">Telebirr</span>
-                        </div>
-                        <span class="badge-popular">Popular</span>
-                    </div>
+                    <!-- Dynamically Loaded via API -->
                 </div>
                 <div class="notice-text">Minimum deposit 20.00 ETB</div>
             </div>
@@ -268,7 +262,7 @@
                 
                 <div class="copy-box">
                     <div class="copy-info">
-                        <div class="lbl">Recipient's phone number · <span id="adminAccountName">Henok</span></div>
+                        <div class="lbl">Recipient's account name · <span id="adminAccountName">Henok</span></div>
                         <div class="val" id="adminAccountPhone">0971321653</div>
                     </div>
                     <button class="btn-copy" onclick="copyText('adminAccountPhone')">📋</button>
@@ -285,7 +279,7 @@
                 <div style="font-size: 13px; font-weight: 700; margin: 14px 0 8px 0; color: #fff;">2. Enter payment details</div>
                 <div class="form-group">
                     <input type="text" id="finalTxnId" class="form-control" placeholder="DXXXXXXXXX" required>
-                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Enter the transaction ID or paste the whole Telebirr SMS</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Enter the transaction ID or paste the whole payment SMS</div>
                 </div>
 
                 <div class="notice-text" style="margin-bottom: 12px;">
@@ -309,9 +303,9 @@
     <script>
         let selectedMethod = { id: 'telebirr', name: 'Telebirr' };
         let depositAmountVal = 0;
-        let adminAccounts = []; // Will be loaded dynamically from Admin
+        let adminAccounts = [];
 
-        // Fetch Dynamic Admin Payment Methods & Accounts
+        // Fetch Dynamic Admin Payment Methods & Accounts with Logo Support
         function loadAdminPaymentAccounts() {
             fetch('/api/payment-methods')
                 .then(res => res.json())
@@ -327,15 +321,22 @@
             const container = document.getElementById('paymentMethodsList');
             if(!adminAccounts.length) return;
             
-            container.innerHTML = adminAccounts.map((acc, index) => `
-                <div class="method-card ${index === 0 ? 'selected' : ''}" onclick="goToStep2('${acc.id}', '${acc.name}')">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 20px;">${acc.icon || '📱'}</span>
-                        <span style="font-weight: 700;">${acc.name}</span>
+            container.innerHTML = adminAccounts.map((acc, index) => {
+                // Fixed: Render uploaded image logo correctly instead of text URL
+                let iconHtml = acc.logo_url 
+                    ? `<img src="${acc.logo_url}" class="gateway-logo" alt="${acc.name}">` 
+                    : `<span style="font-size: 20px;">${acc.icon || '📱'}</span>`;
+
+                return `
+                    <div class="method-card ${index === 0 ? 'selected' : ''}" onclick="goToStep2('${acc.id}', '${acc.name}')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            ${iconHtml}
+                            <span style="font-weight: 700;">${acc.name}</span>
+                        </div>
+                        ${acc.popular ? '<span class="badge-popular">Popular</span>' : ''}
                     </div>
-                    ${acc.popular ? '<span class="badge-popular">Popular</span>' : ''}
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function openDepositModal() {
@@ -373,8 +374,8 @@
             document.getElementById('confirmAmountDisplay').innerText = amt;
 
             // Find matching admin account info if available
-            const accInfo = adminAccounts.find(a => a.id === selectedMethod.id) || { name: 'Henok', phone: '0971321653' };
-            document.getElementById('adminAccountName').innerText = accInfo.name || 'Admin';
+            const accInfo = adminAccounts.find(a => a.id === selectedMethod.id) || { account_name: 'Henok', phone: '0971321653' };
+            document.getElementById('adminAccountName').innerText = accInfo.account_name || accInfo.name || 'Admin';
             document.getElementById('adminAccountPhone').innerText = accInfo.phone || '0971321653';
 
             showStep(3);
