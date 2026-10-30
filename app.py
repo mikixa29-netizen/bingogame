@@ -584,7 +584,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Automatic Polling/Retry for Queued/Pending ---
+# --- 🚀 verify.et API Integration with Safe List/Dict Parsing ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -647,14 +647,20 @@ def verify_deposit():
         result = response.json()
         logger.info(f"verify.et initial response received: {result}")
 
-        # Handle Queued / Pending status with polling (up to 2 retries)
         status = result.get('status')
-        data_block = result.get('data', {})
-        verification_block = data_block.get('verification', {})
         
-        # If verification is queued/pending, let's poll the statusUrl if available
-        if status in ['pending', 'queued'] or verification_block.get('status') in ['pending', 'queued']:
-            status_url = data_block.get('statusUrl')
+        # Safe extraction for data_block (handling list vs dict)
+        data_block = result.get('data', {})
+        if isinstance(data_block, list):
+            data_block = data_block[0] if data_block else {}
+            
+        verification_block = data_block.get('verification', {}) if isinstance(data_block, dict) else {}
+        if isinstance(verification_block, list):
+            verification_block = verification_block[0] if verification_block else {}
+        
+        # If verification is queued/pending, poll statusUrl
+        if status in ['pending', 'queued'] or (isinstance(verification_block, dict) and verification_block.get('status') in ['pending', 'queued']):
+            status_url = data_block.get('statusUrl') if isinstance(data_block, dict) else None
             if status_url:
                 if not status_url.startswith('http'):
                     status_url = f"{VERIFY_ET_BASE_URL}{status_url}"
@@ -666,19 +672,53 @@ def verify_deposit():
                     poll_result = poll_resp.json()
                     logger.info(f"verify.et poll response attempt {attempt+1}: {poll_result}")
                     
-                    if poll_result.get('status') == 'verified' or poll_result.get('data', {}).get('verification', {}).get('status') == 'verified' or poll_result.get('verified') == True:
+                    poll_data = poll_result.get('data', {})
+                    if isinstance(poll_data, list):
+                        poll_data = poll_data[0] if poll_data else {}
+                    poll_ver = poll_data.get('verification', {}) if isinstance(poll_data, dict) else {}
+                    if isinstance(poll_ver, list):
+                        poll_ver = poll_ver[0] if poll_ver else {}
+                        
+                    is_poll_verified = (
+                        poll_result.get('status') == 'verified' or 
+                        (isinstance(poll_ver, dict) and poll_ver.get('status') == 'verified') or 
+                        poll_result.get('verified') == True
+                    )
+                    if is_poll_verified:
                         result = poll_result
                         status = 'verified'
                         break
 
-        # Final evaluation of status
-        if status == 'verified' or result.get('verified') == True or result.get('data', {}).get('verification', {}).get('status') == 'verified':
-            tx_data = result.get('data', {})
-            if 'verification' in tx_data:
-                tx_data = tx_data.get('verification', {})
-                
-            verified_amount = float(tx_data.get('amount', user_entered_amount))
-            verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount', ''))
+        # Final evaluation and safe parsing of transaction data
+        final_data = result.get('data', {})
+        if isinstance(final_data, list):
+            final_data = final_data[0] if final_data else {}
+            
+        tx_data = final_data
+        if isinstance(final_data, dict):
+            if 'verification' in final_data:
+                v_content = final_data.get('verification')
+                if isinstance(v_content, list):
+                    v_content = v_content[0] if v_content else {}
+                if isinstance(v_content, dict) and 'result' in v_content:
+                    tx_data = v_content.get('result', {})
+                else:
+                    tx_data = v_content
+
+        if isinstance(tx_data, list):
+            tx_data = tx_data[0] if tx_data else {}
+
+        is_verified = (
+            status == 'verified' or 
+            result.get('verified') == True or 
+            (isinstance(final_data, dict) and final_data.get('verification', {}).get('status') == 'verified') or
+            (isinstance(final_data, dict) and final_data.get('status') == 'success') or
+            (isinstance(tx_data, dict) and tx_data.get('status') == 'success')
+        )
+
+        if is_verified:
+            verified_amount = float(tx_data.get('amount', user_entered_amount) or user_entered_amount)
+            verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount') or tx_data.get('receiverAccountNo') or '')
 
             # Strict Verification: Check Account and Amount Mismatch
             is_account_mismatch = expected_admin_account and verified_receiver and (verified_receiver != expected_admin_account)
