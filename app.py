@@ -483,7 +483,6 @@ def game_status_api(game_id):
                         p_user.balance += prize_per_winner
                     p_user.games_won = (p_user.games_won or 0) + 1
 
-                # Corrected syntax error with proper parentheses
                 player_card_info = next((c for c in game.players.get(p_tid, []) if c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
 
                 try:
@@ -585,7 +584,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Strict Amount & Account Matching ---
+# --- 🚀 verify.et API Integration with Strict Receiver & Amount Matching ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -721,11 +720,11 @@ def verify_deposit():
             verified_amount = float(tx_data.get('amount', user_entered_amount) or user_entered_amount)
             verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount') or tx_data.get('receiverAccountNo') or '')
 
-            # Strict Verification: Check Account and Exact Amount Match
-            is_account_mismatch = expected_admin_account and verified_receiver and (verified_receiver != expected_admin_account)
-            is_amount_mismatch = (verified_amount != user_entered_amount) # Strict exact match check!
+            # 🛑 Strict Security Checks
+            is_amount_mismatch = (verified_amount != user_entered_amount)
+            is_wrong_receiver = expected_admin_account and verified_receiver and (verified_receiver != expected_admin_account)
 
-            if is_account_mismatch or is_amount_mismatch:
+            if is_amount_mismatch or is_wrong_receiver:
                 pending_tx = Transaction(
                     user_id=user.id,
                     type='deposit',
@@ -733,17 +732,17 @@ def verify_deposit():
                     payment_method=valid_gateway.name if valid_gateway else bank,
                     transaction_id=reference,
                     status='pending',
-                    admin_note=f'Mismatch detected. Entered: {user_entered_amount}, Receipt: {verified_amount}'
+                    admin_note=f'Security Mismatch. Receiver: {verified_receiver}, Expected: {expected_admin_account}, Amount Entered: {user_entered_amount}, Receipt: {verified_amount}'
                 )
                 db.session.add(pending_tx)
                 db.session.commit()
                 return jsonify({
                     'success': False,
                     'status': 'mismatch',
-                    'message': f'❌ ያስገቡት መጠን ({user_entered_amount} ብር) ከደረሰኙ ትክክለኛ መጠን ({verified_amount} ብር) ጋር አይመሳሰልም!'
+                    'message': '❌ ይህ ሪሲፕት ለሌላ ሰው የተላከ ወይም የተሳሳተ መጠን ያለው ነው! ሂሳብ ሊጫን አልቻለም።'
                 })
 
-            # Successful Automatic Crediting (Only if exact match)
+            # Successful Automatic Crediting (Only if exact match & correct receiver)
             user.balance = round(user.balance + verified_amount, 2)
             new_tx = Transaction(
                 user_id=user.id,
