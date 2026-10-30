@@ -130,7 +130,6 @@
         
         .gateway-logo-preview { width: 32px; height: 32px; object-fit: contain; border-radius: 6px; background: #f0f0f0; padding: 2px; }
 
-        /* የሞባይል ሜኑ መክፈቻ ቁልፍ (በነባሪ በዴስክቶፕ ተደብቋል) */
         .mobile-menu-toggle {
             display: none;
             background: var(--header-bg);
@@ -144,21 +143,11 @@
             justify-content: center;
         }
 
-        /* የሞባይል ስክሪን ማስተካከያ (Responsive Design for Mobile) */
         @media (max-width: 768px) {
-            .sidebar {
-                left: -260px; /* በስልክ ስክሪን ሳይድባሩ ተደብቆ ይቆያል */
-            }
-            .sidebar.mobile-open {
-                left: 0; /* ሜኑ ሲከፈት ወደ ውስጥ ይገባል */
-            }
-            .main-wrapper {
-                margin-left: 0 !important;
-                width: 100% !important;
-            }
-            .mobile-menu-toggle {
-                display: inline-flex !important;
-            }
+            .sidebar { left: -260px; }
+            .sidebar.mobile-open { left: 0; }
+            .main-wrapper { margin-left: 0 !important; width: 100% !important; }
+            .mobile-menu-toggle { display: inline-flex !important; }
         }
     </style>
 </head>
@@ -187,7 +176,6 @@
     <div class="main-wrapper">
         <header class="top-bar">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <!-- የሞባይል ሜኑ መክፈቻ ሃምበርገር ቁልፍ -->
                 <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
                 <div class="status-badge"><span class="status-dot"></span> System Online & Connected</div>
             </div>
@@ -221,7 +209,7 @@
                     </div>
                     <div class="stat-card">
                         <h3>Pending Requests</h3>
-                        <p><strong>{{ pending_withdrawals|length }}</strong></p>
+                        <p><strong>{{ (pending_withdrawals|length) + (pending_deposits|default([])|length) }}</strong></p>
                     </div>
                     <div class="stat-card">
                         <h3>House Profit Today</h3>
@@ -245,21 +233,58 @@
                 </div>
             </section>
 
-            <!-- 3. FINANCIAL APPROVALS -->
+            <!-- 3. FINANCIAL APPROVALS (PENDING DEPOSITS & WITHDRAWALS WITH EXACT TIMESTAMP) -->
             <section id="view-financials" class="view-section">
+                
+                <!-- Pending Deposits Approval Box -->
                 <div class="section-box">
-                    <h3><i class="fa-solid fa-money-bill-transfer"></i> Pending Financial Requests</h3>
+                    <h3><i class="fa-solid fa-circle-arrow-down"></i> Pending Deposit Approvals (verify.et / Manual)</h3>
                     <table>
                         <thead>
-                            <tr><th>Tx ID</th><th>User ID</th><th>Type</th><th>Amount</th><th>Method & Destination Account</th><th>Status</th><th>Action</th></tr>
+                            <tr><th>Tx ID / Ref</th><th>User ID</th><th>Amount</th><th>Method & Reference</th><th>Request Time</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in pending_deposits|default([]) %}
+                            <tr>
+                                <td><code>#{{ tx.transaction_id or tx.id }}</code></td>
+                                <td>{{ tx.user_id }}</td>
+                                <td><b>{{ tx.amount }} ETB</b></td>
+                                <td>
+                                    <span class="badge-telebirr"><i class="fa-solid fa-wallet"></i> {{ tx.payment_method }}</span>
+                                </td>
+                                <td>
+                                    <span style="color: var(--accent-yellow); font-weight: bold; font-size: 12px;">
+                                        <i class="fa-regular fa-clock"></i> {{ tx.created_at.strftime('%Y-%m-%d %H:%M:%S') if tx.created_at else 'N/A' }}
+                                    </span>
+                                </td>
+                                <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status | upper }}</span></td>
+                                <td>
+                                    <div style="display: flex; gap: 6px;">
+                                        <form action="{{ url_for('admin.approve_deposit', tx_id=tx.id) }}" method="POST"><button type="submit">Approve</button></form>
+                                        <form action="{{ url_for('admin.reject_deposit', tx_id=tx.id) }}" method="POST"><button type="submit" class="btn-danger">Reject</button></form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="7" style="text-align: center; color: #888;">No pending deposit requests found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pending Withdrawals Approval Box -->
+                <div class="section-box">
+                    <h3><i class="fa-solid fa-circle-arrow-up"></i> Pending Withdrawal Approvals</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Tx ID</th><th>User ID</th><th>Amount</th><th>Method & Destination Account</th><th>Request Time</th><th>Status</th><th>Action</th></tr>
                         </thead>
                         <tbody>
                             {% for tx in pending_withdrawals %}
                             <tr>
                                 <td>#{{ tx.id }}</td>
                                 <td>{{ tx.user_id }}</td>
-                                <td><b>{{ tx.type | capitalize }}</b></td>
-                                <td>{{ tx.amount | abs }} ETB</td>
+                                <td><b>{{ tx.amount | abs }} ETB</b></td>
                                 <td>
                                     {% set pm_lower = tx.payment_method | default('telebirr') | lower %}
                                     {% if 'telebirr' in pm_lower %}
@@ -274,7 +299,12 @@
                                         Acc/Phone: {{ tx.withdrawal_phone or tx.phone or tx.account_number or 'N/A' }}
                                     </strong>
                                 </td>
-                                <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status }}</span></td>
+                                <td>
+                                    <span style="color: var(--accent-yellow); font-weight: bold; font-size: 12px;">
+                                        <i class="fa-regular fa-clock"></i> {{ tx.created_at.strftime('%Y-%m-%d %H:%M:%S') if tx.created_at else 'N/A' }}
+                                    </span>
+                                </td>
+                                <td><span style="color: var(--accent-yellow); font-weight: bold;">{{ tx.status | upper }}</span></td>
                                 <td>
                                     <div style="display: flex; gap: 6px;">
                                         <form action="{{ url_for('admin.approve_withdrawal', tx_id=tx.id) }}" method="POST"><button type="submit">Approve</button></form>
@@ -283,11 +313,12 @@
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="7" style="text-align: center; color: #888;">No pending requests found.</td></tr>
+                            <tr><td colspan="7" style="text-align: center; color: #888;">No pending withdrawal requests found.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+
             </section>
 
             <!-- 4. USERS & BALANCE -->
@@ -476,13 +507,11 @@
             document.getElementById('view-' + viewId).classList.add('active-view');
             btnEl.classList.add('active');
             
-            // በሞባይል ስልክ ሜኑ ሲመረጥ ሳይድባሩ በራሱ እንዲዘጋ (Close እንዲሆን)
             if (window.innerWidth <= 768) {
                 document.getElementById('sidebarNav').classList.remove('mobile-open');
             }
         }
 
-        // የሞባይል ሳይድባር መክፈቻ እና መዝጊያ ፋንክሽን
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebarNav');
             sidebar.classList.toggle('mobile-open');

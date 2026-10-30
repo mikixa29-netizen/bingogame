@@ -63,7 +63,7 @@ def init_db(app):
                     except Exception:
                         pass
 
-                # 3. አዳዲስ አምዶች (Columns) በራስ-ሰር መጨመር (migration እንዳያስፈልግ)
+                # 3. አዳዲስ አምዶች (Columns) በራስ-ሰር መጨመር
                 user_columns_to_add = [
                     ('is_blocked', 'BOOLEAN DEFAULT FALSE'),
                     ('is_deleted', 'BOOLEAN DEFAULT FALSE'),
@@ -121,7 +121,8 @@ def init_db(app):
                     ('sms_text', 'TEXT'),
                     ('withdrawal_phone', 'VARCHAR(20)'),
                     ('withdrawal_status', 'VARCHAR(20)'),
-                    ('admin_note', 'TEXT')
+                    ('admin_note', 'TEXT'),
+                    ('completed_at', 'TIMESTAMP WITHOUT TIME ZONE') # አድሚኑ ያጸደቀበት ወይም የተጠናቀቀበት ሰዓት
                 ]
                 for col_name, col_type in transaction_columns_to_add:
                     try:
@@ -129,7 +130,7 @@ def init_db(app):
                     except Exception:
                         pass
 
-                # 4. አዲሱ የ PaymentGateways ሰንጠረዥ አምዶች በራስ-ሰር እንዲጨመሩ (Safe Migration)
+                # 4. የ PaymentGateways ሰንጠረዥ አምዶች
                 gateway_columns_to_add = [
                     ('name', 'VARCHAR(50)'),
                     ('account_name', 'VARCHAR(100)'),

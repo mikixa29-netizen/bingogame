@@ -4,6 +4,7 @@ import json
 import logging
 import hashlib
 import re
+import requests
 from flask import Flask, jsonify, request, session, render_template, redirect, url_for, flash
 from datetime import datetime, date, timedelta
 from database import db, init_db
@@ -543,140 +544,141 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 አዲሱ የ SMS Webhook ራውት (MacroDroid አውቶማቲክ ዲፖዚት መቀበያ) ---
-@app.route('/api/webhook/sms', methods=['POST'])
-def sms_webhook():
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': 'No data received'}), 400
+# --- 🚀 verify.et API Integration & Pending / Manual Admin Review Route ---
+VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
+VERIFY_ET_URL = "https://verify.et/api/verify?waitMs=4000"
 
-        sms_text = str(data.get('message', '') or data.get('text', ''))
-        sender = str(data.get('sender', '')).lower()
-
-        if not sms_text:
-            return jsonify({'success': False, 'error': 'Empty SMS text'}), 400
-
-        logger.info(f"Incoming SMS from {sender}: {sms_text}")
-
-        amount = 0.0
-        txn_id = ""
-
-        # --- 1. ቴሌብር (Telebirr) ኤስ ኤም ኤስ ማንበቢያ ---
-        if 'telebirr' in sender or 'telebirr' in sms_text.lower() or 'fr' in sms_text.lower():
-            amount_match = re.search(r'(?:ብር|ETB|Br)\s*([\d,]+\.\d{2})', sms_text, re.IGNORECASE) or re.search(r'([\d,]+\.\d{2})\s*(?:ብር|ETB|Br)', sms_text, re.IGNORECASE)
-            txn_match = re.search(r'\b([A-Z0-9]{10,})\b', sms_text)
-            
-            if amount_match:
-                amount = float(amount_match.group(1).replace(',', ''))
-            if txn_match:
-                txn_id = txn_match.group(1)
-
-        # --- 2. ንግድ ባንክ ወይም ሌሎች ባንኮች (CBE / Banks) ኤስ ኤም ኤስ ማንበቢያ ---
-        elif 'cbe' in sender or 'cbebirr' in sms_text.lower() or 'bank' in sms_text.lower() or 'account' in sms_text.lower():
-            amount_match = re.search(r'(?:ETB|Br|ብር)\s*([\d,]+\.\d{2})', sms_text, re.IGNORECASE) or re.search(r'([\d,]+\.\d{2})\s*(?:ETB|Br|ብር)', sms_text, re.IGNORECASE)
-            txn_match = re.search(r'\b([A-Z0-9]{8,})\b', sms_text)
-            
-            if amount_match:
-                amount = float(amount_match.group(1).replace(',', ''))
-            if txn_match:
-                txn_id = txn_match.group(1)
-
-        if not txn_id:
-            txn_id = hashlib.md5(sms_text.encode()).hexdigest()[:16].upper()
-
-        if amount <= 0:
-            return jsonify({'success': False, 'error': 'Could not parse amount from SMS'}), 400
-
-        # --- 3. የድግግሞሽ መከላከያ (Anti-Duplicate Check) ---
-        existing_tx = Transaction.query.filter_by(transaction_id=txn_id).first()
-        if existing_tx:
-            return jsonify({'success': False, 'error': 'Duplicate transaction. Already processed.'}), 400
-
-        # --- 4. ተጠቃሚው አስቀድሞ በዌብአፕ የጠየቀውን (Pending) ዲፖሲት መፈለግ ---
-        pending_tx = Transaction.query.filter_by(status='pending', type='deposit', amount=amount).first()
-        
-        if pending_tx:
-            pending_tx.status = 'completed'
-            pending_tx.transaction_id = txn_id
-            
-            user = User.query.get(pending_tx.user_id)
-            if user:
-                user.balance = round(user.balance + amount, 1)
-                db.session.commit()
-                return jsonify({'success': True, 'message': f'Matched pending tx and credited {amount} ETB to user {user.telegram_id}'}), 200
-
-        # --- 5. ቀጥታ በስልክ ቁጥር ማዛመድ (Direct SMS Match via Phone Number) ---
-        phone_match = re.search(r'(09\d{8}|2519\d{8})', sms_text)
-        if phone_match:
-            phone_str = phone_match.group(1)
-            user = User.query.filter(User.phone.like(f"%{phone_str[-9:]}%")).first()
-            if user:
-                user.balance = round(user.balance + amount, 1)
-                new_tx = Transaction(
-                    user_id=user.id,
-                    type='deposit',
-                    amount=amount,
-                    payment_method='auto_sms',
-                    transaction_id=txn_id,
-                    status='completed',
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(new_tx)
-                db.session.commit()
-                return jsonify({'success': True, 'message': f'Auto-credited via phone match to user {user.telegram_id}'}), 200
-
-        return jsonify({'success': False, 'message': 'SMS received, amount parsed, but no matching user or pending transaction found.'}), 404
-
-    except Exception as e:
-        db.session.rollback()
-        logger.exception(f"SMS Webhook Error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# --- የተሻሻለ የዲፖዚት (Deposit) ራውት ከአዲስ የ PaymentGateway ዳታቤዝ ጋር ---
-@app.route('/deposit', methods=['POST'])
-def deposit():
+@app.route('/api/deposit/verify', methods=['POST'])
+def verify_deposit():
     user_id = session.get('user_id')
-    user = User.query.filter_by(telegram_id=user_id).first()
+    user = User.query.filter_by(telegram_id=user_id).first() if user_id else None
     if not user:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
     data = request.json or {}
-    amount = float(data.get('amount', 0))
-    payment_method = str(data.get('payment_method', '')).strip()
-    transaction_id = str(data.get('transaction_id', '')).strip()
+    bank = str(data.get('bank', '')).strip().lower() # telebirr, cbe, cbebirr, mpesa
+    reference = str(data.get('reference', '')).strip()
+    phone = str(data.get('phone', '')).strip()
+    user_entered_amount = float(data.get('amount', 0))
 
-    if amount < 10:
-        return jsonify({'error': 'Minimum deposit amount is 10 ETB.'}), 400
+    if not bank or not reference or user_entered_amount <= 0:
+        return jsonify({'success': False, 'message': 'እባክዎ ሁሉንም መረጃዎች በትክክል ይሙሉ!'}), 400
 
-    if not transaction_id or len(transaction_id) < 5:
-        return jsonify({'error': 'Please enter a valid receipt or transaction reference ID.'}), 400
-
-    existing_tx = Transaction.query.filter_by(transaction_id=transaction_id).first()
+    # Duplicate Transaction Check
+    existing_tx = Transaction.query.filter_by(transaction_id=reference).first()
     if existing_tx:
-        return jsonify({'error': 'This transaction reference ID has already been used!'}), 400
+        return jsonify({'success': False, 'message': 'ይህ የትራንዛክሽን ሪፈረንስ ቁጥር ቀደም ሲል ጥቅም ላይ ውሏል!'}), 400
 
+    # አድሚኑ ያስቀመጠውን ትክክለኛ የክፍያ መንገድ (Gateway) ከዳታቤዝ ማምጣት
     valid_gateway = PaymentGateway.query.filter(
         PaymentGateway.is_active == True,
         PaymentGateway.purpose == 'deposit',
-        (PaymentGateway.name.ilike(f"%{payment_method}%")) | (PaymentGateway.id == payment_method if payment_method.isdigit() else False)
+        (PaymentGateway.name.ilike(f"%{bank}%")) | (PaymentGateway.id == bank if bank.isdigit() else False)
     ).first()
 
-    if not valid_gateway:
-        return jsonify({'error': 'Selected payment method is invalid or currently inactive.'}), 400
+    expected_admin_account = valid_gateway.account_number if valid_gateway else ""
 
-    user.balance += amount
-    tx = Transaction(
-        user_id=user.id, 
-        type='deposit', 
-        amount=amount, 
-        payment_method=valid_gateway.name,
-        transaction_id=transaction_id,
-        status='completed'
-    )
-    db.session.add(tx)
-    db.session.commit()
-    return jsonify({'success': True, 'message': 'Deposit successful!'})
+    # verify.et ፔይሎድ ማዘጋጀት
+    payload = { "bank": bank }
+    if bank in ['telebirr', 'mpesa']:
+        payload["transactionNumber"] = reference
+    elif bank == 'cbe':
+        payload["reference"] = reference
+    elif bank == 'cbebirr':
+        payload["receiptNumber"] = reference
+        if phone: payload["phone"] = phone
+    else:
+        payload["reference"] = reference
+
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": VERIFY_ET_API_KEY,
+        "Idempotency-Key": f"edil-bingo-dep-{user.telegram_id}-{reference}"
+    }
+
+    try:
+        response = requests.post(VERIFY_ET_URL, json=payload, headers=headers, timeout=10)
+        result = response.json()
+        status = result.get('status') # 'verified', 'pending', 'failed', 'not-found'
+
+        if status == 'verified':
+            tx_data = result.get('data', {})
+            verified_amount = float(tx_data.get('amount', user_entered_amount))
+            verified_receiver = str(tx_data.get('receiverPhone') or tx_data.get('receiverAccount', '')).strip()
+
+            # ሎጂክ: አድሚኑ አካውንቱን ቀይሮ ከሆነ እና ተጠቃሚው በቀድሞው አካውንት ከላከ (Mismatch) -> ወደ Pending መላክ
+            if expected_admin_account and verified_receiver and verified_receiver != expected_admin_account:
+                pending_tx = Transaction(
+                    user_id=user.id,
+                    type='deposit',
+                    amount=user_entered_amount,
+                    payment_method=valid_gateway.name if valid_gateway else bank,
+                    transaction_id=reference,
+                    status='pending'
+                )
+                db.session.add(pending_tx)
+                db.session.commit()
+                return jsonify({
+                    'success': True,
+                    'status': 'pending',
+                    'message': 'የተቀባዩ አካውንት የተለወጠ በመሆኑ ክፍያዎ ለዕይታ (Pending) ተመዝግቧል። አድሚኑ በማኑዋል ያረጋግጠዋል!'
+                })
+
+            # ሁሉም ነገር ትክክል ከሆነ -> ሒሳብ በራስ-ሰር መጫን (Completed)
+            user.balance = round(user.balance + verified_amount, 2)
+            new_tx = Transaction(
+                user_id=user.id,
+                type='deposit',
+                amount=verified_amount,
+                payment_method=valid_gateway.name if valid_gateway else bank,
+                transaction_id=reference,
+                status='completed'
+            )
+            db.session.add(new_tx)
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'status': 'completed',
+                'message': f'ክፍያው በ verify.et ተረጋግጧል! {verified_amount} ብር አካውንትዎ ላይ ገብቷል።',
+                'amount': verified_amount
+            })
+        else:
+            # ፔንዲንግ ወይም ኖት ፋውንድ ከሆነ -> ወደ አድሚን ፔነል Pending አድርጎ መመዝገብ
+            pending_tx = Transaction(
+                user_id=user.id,
+                type='deposit',
+                amount=user_entered_amount,
+                payment_method=valid_gateway.name if valid_gateway else bank,
+                transaction_id=reference,
+                status='pending'
+            )
+            db.session.add(pending_tx)
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'status': 'pending',
+                'message': 'ክፍያው በራስ-ሰር አልተረጋገጠም። በ Pending መልክ ተመዝግቧል፣ አድሚኑ ማኑዋል ያረጋግጠዋል!'
+            })
+
+    except requests.exceptions.RequestException:
+        # የኔትወርክ ወይም የሰርቨር ችግር ሲኖር Pending ማድረግ
+        pending_tx = Transaction(
+            user_id=user.id,
+            type='deposit',
+            amount=user_entered_amount,
+            payment_method=bank,
+            transaction_id=reference,
+            status='pending'
+        )
+        db.session.add(pending_tx)
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'status': 'pending',
+            'message': 'የሰርቨር መዘግየት አጋጥሟል። ክፍያዎ በ Pending ተመዝግቧል፣ አድሚኑ ያረጋግጠዋል።'
+        })
 
 @app.route('/api/payment-methods', methods=['GET'])
 def api_payment_methods():
@@ -684,7 +686,7 @@ def api_payment_methods():
     methods = []
     for g in gateways:
         methods.append({
-            'id': str(g.id),
+            'id': str(g.name).lower().replace(' ', '_'),
             'name': g.name,
             'account_name': g.account_name,
             'phone': g.account_number,
@@ -819,7 +821,7 @@ def get_user_transactions():
             'id': t.id,
             'type': t.type,
             'amount': t.amount,
-            'method': t.payment_method or 'Wallet',
+            'method': t.payment_method or 'telebirr',
             'status': t.status or 'completed',
             'date': t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else ''
         })

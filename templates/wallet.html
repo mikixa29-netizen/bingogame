@@ -16,6 +16,7 @@
             --text-color: #ffffff;
             --success-green: #2ecc71;
             --danger-red: #e74c3c;
+            --pending-yellow: #f39c12;
         }
 
         * { box-sizing: border-box; font-family: 'Inria Serif', serif; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
@@ -104,10 +105,6 @@
         }
         .method-card:hover { border-color: var(--accent-yellow); background: rgba(27, 94, 32, 0.7); }
         .method-card.selected { border-color: var(--accent-yellow); background: rgba(253, 216, 53, 0.1); }
-        .badge-popular {
-            position: absolute; top: 8px; right: 10px; background: var(--accent-yellow); color: #1b5e20;
-            font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
-        }
         .gateway-logo { width: 32px; height: 32px; object-fit: contain; border-radius: 8px; background: #fff; padding: 3px; }
 
         /* Step 2 Quick Amounts */
@@ -117,17 +114,6 @@
             border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: 0.2s;
         }
         .btn-quick:active, .btn-quick:hover { background: #1b5e20; border-color: var(--accent-yellow); color: var(--accent-yellow); }
-
-        /* Step 3 Copy Boxes */
-        .copy-box {
-            background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 14px;
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
-        }
-        .copy-info .lbl { font-size: 11px; color: #a5d6a7; font-weight: 600; text-transform: uppercase; }
-        .copy-info .val { font-size: 16px; font-weight: 700; color: var(--accent-yellow); margin-top: 3px; }
-        .btn-copy { background: rgba(255, 255, 255, 0.12); border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-copy:hover { background: rgba(255, 255, 255, 0.2); }
-
         .notice-text { font-size: 11px; color: #b0bec5; line-height: 1.4; margin-top: 10px; text-align: center; }
 
         /* Transaction History */
@@ -136,12 +122,13 @@
         .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; }
         .tx-item { background: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--success-green); border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .tx-item.outcome { border-left-color: var(--danger-red); }
+        .tx-item.pending { border-left-color: var(--pending-yellow); }
         .tx-type { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #fff; }
         .tx-date { font-size: 10px; color: #9e9e9e; margin-top: 2px; }
         .tx-amount { font-size: 15px; font-weight: 700; color: var(--accent-yellow); }
         .tx-status { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; margin-top: 3px; display: inline-block; }
         .tx-status.completed { background: rgba(46, 204, 113, 0.2); color: var(--success-green); border: 1px solid var(--success-green); }
-        .tx-status.pending { background: rgba(253, 216, 53, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+        .tx-status.pending { background: rgba(243, 156, 18, 0.2); color: var(--pending-yellow); border: 1px solid var(--pending-yellow); }
 
         /* Bottom Nav */
         .bottom-nav {
@@ -241,7 +228,7 @@
         </div>
     </div>
 
-    <!-- 3-STEP DEPOSIT MODAL -->
+    <!-- 3-STEP DEPOSIT MODAL WITH VERIFY.ET & ACCOUNT MISMATCH PENDING CHECK -->
     <div class="modal-overlay" id="depositModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -275,45 +262,37 @@
                     <button class="btn-quick" onclick="setAmount(500)">ETB 500</button>
                 </div>
                 <div style="font-size: 11px; color: #b0bec5; text-align: center; margin: 12px 0;">50% of this deposit stays locked until you win 50% profit</div>
-                <button class="btn-action" onclick="goToStep3()">Deposit</button>
+                <button class="btn-action" onclick="goToStep3()">Continue to Verification</button>
             </div>
 
-            <!-- STEP 3: COPY DETAILS & ENTER TXN ID -->
+            <!-- STEP 3: ENTER TRANSACTION REFERENCE FOR VERIFY.ET -->
             <div id="depStep3" style="display: none;">
                 <div style="font-size: 12px; color: #b0bec5; margin-bottom: 12px; line-height: 1.4;">
-                    1. Send funds to the following account<br>
-                    2. After payment, enter the transaction ID, or the funds will not be credited
+                    1. ክፍያውን ከፈጸሙ በኋላ የትራንዛክሽን ቁጥሩን ያስገቡ።<br>
+                    2. ሲስተሙ በ verify.et በኩል አካውንቱ ትክክል መሆኑን ያረጋግጣል። አካውንቱ ከተቀየረ ወይም ስህተት ካለ በ **Pending** ተመዝግቦ አድሚኑ ማኑዋል ሲያጸድቀው ይገባል!
                 </div>
 
-                <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--accent-yellow);">1. Copy bank details</div>
-                
-                <div class="copy-box">
-                    <div class="copy-info">
-                        <div class="lbl">Recipient's account name · <span id="adminAccountName">Henok</span></div>
-                        <div class="val" id="adminAccountPhone">0971321653</div>
-                    </div>
-                    <button class="btn-copy" onclick="copyText('adminAccountPhone')"><i class="fa-regular fa-copy"></i></button>
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--accent-yellow);">
+                    የተመረጠው መጠን: ETB <span id="confirmAmountDisplay">100</span>
                 </div>
 
-                <div class="copy-box">
-                    <div class="copy-info">
-                        <div class="lbl">Amount</div>
-                        <div class="val">ETB <span id="confirmAmountDisplay">100</span></div>
-                    </div>
-                    <button class="btn-copy" onclick="copyText('confirmAmountDisplay')"><i class="fa-regular fa-copy"></i></button>
+                <!-- CBE Birr ከሆነ የሚታይ የስልክ ቁጥር ግብዓት -->
+                <div class="form-group" id="depPhoneGroup" style="display: none;">
+                    <label>የስልክ ቁጥር (CBE Birr ከሆነ)</label>
+                    <input type="text" id="finalPhoneInput" class="form-control" placeholder="09xxxxxxxx">
                 </div>
 
-                <div style="font-size: 13px; font-weight: 700; margin: 14px 0 8px 0; color: var(--accent-yellow);">2. Enter payment details</div>
                 <div class="form-group">
-                    <input type="text" id="finalTxnId" class="form-control" placeholder="DXXXXXXXXX" required>
-                    <div style="font-size: 10px; color: #b0bec5; margin-top: 4px;">Enter the transaction ID or paste the whole payment SMS</div>
+                    <label>የትራንዛክሽን ሪፈረንስ / ቴሌኮም ቁጥር</label>
+                    <input type="text" id="finalTxnId" class="form-control" placeholder="ለምሳሌ: FT23... ወይም TR23..." required>
+                    <div style="font-size: 10px; color: #b0bec5; margin-top: 4px;">የደረሰኙን ትራንዛክሽን ሪፈረንስ ቁጥር ያስገቡ</div>
                 </div>
 
                 <div class="notice-text" style="margin-bottom: 14px;">
-                    Use the receiving account shown above. If you already paid, submit your receipt even if the account assignment has since changed.
+                    አካውንቱ ከተቀየረ ወይም ስህተት ካለ በአድሚን ፔነል በ Pending ይታያል።
                 </div>
 
-                <button class="btn-action" onclick="submitFinalDeposit()">Confirm transfer</button>
+                <button class="btn-action" onclick="submitFinalDeposit(event)">ክፍያ አረጋግጥ &amp; ሒሳብ ጫን</button>
             </div>
         </div>
     </div>
@@ -330,21 +309,31 @@
     <script>
         let selectedMethod = { id: 'telebirr', name: 'Telebirr' };
         let depositAmountVal = 0;
-        let adminDepositAccounts = [];
         let adminWithdrawalAccounts = [];
 
         function loadAdminPaymentAccounts() {
-            // Load deposit gateways
             fetch('/api/payment-methods')
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.methods.length > 0) {
-                        adminDepositAccounts = data.methods;
-                        renderPaymentMethods();
+                        renderPaymentMethods(data.methods);
+                    } else {
+                        renderPaymentMethods([
+                            { id: 'telebirr', name: 'Telebirr', icon: '📱' },
+                            { id: 'cbe', name: 'Commercial Bank of Ethiopia (CBE)', icon: '🏦' },
+                            { id: 'cbebirr', name: 'CBE Birr', icon: '💳' },
+                            { id: 'mpesa', name: 'M-Pesa', icon: '🟢' }
+                        ]);
                     }
-                }).catch(e => console.log('Error loading deposit accounts'));
+                }).catch(e => {
+                    renderPaymentMethods([
+                        { id: 'telebirr', name: 'Telebirr', icon: '📱' },
+                        { id: 'cbe', name: 'Commercial Bank of Ethiopia (CBE)', icon: '🏦' },
+                        { id: 'cbebirr', name: 'CBE Birr', icon: '💳' },
+                        { id: 'mpesa', name: 'M-Pesa', icon: '🟢' }
+                    ]);
+                });
 
-            // Load withdrawal gateways
             fetch('/api/withdrawal-methods')
                 .then(res => res.json())
                 .then(data => {
@@ -355,11 +344,9 @@
                 }).catch(e => console.log('Error loading withdrawal accounts'));
         }
 
-        function renderPaymentMethods() {
+        function renderPaymentMethods(methods) {
             const container = document.getElementById('paymentMethodsList');
-            if(!adminDepositAccounts.length) return;
-            
-            container.innerHTML = adminDepositAccounts.map((acc, index) => {
+            container.innerHTML = methods.map((acc, index) => {
                 let iconHtml = acc.logo_url 
                     ? `<img src="${acc.logo_url}" class="gateway-logo" alt="${acc.name}">` 
                     : `<span style="font-size: 22px;">${acc.icon || '📱'}</span>`;
@@ -412,50 +399,65 @@
         function goToStep3() {
             const amt = document.getElementById('modalDepositAmount').value;
             if (!amt || amt < 20) {
-                alert('⚠️ Minimum deposit amount is 20 ETB');
+                alert('⚠️ ዝቅተኛው የዲፖዚት መጠን 20 ብር ነው');
                 return;
             }
             depositAmountVal = amt;
             document.getElementById('confirmAmountDisplay').innerText = amt;
 
-            const accInfo = adminDepositAccounts.find(a => a.id === selectedMethod.id) || { account_name: 'Henok', phone: '0971321653' };
-            document.getElementById('adminAccountName').innerText = accInfo.account_name || accInfo.name || 'Admin';
-            document.getElementById('adminAccountPhone').innerText = accInfo.phone || '0971321653';
+            const phoneGroup = document.getElementById('depPhoneGroup');
+            phoneGroup.style.display = (selectedMethod.id === 'cbebirr') ? 'block' : 'none';
 
             showStep(3);
         }
 
-        function copyText(elementId) {
-            const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text);
-            alert('📋 Copied: ' + text);
-        }
-
-        function submitFinalDeposit() {
+        function submitFinalDeposit(event) {
             const txnId = document.getElementById('finalTxnId').value.trim();
+            const phone = document.getElementById('finalPhoneInput')?.value.trim() || '';
+
             if (!txnId) {
-                alert('⚠️ Please enter the Transaction ID / Reference Number');
+                alert('⚠️ እባክዎ የትራንዛክሽን ሪፈረንስ ቁጥር ያስገቡ!');
                 return;
             }
 
-            fetch('/deposit', {
+            const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '123456789';
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerText = 'በማጣራት ላይ (Verify.et)...';
+
+            fetch('/api/deposit/verify', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    amount: depositAmountVal,
-                    payment_method: selectedMethod.id,
-                    transaction_id: txnId
+                    bank: selectedMethod.id, // telebirr, cbe, cbebirr, mpesa
+                    reference: txnId,
+                    phone: phone,
+                    user_id: userId,
+                    amount: depositAmountVal
                 })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert('✅ Deposit request submitted successfully!');
+                    if (data.status === 'completed') {
+                        alert(`✅ ${data.message}`);
+                    } else {
+                        alert(`⏳ ${data.message}`); // አካውንቱ ተቀይሮ ወይም ፔንዲንግ ከሆነ የሚሰጥ ማሳሰቢያ
+                    }
                     closeDepositModal();
+                    loadTransactionHistory();
                     location.reload();
                 } else {
-                    alert('⚠️ ' + (data.error || 'Submission failed'));
+                    alert('⚠️ ' + (data.message || 'ክፍያውን ማረጋገጥ አልተቻለም።'));
                 }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('⚠️ የሰርቨር ግንኙነት ስህተት አጋጥሟል፣ እባክዎ እንደገና ይሞክሩ።');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = 'ክፍያ አረጋግጥ & ሒሳብ ጫን';
             });
         }
 
@@ -510,12 +512,16 @@
                 }
                 list.forEach(tx => {
                     const isIncome = (tx.type === 'deposit' || tx.type === 'win' || tx.type === 'transfer_in');
-                    const cssClass = isIncome ? 'income' : 'outcome';
+                    let cssClass = isIncome ? 'income' : 'outcome';
+                    if (tx.status === 'pending') {
+                        cssClass = 'pending';
+                    }
+                    
                     const div = document.createElement('div');
                     div.className = `tx-item ${cssClass}`;
                     div.innerHTML = `
                         <div>
-                            <div class="tx-type">${isIncome ? '⬇️' : '⬆️'} ${tx.type} (${tx.method})</div>
+                            <div class="tx-type">${isIncome ? '⬇️' : '⬆️'} ${tx.type} (${tx.method || 'telebirr'})</div>
                             <div class="tx-date">${tx.date}</div>
                         </div>
                         <div style="text-align: right;">

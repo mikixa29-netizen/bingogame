@@ -90,7 +90,10 @@ def dashboard():
 
         admins = Admin.query.all()
         
-        pending_withdrawals = Transaction.query.filter_by(status='pending').all()
+        # ፔንዲንግ የሆኑ የውዝድሮ እና የዲፖዚት ጥያቄዎችን በአንድ ላይ ማምጣት
+        pending_withdrawals = Transaction.query.filter_by(status='pending', type='withdrawal').all()
+        pending_deposits = Transaction.query.filter_by(status='pending', type='deposit').all()
+        
         transactions = Transaction.query.order_by(Transaction.id.desc()).limit(20).all()
         
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -119,6 +122,7 @@ def dashboard():
             active_players_count=active_players_count,
             blocked_players_count=blocked_players_count,
             pending_withdrawals=pending_withdrawals,
+            pending_deposits=pending_deposits, # ለዲፖዚት ፔንዲንግ ማሳያ
             transactions=transactions,
             user_filter=user_filter,
             house_profit_today=house_profit_today,
@@ -356,6 +360,38 @@ def delete_staff(admin_id):
     db.session.delete(adm)
     db.session.commit()
     flash('Staff member deleted successfully.', 'success')
+    return redirect(url_for('admin.dashboard'))
+
+# --- 🚀 የዲፖዚት ማረጋገጫ (Deposit Approve & Reject Routes) ---
+@admin_bp.route('/admin/deposit/<int:tx_id>/approve', methods=['POST'])
+@admin_required
+def approve_deposit(tx_id):
+    tx = Transaction.query.get(tx_id)
+    if tx and tx.status == 'pending' and tx.type == 'deposit':
+        tx.status = 'completed'
+        tx.completed_at = datetime.utcnow()
+        
+        # ተጠቃሚው አካውንት ላይ ገንዘቡን መጫን
+        user = User.query.get(tx.user_id)
+        if user:
+            user.balance = round(user.balance + tx.amount, 2)
+            
+        db.session.commit()
+        flash('Deposit request approved and balance credited successfully!', 'success')
+    else:
+        flash('Transaction not found or already processed.', 'error')
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/deposit/<int:tx_id>/reject', methods=['POST'])
+@admin_required
+def reject_deposit(tx_id):
+    tx = Transaction.query.get(tx_id)
+    if tx and tx.status == 'pending' and tx.type == 'deposit':
+        tx.status = 'rejected'
+        db.session.commit()
+        flash('Deposit request rejected successfully.', 'success')
+    else:
+        flash('Transaction not found or already processed.', 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/withdrawal/<int:tx_id>/approve', methods=['POST'])
