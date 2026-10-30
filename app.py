@@ -60,6 +60,16 @@ def init_default_games():
 
 init_default_games()
 
+def normalize_account(acc):
+    if not acc:
+        return ""
+    acc = str(acc).strip().replace(" ", "")
+    if acc.startswith("+251"):
+        acc = "0" + acc[4:]
+    elif acc.startswith("251"):
+        acc = "0" + acc[3:]
+    return acc
+
 @app.route('/')
 def index():
     user_id = request.args.get('user_id') or session.get('user_id')
@@ -544,7 +554,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration & Pending / Manual Admin Review Route ---
+# --- 🚀 verify.et API Integration & Strict Account/Amount Verification ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_URL = "https://verify.et/api/verify?waitMs=4000"
 
@@ -556,29 +566,29 @@ def verify_deposit():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
     data = request.json or {}
-    bank = str(data.get('bank', '')).strip().lower() # telebirr, cbe, cbebirr, mpesa
+    bank = str(data.get('bank', '')).strip().lower()
     reference = str(data.get('reference', '')).strip()
     phone = str(data.get('phone', '')).strip()
     user_entered_amount = float(data.get('amount', 0))
 
     if not bank or not reference or user_entered_amount <= 0:
-        return jsonify({'success': False, 'message': 'እባክዎ ሁሉንም መረጃዎች በትክክል ይሙሉ!'}), 400
+        return jsonify({'success': False, 'message': 'Please fill in all required fields correctly!'}), 400
 
     # Duplicate Transaction Check
     existing_tx = Transaction.query.filter_by(transaction_id=reference).first()
     if existing_tx:
-        return jsonify({'success': False, 'message': 'ይህ የትራንዛክሽን ሪፈረንስ ቁጥር ቀደም ሲል ጥቅም ላይ ውሏል!'}), 400
+        return jsonify({'success': False, 'message': 'This transaction reference number has already been used!'}), 400
 
-    # አድሚኑ ያስቀመጠውን ትክክለኛ የክፍያ መንገድ (Gateway) ከዳታቤዝ ማምጣት
+    # Get Active Admin Gateway for this bank
     valid_gateway = PaymentGateway.query.filter(
         PaymentGateway.is_active == True,
         PaymentGateway.purpose == 'deposit',
         (PaymentGateway.name.ilike(f"%{bank}%")) | (PaymentGateway.id == bank if bank.isdigit() else False)
     ).first()
 
-    expected_admin_account = valid_gateway.account_number if valid_gateway else ""
+    expected_admin_account = normalize_account(valid_gateway.account_number) if valid_gateway else ""
 
-    # verify.et ፔይሎድ ማዘጋጀት
+    # Prepare verify.et payload
     payload = { "bank": bank }
     if bank in ['telebirr', 'mpesa']:
         payload["transactionNumber"] = reference
@@ -604,27 +614,31 @@ def verify_deposit():
         if status == 'verified':
             tx_data = result.get('data', {})
             verified_amount = float(tx_data.get('amount', user_entered_amount))
-            verified_receiver = str(tx_data.get('receiverPhone') or tx_data.get('receiverAccount', '')).strip()
+            verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount', ''))
 
-            # ሎጂክ: አድሚኑ አካውንቱን ቀይሮ ከሆነ እና ተጠቃሚው በቀድሞው አካውንት ከላከ (Mismatch) -> ወደ Pending መላክ
-            if expected_admin_account and verified_receiver and verified_receiver != expected_admin_account:
+            # Strict Verification: Check Account and Amount Mismatch
+            is_account_mismatch = expected_admin_account and verified_receiver and (verified_receiver != expected_admin_account)
+            is_amount_mismatch = verified_amount < user_entered_amount
+
+            if is_account_mismatch or is_amount_mismatch:
                 pending_tx = Transaction(
                     user_id=user.id,
                     type='deposit',
                     amount=user_entered_amount,
                     payment_method=valid_gateway.name if valid_gateway else bank,
                     transaction_id=reference,
-                    status='pending'
+                    status='pending',
+                    admin_note='Account or Amount mismatch detected by verify.et'
                 )
                 db.session.add(pending_tx)
                 db.session.commit()
                 return jsonify({
                     'success': True,
                     'status': 'pending',
-                    'message': 'የተቀባዩ አካውንት የተለወጠ በመሆኑ ክፍያዎ ለዕይታ (Pending) ተመዝግቧል። አድሚኑ በማኑዋል ያረጋግጠዋል!'
+                    'message': 'Transaction marked as Pending due to account or amount mismatch. Admin review required!'
                 })
 
-            # ሁሉም ነገር ትክክል ከሆነ -> ሒሳብ በራስ-ሰር መጫን (Completed)
+            # Successful Automatic Crediting
             user.balance = round(user.balance + verified_amount, 2)
             new_tx = Transaction(
                 user_id=user.id,
@@ -640,11 +654,11 @@ def verify_deposit():
             return jsonify({
                 'success': True,
                 'status': 'completed',
-                'message': f'ክፍያው በ verify.et ተረጋግጧል! {verified_amount} ብር አካውንትዎ ላይ ገብቷል።',
+                'message': f'Payment successfully verified by verify.et! {verified_amount} ETB has been credited to your balance.',
                 'amount': verified_amount
             })
         else:
-            # ፔንዲንግ ወይም ኖት ፋውንድ ከሆነ -> ወደ አድሚን ፔነል Pending አድርጎ መመዝገብ
+            # Pending or Not-found fallback
             pending_tx = Transaction(
                 user_id=user.id,
                 type='deposit',
@@ -659,11 +673,10 @@ def verify_deposit():
             return jsonify({
                 'success': True,
                 'status': 'pending',
-                'message': 'ክፍያው በራስ-ሰር አልተረጋገጠም። በ Pending መልክ ተመዝግቧል፣ አድሚኑ ማኑዋል ያረጋግጠዋል!'
+                'message': 'Payment could not be verified automatically. Recorded as Pending for manual admin review.'
             })
 
     except requests.exceptions.RequestException:
-        # የኔትወርክ ወይም የሰርቨር ችግር ሲኖር Pending ማድረግ
         pending_tx = Transaction(
             user_id=user.id,
             type='deposit',
@@ -677,7 +690,7 @@ def verify_deposit():
         return jsonify({
             'success': True,
             'status': 'pending',
-            'message': 'የሰርቨር መዘግየት አጋጥሟል። ክፍያዎ በ Pending ተመዝግቧል፣ አድሚኑ ያረጋግጠዋል።'
+            'message': 'Server delay encountered. Transaction saved as Pending for admin review.'
         })
 
 @app.route('/api/payment-methods', methods=['GET'])
@@ -694,7 +707,7 @@ def api_payment_methods():
         })
     
     if not methods:
-        methods = [{'id': 'telebirr', 'name': 'Telebirr', 'account_name': 'Henok', 'phone': '0971321653', 'logo_url': ''}]
+        methods = [{'id': 'telebirr', 'name': 'Telebirr', 'account_name': 'Admin', 'phone': '0971321653', 'logo_url': ''}]
     
     return jsonify({'success': True, 'methods': methods})
 
