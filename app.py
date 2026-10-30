@@ -584,7 +584,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Strict Unmatched & Receiver Matching ---
+# --- 🚀 verify.et API Integration with Strict MatchType & Unmatched Rejection ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -708,82 +708,55 @@ def verify_deposit():
         if isinstance(tx_data, list):
             tx_data = tx_data[0] if tx_data else {}
 
-        is_verified = (
-            status == 'verified' or 
-            result.get('verified') == True or 
-            (isinstance(final_data, dict) and final_data.get('verification', {}).get('status') == 'verified') or
-            (isinstance(final_data, dict) and final_data.get('status') == 'success') or
-            (isinstance(tx_data, dict) and tx_data.get('status') == 'success')
-        )
+        # Extract transaction fields securely
+        verified_amount = float(tx_data.get('amount', user_entered_amount) or user_entered_amount)
+        verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount') or tx_data.get('receiverAccountNo') or '')
+        match_type = str(tx_data.get('matchType', 'unmatched')).strip().lower()
+        matched_account = tx_data.get('matchedAccount', True)
 
-        if is_verified:
-            verified_amount = float(tx_data.get('amount', user_entered_amount) or user_entered_amount)
-            verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount') or tx_data.get('receiverAccountNo') or '')
+        # 🛑 STRICT SECURITY & MATCHTYPE VALIDATION
+        # Must be strictly 'matched' and matchedAccount cannot be False
+        is_matched_by_api = (match_type == 'matched' and matched_account is not False)
+        is_amount_match = (verified_amount == user_entered_amount)
+        is_receiver_match = (not expected_admin_account) or (not verified_receiver) or (verified_receiver == expected_admin_account)
 
-            # 🛑 Strict Security & Unmatched Validation from verify.et response
-            match_type = str(tx_data.get('matchType', '')).lower()
-            
-            # If verify.et explicitly flags unmatched (e.g. candidate_account_mismatch)
-            is_unmatched_by_api = (match_type == 'unmatched' or tx_data.get('matchedAccount') == False)
-            is_amount_mismatch = (verified_amount != user_entered_amount)
-            is_wrong_receiver = expected_admin_account and verified_receiver and (verified_receiver != expected_admin_account)
-
-            if is_unmatched_by_api or is_amount_mismatch or is_wrong_receiver:
-                pending_tx = Transaction(
-                    user_id=user.id,
-                    type='deposit',
-                    amount=user_entered_amount,
-                    payment_method=valid_gateway.name if valid_gateway else bank,
-                    transaction_id=reference,
-                    status='pending',
-                    admin_note=f'Security Mismatch. Receiver: {verified_receiver}, Expected: {expected_admin_account}, MatchType: {match_type}'
-                )
-                db.session.add(pending_tx)
-                db.session.commit()
-                return jsonify({
-                    'success': False,
-                    'status': 'mismatch',
-                    'message': '❌ This receipt belongs to another account or has a mismatched amount! Balance could not be credited.'
-                })
-
-            # Successful Automatic Crediting (Only if strictly matched)
-            user.balance = round(user.balance + verified_amount, 2)
-            new_tx = Transaction(
-                user_id=user.id,
-                type='deposit',
-                amount=verified_amount,
-                payment_method=valid_gateway.name if valid_gateway else bank,
-                transaction_id=reference,
-                status='completed'
-            )
-            db.session.add(new_tx)
-            db.session.commit()
-
-            return jsonify({
-                'success': True,
-                'status': 'completed',
-                'message': f'Payment successfully verified by verify.et! {verified_amount} ETB has been credited to your balance.',
-                'amount': verified_amount
-            })
-        else:
-            # Pending or Not-found fallback
+        if not is_matched_by_api or not is_amount_match or not is_receiver_match:
             pending_tx = Transaction(
                 user_id=user.id,
                 type='deposit',
                 amount=user_entered_amount,
                 payment_method=valid_gateway.name if valid_gateway else bank,
                 transaction_id=reference,
-                status='pending'
+                status='pending',
+                admin_note=f'Security Mismatch. MatchType: {match_type}, Receiver: {verified_receiver}, Expected: {expected_admin_account}'
             )
             db.session.add(pending_tx)
             db.session.commit()
-
             return jsonify({
-                'success': True,
-                'status': 'pending',
-                'message': 'Payment could not be verified automatically. Recorded as Pending for manual admin review.'
+                'success': False,
+                'status': 'mismatch',
+                'message': '❌ This receipt belongs to another account or has an unmatched amount! Balance could not be credited.'
             })
 
+        # Successful Automatic Crediting (Only if strictly matched)
+        user.balance = round(user.balance + verified_amount, 2)
+        new_tx = Transaction(
+            user_id=user.id,
+            type='deposit',
+            amount=verified_amount,
+            payment_method=valid_gateway.name if valid_gateway else bank,
+            transaction_id=reference,
+            status='completed'
+        )
+        db.session.add(new_tx)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'status': 'completed',
+            'message': f'Payment successfully verified by verify.et! {verified_amount} ETB has been credited to your balance.',
+            'amount': verified_amount
+        })
     except requests.exceptions.RequestException as e:
         logger.error(f"verify.et connection error: {str(e)}")
         pending_tx = Transaction(
