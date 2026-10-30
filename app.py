@@ -483,7 +483,8 @@ def game_status_api(game_id):
                         p_user.balance += prize_per_winner
                     p_user.games_won = (p_user.games_won or 0) + 1
 
-                player_card_info = next((c for c in game.players.get(p_tid, []) if c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id'] == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
+                # Corrected syntax error with proper parentheses
+                player_card_info = next((c for c in game.players.get(p_tid, []) if c.get('cartela_number') == next((w.get('cartela_number') for w in game.winners if w.get('user_id') == p_tid), c.get('cartela_number'))), game.players.get(p_tid, [{}])[0])
 
                 try:
                     hist = GameHistory(
