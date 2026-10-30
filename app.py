@@ -70,6 +70,35 @@ def normalize_account(acc):
         acc = "0" + acc[3:]
     return acc
 
+def get_verify_et_bank_slug(bank_input):
+    b = str(bank_input).strip().lower()
+    if 'telebirr' in b:
+        return 'telebirr'
+    elif 'cbe birr' in b or 'cbe_birr' in b or 'cbebirr' in b:
+        return 'cbebirr'
+    elif 'cbe' in b or 'commercial' in b:
+        return 'cbe'
+    elif 'mpesa' in b or 'm-pesa' in b:
+        return 'mpesa'
+    return b
+
+# Temporary route to clear transaction references on Render Free Tier
+@app.route('/admin/clear-tx-refs')
+def clear_tx_refs():
+    secret_key = request.args.get('key')
+    if secret_key == 'edil1234':
+        try:
+            transactions = Transaction.query.all()
+            for tx in transactions:
+                tx.transaction_id = None
+                tx.status = 'pending'
+            db.session.commit()
+            return "✅ All transaction reference numbers have been cleared successfully!"
+        except Exception as e:
+            db.session.rollback()
+            return f"❌ Error: {str(e)}"
+    return "Unauthorized access!", 403
+
 @app.route('/')
 def index():
     user_id = request.args.get('user_id') or session.get('user_id')
@@ -566,7 +595,8 @@ def verify_deposit():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
     data = request.json or {}
-    bank = str(data.get('bank', '')).strip().lower()
+    raw_bank = str(data.get('bank', '')).strip()
+    bank = get_verify_et_bank_slug(raw_bank)
     reference = str(data.get('reference', '')).strip()
     phone = str(data.get('phone', '')).strip()
     user_entered_amount = float(data.get('amount', 0))
@@ -583,7 +613,7 @@ def verify_deposit():
     valid_gateway = PaymentGateway.query.filter(
         PaymentGateway.is_active == True,
         PaymentGateway.purpose == 'deposit',
-        (PaymentGateway.name.ilike(f"%{bank}%")) | (PaymentGateway.id == bank if bank.isdigit() else False)
+        (PaymentGateway.name.ilike(f"%{raw_bank}%")) | (PaymentGateway.id == raw_bank if raw_bank.isdigit() else False)
     ).first()
 
     expected_admin_account = normalize_account(valid_gateway.account_number) if valid_gateway else ""
