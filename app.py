@@ -584,7 +584,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Reliable API Verification Reliance ---
+# --- 🚀 verify.et API Integration with Robust Verification ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -616,8 +616,6 @@ def verify_deposit():
         PaymentGateway.purpose == 'deposit',
         (PaymentGateway.name.ilike(f"%{raw_bank}%")) | (PaymentGateway.id == raw_bank if raw_bank.isdigit() else False)
     ).first()
-
-    expected_admin_account = valid_gateway.account_number if valid_gateway else ""
 
     # Prepare precise verify.et payload
     payload = { "bank": bank }
@@ -723,8 +721,8 @@ def verify_deposit():
         )
 
         # 🛑 RELIABLE CHECK:
-        # Trust verify.et when it confirms the transaction as verified and matched to the merchant,
-        # while ensuring the amount matches and it is NOT explicitly marked as unmatched or false.
+        # Trust verify.et when it confirms the transaction as verified and matched to the merchant (matchedAccount=True),
+        # while ensuring the amount matches and it is NOT explicitly marked as unmatched.
         is_amount_match = (verified_amount == user_entered_amount)
         is_explicitly_wrong = (match_type == 'unmatched' or matched_account is False)
 
