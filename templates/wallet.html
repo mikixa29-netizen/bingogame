@@ -239,7 +239,7 @@
             <!-- STEP 1: CHOOSE PAYMENT METHOD -->
             <div id="depStep1">
                 <div class="currency-badge">
-                    <span>🇪🇹 Ethiopian birr</span>
+                    <span>🇪🇹 Ethiopian Birr</span>
                     <span style="color:var(--accent-yellow);">ETB</span>
                 </div>
                 <div style="font-size: 13px; font-weight: 700; color: #a5d6a7; margin-bottom: 10px;">Choose a payment method</div>
@@ -268,31 +268,31 @@
             <!-- STEP 3: ENTER TRANSACTION REFERENCE FOR VERIFY.ET -->
             <div id="depStep3" style="display: none;">
                 <div style="font-size: 12px; color: #b0bec5; margin-bottom: 12px; line-height: 1.4;">
-                    1. ክፍያውን ከፈጸሙ በኋላ የትራንዛክሽን ቁጥሩን ያስገቡ።<br>
-                    2. ሲስተሙ በ verify.et በኩል አካውንቱ ትክክል መሆኑን ያረጋግጣል። አካውንቱ ከተቀየረ ወይም ስህተት ካለ በ **Pending** ተመዝግቦ አድሚኑ ማኑዋል ሲያጸድቀው ይገባል!
+                    1. Enter your transaction reference number after making the payment.<br>
+                    2. The system verifies the account via verify.et. If mismatched or delayed, it will be marked as **Pending** for manual admin review!
                 </div>
 
                 <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--accent-yellow);">
-                    የተመረጠው መጠን: ETB <span id="confirmAmountDisplay">100</span>
+                    Selected Amount: ETB <span id="confirmAmountDisplay">100</span>
                 </div>
 
-                <!-- CBE Birr ከሆነ የሚታይ የስልክ ቁጥር ግብዓት -->
+                <!-- Phone input for CBE Birr -->
                 <div class="form-group" id="depPhoneGroup" style="display: none;">
-                    <label>የስልክ ቁጥር (CBE Birr ከሆነ)</label>
+                    <label>Phone Number (For CBE Birr)</label>
                     <input type="text" id="finalPhoneInput" class="form-control" placeholder="09xxxxxxxx">
                 </div>
 
                 <div class="form-group">
-                    <label>የትራንዛክሽን ሪፈረንስ / ቴሌኮም ቁጥር</label>
-                    <input type="text" id="finalTxnId" class="form-control" placeholder="ለምሳሌ: FT23... ወይም TR23..." required>
-                    <div style="font-size: 10px; color: #b0bec5; margin-top: 4px;">የደረሰኙን ትራንዛክሽን ሪፈረንስ ቁጥር ያስገቡ</div>
+                    <label>Transaction Reference / Telecom Number</label>
+                    <input type="text" id="finalTxnId" class="form-control" placeholder="e.g. FT23... or TR23..." required>
+                    <div style="font-size: 10px; color: #b0bec5; margin-top: 4px;">Enter your receipt transaction reference number</div>
                 </div>
 
                 <div class="notice-text" style="margin-bottom: 14px;">
-                    አካውንቱ ከተቀየረ ወይም ስህተት ካለ በአድሚን ፔነል በ Pending ይታያል።
+                    If the account is changed or incorrect, it will appear as Pending in the admin panel.
                 </div>
 
-                <button class="btn-action" onclick="submitFinalDeposit(event)">ክፍያ አረጋግጥ &amp; ሒሳብ ጫን</button>
+                <button class="btn-action" onclick="submitFinalDeposit(event)">Confirm Payment &amp; Credit Balance</button>
             </div>
         </div>
     </div>
@@ -399,7 +399,7 @@
         function goToStep3() {
             const amt = document.getElementById('modalDepositAmount').value;
             if (!amt || amt < 20) {
-                alert('⚠️ ዝቅተኛው የዲፖዚት መጠን 20 ብር ነው');
+                alert('⚠️ Minimum deposit amount is 20 ETB');
                 return;
             }
             depositAmountVal = amt;
@@ -416,14 +416,14 @@
             const phone = document.getElementById('finalPhoneInput')?.value.trim() || '';
 
             if (!txnId) {
-                alert('⚠️ እባክዎ የትራንዛክሽን ሪፈረንስ ቁጥር ያስገቡ!');
+                alert('⚠️ Please enter a transaction reference number!');
                 return;
             }
 
             const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '123456789';
             const btn = event.target;
             btn.disabled = true;
-            btn.innerText = 'በማጣራት ላይ (Verify.et)...';
+            btn.innerText = 'Verifying (Verify.et)...';
 
             fetch('/api/deposit/verify', {
                 method: 'POST',
@@ -442,22 +442,22 @@
                     if (data.status === 'completed') {
                         alert(`✅ ${data.message}`);
                     } else {
-                        alert(`⏳ ${data.message}`); // አካውንቱ ተቀይሮ ወይም ፔንዲንግ ከሆነ የሚሰጥ ማሳሰቢያ
+                        alert(`⏳ ${data.message}`);
                     }
                     closeDepositModal();
                     loadTransactionHistory();
                     location.reload();
                 } else {
-                    alert('⚠️ ' + (data.message || 'ክፍያውን ማረጋገጥ አልተቻለም።'));
+                    alert('⚠️ ' + (data.message || 'Failed to verify payment.'));
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert('⚠️ የሰርቨር ግንኙነት ስህተት አጋጥሟል፣ እባክዎ እንደገና ይሞክሩ።');
+                alert('⚠️ Server connection error occurred, please try again.');
             })
             .finally(() => {
                 btn.disabled = false;
-                btn.innerText = 'ክፍያ አረጋግጥ & ሒሳብ ጫን';
+                btn.innerText = 'Confirm Payment & Credit Balance';
             });
         }
 
