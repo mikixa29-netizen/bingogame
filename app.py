@@ -73,14 +73,29 @@ def normalize_account(acc):
 
 def verify_masked_account(masked_acc, expected_acc):
     if not masked_acc or not expected_acc:
-        return True
+        return False  # Strict security: reject if either is missing
+    
     clean_expected = normalize_account(expected_acc)
-    parts = [p for p in str(masked_acc).split('*') if p]
+    clean_masked = normalize_account(str(masked_acc).strip())
+    
+    # If unmasked directly
+    if '*' not in clean_masked:
+        return clean_masked == clean_expected
+        
+    # Split by '*' to get visible parts
+    parts = [p for p in clean_masked.split('*') if p]
     if not parts:
-        return True
-    prefix = parts[0]
-    suffix = parts[-1] if len(parts) > 1 else parts[0]
-    return clean_expected.startswith(prefix) and clean_expected.endswith(suffix)
+        return False
+        
+    # Ensure parts exist in the expected account in correct relative order
+    current_idx = 0
+    for part in parts:
+        idx = clean_expected.find(part, current_idx)
+        if idx == -1:
+            return False
+        current_idx = idx + len(part)
+        
+    return True
 
 def get_verify_et_bank_slug(bank_input):
     b = str(bank_input).strip().lower()
@@ -595,7 +610,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Smart Masked Account & Strict Validation ---
+# --- 🚀 verify.et API Integration with Strict Receiver & Order Validation ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -725,12 +740,14 @@ def verify_deposit():
         match_type = str(tx_data.get('matchType', '')).strip().lower()
         matched_account = tx_data.get('matchedAccount')
 
-        # 🛑 SMART VALIDATION: Check amount, masked receiver match, and API match status
+        # 🛑 STRICT VALIDATION CHECKS
         is_amount_match = (verified_amount == user_entered_amount)
         is_receiver_valid = verify_masked_account(verified_receiver, expected_admin_account)
         
-        # A transaction is valid if verify.et explicitly matched it OR our masked account check passes and it's not marked as unmatched
-        is_valid_transaction = is_amount_match and is_receiver_valid and (match_type != 'unmatched') and (matched_account is not False)
+        # If verify.et explicitly states unmatched or matchedAccount is False, reject immediately
+        is_explicitly_unmatched = (match_type == 'unmatched' or matched_account is False)
+
+        is_valid_transaction = is_amount_match and is_receiver_valid and not is_explicitly_unmatched
 
         if not is_valid_transaction:
             pending_tx = Transaction(
@@ -750,7 +767,7 @@ def verify_deposit():
                 'message': '❌ This receipt belongs to another account or has a mismatched amount! Balance could not be credited.'
             })
 
-        # Successful Automatic Crediting (Only if valid)
+        # Successful Automatic Crediting (Only if strictly valid & matched to admin)
         user.balance = round(user.balance + verified_amount, 2)
         new_tx = Transaction(
             user_id=user.id,
