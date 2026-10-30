@@ -584,7 +584,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Robust Verification ---
+# --- 🚀 verify.et API Integration with Proper Acceptance of Verified Transactions ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -884,7 +884,7 @@ def transfer_balance():
 
     return jsonify({'success': True, 'message': 'Balance transferred successfully!'})
 
-@app.route('/wallet/transactions', methods=['GET'])
+@app.wallet_transactions if 'wallet_transactions' in globals() else app.route('/wallet/transactions', methods=['GET'])
 def get_user_transactions():
     user_id = session.get('user_id')
     user = User.query.filter_by(telegram_id=user_id).first()
