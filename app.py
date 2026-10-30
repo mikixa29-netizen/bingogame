@@ -584,7 +584,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Strict Receiver & Amount Matching ---
+# --- 🚀 verify.et API Integration with Strict Unmatched & Receiver Matching ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -720,11 +720,15 @@ def verify_deposit():
             verified_amount = float(tx_data.get('amount', user_entered_amount) or user_entered_amount)
             verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount') or tx_data.get('receiverAccountNo') or '')
 
-            # 🛑 Strict Security Checks
+            # 🛑 Strict Security & Unmatched Validation from verify.et response
+            match_type = str(tx_data.get('matchType', '')).lower()
+            
+            # If verify.et explicitly flags unmatched (e.g. candidate_account_mismatch)
+            is_unmatched_by_api = (match_type == 'unmatched' or tx_data.get('matchedAccount') == False)
             is_amount_mismatch = (verified_amount != user_entered_amount)
             is_wrong_receiver = expected_admin_account and verified_receiver and (verified_receiver != expected_admin_account)
 
-            if is_amount_mismatch or is_wrong_receiver:
+            if is_unmatched_by_api or is_amount_mismatch or is_wrong_receiver:
                 pending_tx = Transaction(
                     user_id=user.id,
                     type='deposit',
@@ -732,17 +736,17 @@ def verify_deposit():
                     payment_method=valid_gateway.name if valid_gateway else bank,
                     transaction_id=reference,
                     status='pending',
-                    admin_note=f'Security Mismatch. Receiver: {verified_receiver}, Expected: {expected_admin_account}, Amount Entered: {user_entered_amount}, Receipt: {verified_amount}'
+                    admin_note=f'Security Mismatch. Receiver: {verified_receiver}, Expected: {expected_admin_account}, MatchType: {match_type}'
                 )
                 db.session.add(pending_tx)
                 db.session.commit()
                 return jsonify({
                     'success': False,
                     'status': 'mismatch',
-                    'message': '❌ ይህ ሪሲፕት ለሌላ ሰው የተላከ ወይም የተሳሳተ መጠን ያለው ነው! ሂሳብ ሊጫን አልቻለም።'
+                    'message': '❌ This receipt belongs to another account or has a mismatched amount! Balance could not be credited.'
                 })
 
-            # Successful Automatic Crediting (Only if exact match & correct receiver)
+            # Successful Automatic Crediting (Only if strictly matched)
             user.balance = round(user.balance + verified_amount, 2)
             new_tx = Transaction(
                 user_id=user.id,
