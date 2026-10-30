@@ -71,6 +71,17 @@ def normalize_account(acc):
         acc = "0" + acc[3:]
     return acc
 
+def verify_masked_account(masked_acc, expected_acc):
+    if not masked_acc or not expected_acc:
+        return True
+    clean_expected = normalize_account(expected_acc)
+    parts = [p for p in str(masked_acc).split('*') if p]
+    if not parts:
+        return True
+    prefix = parts[0]
+    suffix = parts[-1] if len(parts) > 1 else parts[0]
+    return clean_expected.startswith(prefix) and clean_expected.endswith(suffix)
+
 def get_verify_et_bank_slug(bank_input):
     b = str(bank_input).strip().lower()
     if 'telebirr' in b:
@@ -584,7 +595,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Strict MatchType & Unmatched Rejection ---
+# --- 🚀 verify.et API Integration with Smart Masked Account & Strict Validation ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -617,7 +628,7 @@ def verify_deposit():
         (PaymentGateway.name.ilike(f"%{raw_bank}%")) | (PaymentGateway.id == raw_bank if raw_bank.isdigit() else False)
     ).first()
 
-    expected_admin_account = normalize_account(valid_gateway.account_number) if valid_gateway else ""
+    expected_admin_account = valid_gateway.account_number if valid_gateway else ""
 
     # Prepare precise verify.et payload
     payload = { "bank": bank }
@@ -710,17 +721,18 @@ def verify_deposit():
 
         # Extract transaction fields securely
         verified_amount = float(tx_data.get('amount', user_entered_amount) or user_entered_amount)
-        verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount') or tx_data.get('receiverAccountNo') or '')
-        match_type = str(tx_data.get('matchType', 'unmatched')).strip().lower()
-        matched_account = tx_data.get('matchedAccount', True)
+        verified_receiver = tx_data.get('receiverPhone') or tx_data.get('receiverAccount') or tx_data.get('receiverAccountNo') or ''
+        match_type = str(tx_data.get('matchType', '')).strip().lower()
+        matched_account = tx_data.get('matchedAccount')
 
-        # 🛑 STRICT SECURITY & MATCHTYPE VALIDATION
-        # Must be strictly 'matched' and matchedAccount cannot be False
-        is_matched_by_api = (match_type == 'matched' and matched_account is not False)
+        # 🛑 SMART VALIDATION: Check amount, masked receiver match, and API match status
         is_amount_match = (verified_amount == user_entered_amount)
-        is_receiver_match = (not expected_admin_account) or (not verified_receiver) or (verified_receiver == expected_admin_account)
+        is_receiver_valid = verify_masked_account(verified_receiver, expected_admin_account)
+        
+        # A transaction is valid if verify.et explicitly matched it OR our masked account check passes and it's not marked as unmatched
+        is_valid_transaction = is_amount_match and is_receiver_valid and (match_type != 'unmatched') and (matched_account is not False)
 
-        if not is_matched_by_api or not is_amount_match or not is_receiver_match:
+        if not is_valid_transaction:
             pending_tx = Transaction(
                 user_id=user.id,
                 type='deposit',
@@ -728,17 +740,17 @@ def verify_deposit():
                 payment_method=valid_gateway.name if valid_gateway else bank,
                 transaction_id=reference,
                 status='pending',
-                admin_note=f'Security Mismatch. MatchType: {match_type}, Receiver: {verified_receiver}, Expected: {expected_admin_account}'
+                admin_note=f'Security Mismatch. Receiver: {verified_receiver}, Expected: {expected_admin_account}, MatchType: {match_type}'
             )
             db.session.add(pending_tx)
             db.session.commit()
             return jsonify({
                 'success': False,
                 'status': 'mismatch',
-                'message': '❌ This receipt belongs to another account or has an unmatched amount! Balance could not be credited.'
+                'message': '❌ This receipt belongs to another account or has a mismatched amount! Balance could not be credited.'
             })
 
-        # Successful Automatic Crediting (Only if strictly matched)
+        # Successful Automatic Crediting (Only if valid)
         user.balance = round(user.balance + verified_amount, 2)
         new_tx = Transaction(
             user_id=user.id,
