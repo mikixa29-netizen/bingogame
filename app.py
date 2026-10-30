@@ -4,6 +4,7 @@ import json
 import logging
 import hashlib
 import re
+import time
 import requests
 from flask import Flask, jsonify, request, session, render_template, redirect, url_for, flash
 from datetime import datetime, date, timedelta
@@ -583,9 +584,9 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration & Detailed Logging for Debugging ---
+# --- 🚀 verify.et API Integration with Automatic Polling/Retry for Queued/Pending ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
-VERIFY_ET_URL = "https://verify.et/api/verify?waitMs=4000"
+VERIFY_ET_BASE_URL = "https://verify.et"
 
 @app.route('/api/deposit/verify', methods=['POST'])
 def verify_deposit():
@@ -640,17 +641,42 @@ def verify_deposit():
     }
 
     try:
-        logger.info(f"Sending verify.et request for bank: {bank}, payload: {payload}")
-        response = requests.post(VERIFY_ET_URL, json=payload, headers=headers, timeout=15)
+        verify_url = f"{VERIFY_ET_BASE_URL}/api/verify?waitMs=4000"
+        logger.info(f"Sending verify.et initial request for bank: {bank}, payload: {payload}")
+        response = requests.post(verify_url, json=payload, headers=headers, timeout=15)
         result = response.json()
-        
-        # Log full verify.et response to debug why verification might fail
-        logger.info(f"verify.et full response received: {result}")
-        
-        status = result.get('status') # 'verified', 'pending', 'failed', 'not-found'
+        logger.info(f"verify.et initial response received: {result}")
 
-        if status == 'verified':
+        # Handle Queued / Pending status with polling (up to 2 retries)
+        status = result.get('status')
+        data_block = result.get('data', {})
+        verification_block = data_block.get('verification', {})
+        
+        # If verification is queued/pending, let's poll the statusUrl if available
+        if status in ['pending', 'queued'] or verification_block.get('status') in ['pending', 'queued']:
+            status_url = data_block.get('statusUrl')
+            if status_url:
+                if not status_url.startswith('http'):
+                    status_url = f"{VERIFY_ET_BASE_URL}{status_url}"
+                
+                for attempt in range(2):
+                    logger.info(f"Polling verify.et status attempt {attempt+1} at {status_url}")
+                    time.sleep(3)
+                    poll_resp = requests.get(status_url, headers=headers, timeout=10)
+                    poll_result = poll_resp.json()
+                    logger.info(f"verify.et poll response attempt {attempt+1}: {poll_result}")
+                    
+                    if poll_result.get('status') == 'verified' or poll_result.get('data', {}).get('verification', {}).get('status') == 'verified' or poll_result.get('verified') == True:
+                        result = poll_result
+                        status = 'verified'
+                        break
+
+        # Final evaluation of status
+        if status == 'verified' or result.get('verified') == True or result.get('data', {}).get('verification', {}).get('status') == 'verified':
             tx_data = result.get('data', {})
+            if 'verification' in tx_data:
+                tx_data = tx_data.get('verification', {})
+                
             verified_amount = float(tx_data.get('amount', user_entered_amount))
             verified_receiver = normalize_account(tx_data.get('receiverPhone') or tx_data.get('receiverAccount', ''))
 
