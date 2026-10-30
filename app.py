@@ -583,7 +583,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration & Strict Account/Amount Verification ---
+# --- 🚀 verify.et API Integration & Detailed Logging for Debugging ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_URL = "https://verify.et/api/verify?waitMs=4000"
 
@@ -618,15 +618,18 @@ def verify_deposit():
 
     expected_admin_account = normalize_account(valid_gateway.account_number) if valid_gateway else ""
 
-    # Prepare verify.et payload
+    # Prepare precise verify.et payload
     payload = { "bank": bank }
-    if bank in ['telebirr', 'mpesa']:
+    if bank == 'telebirr':
         payload["transactionNumber"] = reference
     elif bank == 'cbe':
         payload["reference"] = reference
     elif bank == 'cbebirr':
         payload["receiptNumber"] = reference
-        if phone: payload["phone"] = phone
+        if phone: 
+            payload["phone"] = phone
+    elif bank == 'mpesa':
+        payload["transactionNumber"] = reference
     else:
         payload["reference"] = reference
 
@@ -637,8 +640,13 @@ def verify_deposit():
     }
 
     try:
-        response = requests.post(VERIFY_ET_URL, json=payload, headers=headers, timeout=10)
+        logger.info(f"Sending verify.et request for bank: {bank}, payload: {payload}")
+        response = requests.post(VERIFY_ET_URL, json=payload, headers=headers, timeout=15)
         result = response.json()
+        
+        # Log full verify.et response to debug why verification might fail
+        logger.info(f"verify.et full response received: {result}")
+        
         status = result.get('status') # 'verified', 'pending', 'failed', 'not-found'
 
         if status == 'verified':
@@ -706,7 +714,8 @@ def verify_deposit():
                 'message': 'Payment could not be verified automatically. Recorded as Pending for manual admin review.'
             })
 
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as e:
+        logger.error(f"verify.et connection error: {str(e)}")
         pending_tx = Transaction(
             user_id=user.id,
             type='deposit',
