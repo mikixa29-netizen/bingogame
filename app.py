@@ -72,9 +72,7 @@ def normalize_account(acc):
     return acc
 
 def verify_masked_account(masked_acc, expected_acc):
-    if not masked_acc:
-        return True  # If verify.et didn't return receiver info, allow if status is verified
-    if not expected_acc:
+    if not masked_acc or not expected_acc:
         return True
     
     clean_expected = normalize_account(expected_acc)
@@ -609,7 +607,7 @@ def leave_game(game_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- 🚀 verify.et API Integration with Balanced Flexible Validation ---
+# --- 🚀 verify.et API Integration with Unsparing Receiver & MatchType Security ---
 VERIFY_ET_API_KEY = os.getenv('VERIFY_ET_API_KEY', 'your_verify_et_api_key_here')
 VERIFY_ET_BASE_URL = "https://verify.et"
 
@@ -739,16 +737,14 @@ def verify_deposit():
         match_type = str(tx_data.get('matchType', '')).strip().lower()
         matched_account = tx_data.get('matchedAccount')
 
-        # 🛑 BALANCED VALIDATION CHECKS
+        # 🛑 STRICT SECURITY VALIDATION
         is_amount_match = (verified_amount == user_entered_amount)
         is_receiver_valid = verify_masked_account(verified_receiver, expected_admin_account)
         
-        # Reject ONLY if explicitly marked as unmatched or matchedAccount is False
-        is_explicitly_unmatched = (match_type == 'unmatched' or matched_account is False)
+        # If matchType is 'unmatched' OR matchedAccount is False OR receiver check fails -> REJECT IMMEDIATELY!
+        is_unmatched = (match_type == 'unmatched' or matched_account is False or not is_receiver_valid)
 
-        is_valid_transaction = is_amount_match and is_receiver_valid and not is_explicitly_unmatched
-
-        if not is_valid_transaction:
+        if not is_amount_match or is_unmatched:
             pending_tx = Transaction(
                 user_id=user.id,
                 type='deposit',
@@ -756,7 +752,7 @@ def verify_deposit():
                 payment_method=valid_gateway.name if valid_gateway else bank,
                 transaction_id=reference,
                 status='pending',
-                admin_note=f'Security Mismatch. Receiver: {verified_receiver}, Expected: {expected_admin_account}, MatchType: {match_type}'
+                admin_note=f'Security Mismatch. Receiver: {verified_receiver}, Expected: {expected_admin_account}, MatchType: {match_type}, MatchedAccount: {matched_account}'
             )
             db.session.add(pending_tx)
             db.session.commit()
@@ -766,7 +762,7 @@ def verify_deposit():
                 'message': '❌ This receipt belongs to another account or has a mismatched amount! Balance could not be credited.'
             })
 
-        # Successful Automatic Crediting
+        # Successful Automatic Crediting (Strictly Matched to Admin)
         user.balance = round(user.balance + verified_amount, 2)
         new_tx = Transaction(
             user_id=user.id,
